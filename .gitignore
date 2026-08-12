@@ -1,0 +1,68 @@
+# ============================================================
+# Laravel .gitignore — iTech Inventory Project
+# ============================================================
+
+# Dependencies
+/vendor/
+/node_modules/
+
+# Environment & Sensitive Configs
+.env
+.env.backup
+.env.production
+.env.local
+.env.*.local
+Homestead.json
+Homestead.yaml
+auth.json
+
+# Storage & Framework Cache
+/storage/*.key
+/storage/app/*
+!/storage/app/.gitignore
+!/storage/app/public/.gitignore
+/storage/framework/cache/*
+!/storage/framework/cache/.gitignore
+/storage/framework/sessions/*
+!/storage/framework/sessions/.gitignore
+/storage/framework/testing/*
+!/storage/framework/testing/.gitignore
+/storage/framework/views/*
+!/storage/framework/views/.gitignore
+/storage/logs/*
+!/storage/logs/.gitignore
+!/storage/logs/.gitkeep
+
+# Build Artifacts
+/public/build/
+/public/hot
+/public/storage
+
+# Logs & Debugging
+*.log
+npm-debug.log
+yarn-error.log
+php_error.log
+/storage/logs/*.log
+
+# Testing Cache
+.phpunit.result.cache
+.phpunit.cache/
+
+# IDE & OS Specific Files
+.agents/
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+Thumbs.db
+desktop.ini
+*.code-workspace
+
+# Database Dumps (contain sensitive business/customer records)
+*.sql
+*.sqlite

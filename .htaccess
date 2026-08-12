@@ -1,0 +1,59 @@
+<IfModule mod_rewrite.c>
+    <IfModule mod_negotiation.c>
+        Options -MultiViews -Indexes
+    </IfModule>
+
+    RewriteEngine On
+
+    # Handle Authorization Header
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Redirect Trailing Slashes If Not A Folder...
+    #RewriteCond %{REQUEST_FILENAME} !-d
+    #RewriteCond %{REQUEST_URI} (.+)/$
+    #RewriteRule ^ %1 [L,R=301]
+
+    RewriteCond %{REQUEST_FILENAME} -d [OR]
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule ^ ^$1 [N]
+
+    RewriteCond %{REQUEST_URI} (\.\w+$) [NC]
+    RewriteRule ^(.*)$ public/$1
+
+    # Send Requests To Front Controller...
+    #RewriteCond %{REQUEST_FILENAME} !-d
+    #RewriteCond %{REQUEST_FILENAME} !-f
+    #RewriteRule ^ index.php [L]
+
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ server.php
+
+    # Handle Front Controller...
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(css|js|images)/(.*)$ public/$1/$2 [L,NC]
+    RewriteCond %{REQUEST_URI} !(\.css|\.js|\.png|\.jpg|\.gif|robots\.txt)$ [NC]  
+</IfModule>
+
+ # Always use https for secure connections
+# Replace 'www.example.com' with your domain name
+# (as it appears on your SSL certificate)
+#RewriteCond %{SERVER_PORT} 82
+#RewriteRule ^(.*)$ https://www.example.com/$1 [R=301,L]
+#RewriteRule ^(.*)$ http://localhost:%{SERVER_PORT}/$1 [R=301,L]
+
+#hide a Specific File
+#<Files .env>
+    #order allow,deny
+    #Deny from all
+#</Files>   
+
+<Files ~ "\.(env|json|md|xml|gitignore|gitattributes|lock|editorconfig|yml|htaccess)$">
+    Order allow,deny
+    Deny from all
+</Files>
+<Files ~ "(artisan|package.json|webpack.mix.js|config.js|robots.txt|styleci.yml)$">
+    Order allow,deny
+    Deny from all
+</Files>
