@@ -201,11 +201,11 @@ Route::middleware(['auth', 'role:Super Admin'])->group(function () {
             Route::get('reports/cash-flow', [FinancialStatementController::class, 'cashFlow'])->name('reports.cash-flow');
 
             // Contra Entries (Transfers)
-            Route::resource('contra-entries', ContraEntryController::class)->only(['index', 'create', 'store']);
+            // Route::resource('contra-entries', ContraEntryController::class)->only(['index', 'create', 'store']);
 
-            // Bank Reconciliation
-            Route::get('reconciliation', [ReconciliationController::class, 'index'])->name('reconciliation.index');
-            Route::post('reconciliation', [ReconciliationController::class, 'store'])->name('reconciliation.store');
+            // // Bank Reconciliation
+            // Route::get('reconciliation', [ReconciliationController::class, 'index'])->name('reconciliation.index');
+            // Route::post('reconciliation', [ReconciliationController::class, 'store'])->name('reconciliation.store');
 
             // Fiscal Years & Year-End Close
             Route::get('fiscal-years', [FiscalYearController::class, 'index'])->name('fiscal-years.index');
