@@ -179,12 +179,7 @@
                         <a href="{{ route('reports.cash-flow') }}" class="{{ request()->routeIs('reports.cash-flow*') ? 'active' : '' }}">
                             <i class="fe fe-dollar-sign"></i> <span>Cash Flow Statement</span>
                         </a>
-                        <!-- <a href="{{ route('contra-entries.index') }}" class="{{ request()->routeIs('contra-entries.*') ? 'active' : '' }}">
-                            <i class="fe fe-repeat"></i> <span>Contra Transfers</span>
-                        </a> -->
-                        <!-- <a href="{{ route('reconciliation.index') }}" class="{{ request()->routeIs('reconciliation.*') ? 'active' : '' }}">
-                            <i class="fe fe-check-circle"></i> <span>Bank Reconciliation</span>
-                        </a> -->
+                       
                         <a href="{{ route('fiscal-years.index') }}" class="{{ request()->routeIs('fiscal-years.*') ? 'active' : '' }}">
                             <i class="fe fe-calendar"></i> <span>Fiscal Years & Closing</span>
                         </a>
