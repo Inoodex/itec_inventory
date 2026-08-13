@@ -61,11 +61,7 @@
     }
     .table-custom th, .table-custom td {
         white-space: nowrap;
-    }
-    .table-responsive {
-        overflow: visible !important;
-    }
-</style>
+    }</style>
 @endpush
 
 @section('content')
@@ -173,7 +169,7 @@
 
         <!-- Table Body -->
         <div class="card-body p-0" style="overflow: visible;">
-            <div class="table-responsive" style="overflow: visible !important;">
+            <div class="table-responsive">
                 <table class="table table-hover table-custom align-middle mb-0" id="salesTable">
                     <thead class="bg-light text-secondary fs-7 text-uppercase">
                         <tr>

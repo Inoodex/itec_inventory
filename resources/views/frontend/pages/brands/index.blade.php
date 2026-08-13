@@ -50,11 +50,7 @@
 
     .table-custom th, .table-custom td {
         white-space: nowrap;
-    }
-    .table-responsive {
-        overflow: visible !important;
-    }
-</style>
+    }</style>
 @endpush
 
 @section('content')

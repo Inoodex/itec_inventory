@@ -22,14 +22,14 @@
                         <!-- Quotation Header -->
                         <div class="row mb-4">
                             <div class="col-6">
-                                <h2 class="text-primary">QUOTATION</h2>
+                                <h2 class="text-dark">QUOTATION</h2>
                                 <p class="mb-1"><strong>Date:</strong>
                                     {{ \Carbon\Carbon::parse($quotation->created_at)->format('F d, Y') }}</p>
                                 <p class="mb-1"><strong>Quotation #:</strong>
                                     QTN-{{ str_pad($quotation->id, 5, '0', STR_PAD_LEFT) }}</p>
                             </div>
                             <div class="col-6 text-end">
-                                <h4 class="text-primary">{{ $quotation->company_name }}</h4>
+                                <h4 class="text-dark">{{ $quotation->company_name }}</h4>
                                 <p class="mb-1">{{ $quotation->company_phone }}</p>
                                 <p class="mb-1">{{ $quotation->company_email }}</p>
                                 <p class="mb-0">{{ $quotation->company_website }}</p>
@@ -54,7 +54,7 @@
                         <!-- Subject -->
                         <div class="row mb-4">
                             <div class="col-12">
-                                <h5 class="text-primary">Subject: {{ $quotation->subject }}</h5>
+                                <h5 class="text-dark">Subject: {{ $quotation->subject }}</h5>
                             </div>
                         </div>
 
@@ -69,7 +69,7 @@
                         @if ($quotation->items && count($quotation->items) > 0)
                             <div class="row mb-4">
                                 <div class="col-12">
-                                    <h5 class="text-primary mb-3">Quotation Details</h5>
+                                    <h5 class="text-dark mb-3">Quotation Details</h5>
                                     <div class="table-responsive">
                                         <table class="table table-bordered">
                                             <thead class="table-light">
@@ -139,7 +139,7 @@
                         @if ($quotation->additional_enclosed)
                             <div class="row mb-4">
                                 <div class="col-12">
-                                    <h5 class="text-primary">Enclosed Documents:</h5>
+                                    <h5 class="text-dark">Enclosed Documents:</h5>
                                     <div style="white-space: pre-line;">{{ $quotation->additional_enclosed }}</div>
                                 </div>
                             </div>
@@ -148,7 +148,7 @@
                         <!-- Terms and Conditions -->
                         <div class="row mb-4">
                             <div class="col-12">
-                                <h5 class="text-primary">Terms and Conditions:</h5>
+                                <h5 class="text-dark">Terms and Conditions:</h5>
                                 <div style="white-space: pre-line;">{{ $quotation->terms_conditions }}</div>
                             </div>
                         </div>
@@ -241,10 +241,6 @@
         .table th {
             background-color: #f8f9fa;
             font-weight: 600;
-        }
-
-        .text-primary {
-            color: #2c5aa0 !important;
         }
     </style>
 @endsection

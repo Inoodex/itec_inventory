@@ -33,7 +33,7 @@ class PaymentController extends Controller
         if($request->payment_for == '2'){
             $bill = sale::where('id', $request->id)->first();
         }
-        if(!$bill) return redirect()->back()->with(['error' => getNotify(10)]);
+        if(!$bill) return redirect()->back()->with(['error' => 'Bill not found. Please try again.']);
 
 
 
@@ -50,19 +50,19 @@ class PaymentController extends Controller
         $bill->due_amount = max(0,$bill->bill-$bill->paid_amount);
         $bill->update();
 
-        return redirect()->back()->with(['success' => getNotify(1)]);
+        return redirect()->back()->with(['success' => 'Payment added successfully.']);
     }
 
     public function updatePayment(Request $request, $id){
         $payment = Payment::where('id',$id)->first();
-        if(!$payment) return redirect()->back()->with(['error' => getNotify(10)]);
+        if(!$payment) return redirect()->back()->with(['error' => 'Payment not found. Please try again.']);
         if($payment->payment_for == '1'){
             $bill = Service::where('id', $payment->sale_id)->first();
         }
         if($payment->payment_for == '2'){
             $bill = Sale::where('id', $payment->sale_id)->first();
         }
-        if(!$bill) return redirect()->back()->with(['error' => getNotify(10)]);
+        if(!$bill) return redirect()->back()->with(['error' => 'Bill not found. Please try again.']);
 
         $bill->paid_amount = max(0,$bill->paid_amount - $payment->amount);
         $bill->paid_amount += $request->amount;
@@ -74,19 +74,19 @@ class PaymentController extends Controller
         $payment->remarks = $request->remarks;
         $payment->update();
 
-        return redirect()->back()->with(['success' => getNotify(2)]);
+        return redirect()->back()->with(['success' => 'Payment updated successfully.']);
 
     }
     public function deletePayment(Request $request, $id){
         $payment = Payment::where('id',$id)->first();
-        if(!$payment) return redirect()->back()->with(['error' => getNotify(10)]);
+        if(!$payment) return redirect()->back()->with(['error' => 'Payment not found. Please try again.']);
         if($payment->payment_for == '1'){
             $bill = Service::where('id', $payment->sale_id)->first();
         }
         if($payment->payment_for == '2'){
             $bill = Sale::where('id', $payment->sale_id)->first();
         }
-        if(!$bill) return redirect()->back()->with(['error' => getNotify(10)]);
+        if(!$bill) return redirect()->back()->with(['error' => 'Bill not found. Please try again.']);
 
         $bill->paid_amount = max(0,$bill->paid_amount - $payment->amount);
         $bill->due_amount = max(0,$bill->bill - $bill->paid_amount);
@@ -94,7 +94,7 @@ class PaymentController extends Controller
 
         $payment->delete();
 
-        return redirect()->back()->with(['success' => getNotify(3)]);
+        return redirect()->back()->with(['success' => 'Payment deleted successfully.']);
 
     }
 }

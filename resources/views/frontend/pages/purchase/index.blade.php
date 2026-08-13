@@ -66,11 +66,23 @@
     .table-custom th, .table-custom td {
         white-space: nowrap;
     }
-
-    .table-responsive {
-        overflow: visible !important;
+    .stat-card .card-body > div:last-child {
+        min-width: 0;
+        flex: 1 1 auto;
     }
-</style>
+    .stat-card h4 {
+        font-size: clamp(16px, 2.2vw, 24px);
+        line-height: 1.25;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+        white-space: normal !important;
+    }
+    .stat-card .text-muted {
+        white-space: nowrap;
+    }
+    .stat-card .avatar {
+        flex-shrink: 0;
+    }</style>
 @endpush
 
 @section('content')
@@ -193,7 +205,7 @@
 
         <!-- Table Body -->
         <div class="card-body p-0" style="overflow: visible;">
-            <div class="table-responsive" style="overflow: visible !important;">
+            <div class="table-responsive">
                 <table class="table table-hover table-custom align-middle mb-0" id="purchaseTable">
                     <thead class="bg-light text-secondary fs-7 text-uppercase">
                         <tr>

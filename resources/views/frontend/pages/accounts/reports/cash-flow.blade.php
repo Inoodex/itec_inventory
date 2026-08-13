@@ -6,7 +6,7 @@
         <div class="page-header">
             <div class="row align-items-center">
                 <div class="col">
-                    <h3 class="page-title font-weight-bold" style="color: #1e293b;">Cash Flow Statement</h3>
+                    <h3 class="page-title font-weight-bold text-dark">Cash Flow Statement</h3>
                 </div>
             </div>
         </div>

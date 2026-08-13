@@ -41,7 +41,7 @@ class VendorController extends Controller
         ];
         $validation = Validator::make($attributes, $rules);
         if ($validation->fails()) {
-            return redirect()->back()->with(['error' => getNotify(4), 'error_code' => 'edit'])->withErrors($validation)->withInput();
+            return redirect()->back()->with(['error' => 'Validation failed. Please check your inputs.', 'error_code' => 'edit'])->withErrors($validation)->withInput();
         }
 
         $vendor = new Vendor;
@@ -90,7 +90,7 @@ class VendorController extends Controller
         ];
         $validation = Validator::make($attributes, $rules);
         if ($validation->fails()) {
-            return redirect()->back()->with(['error' => getNotify(4), 'error_code' => 'edit'])->withErrors($validation)->withInput();
+            return redirect()->back()->with(['error' => 'Validation failed. Please check your inputs.', 'error_code' => 'edit'])->withErrors($validation)->withInput();
         }
 
         $vendor = Vendor::findOrFail($id);
@@ -110,7 +110,7 @@ class VendorController extends Controller
     {
        $vendor = Vendor::findOrFail($id);
        $vendor->delete();
-       return redirect()->back()->with(['success' => getNotify(3)]);
+       return redirect()->back()->with(['success' => 'Vendor deleted successfully.']);
     }
 
     public function downloadPdf()

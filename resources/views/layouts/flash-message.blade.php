@@ -123,7 +123,7 @@
 </style>
 
 <div class="flash-toast-wrapper" id="flashToastWrapper">
-    @if (Session::has('success') || Session::has('error') || Session::has('warning') || Session::has('info') || $errors->any())
+    @if (Session::has('success') || Session::has('error') || Session::has('warning') || Session::has('info') || (isset($errors) && $errors->any()))
         <div class="d-flex flex-column align-items-end gap-2">
             @if ($message = Session::get('success'))
                 <div class="toast-card toast-card-success d-flex align-items-center justify-content-between" role="alert">
@@ -193,7 +193,7 @@
                 </div>
             @endif
 
-            @if ($errors->any())
+            @if (isset($errors) && $errors->any())
                 <div class="toast-card toast-card-error d-flex align-items-start justify-content-between" role="alert">
                     <div class="d-flex align-items-start gap-3">
                         <div class="toast-icon-badge mt-1">

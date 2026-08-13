@@ -23,6 +23,9 @@
     .dropdown-menu {
         z-index: 9999 !important;
     }
+    html[data-layout-mode="dark"] .page-title {
+        color: #e6e9ef !important;
+    }
 </style>
 @endpush
 
@@ -32,7 +35,7 @@
     <div class="page-header">
         <div class="row align-items-center">
             <div class="col">
-                <h3 class="page-title font-weight-bold" style="color: #1e293b;">Fiscal Years & Year-End Closing</h3>
+                <h3 class="page-title font-weight-bold text-dark">Fiscal Years & Year-End Closing</h3>
             </div>
             <div class="col-auto">
                 <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#newFiscalYearModal">

@@ -22,22 +22,21 @@
             border-color: #7638ff !important;
         }
 
-        .table-responsive {
-            overflow: visible !important;
-        }
-
         .account-row {
             transition: background-color 0.15s ease;
+            border-bottom: 1px solid #eef2f7;
+        }
+        .account-row:last-child {
+            border-bottom: 0;
         }
 
         .account-row:hover {
-            background-color: #f8fafc !important;
+            background-color: #eef2f7 !important;
         }
 
         .account-level-1 {
-            background-color: #f8fafc;
+            background-color: #f1f5f9;
             font-weight: 700;
-            border-top: 1px solid #e2e8f0;
         }
 
         .account-level-2 {
@@ -46,8 +45,21 @@
         }
 
         .account-level-3 {
-            background-color: #ffffff;
+            background-color: #f8fafc;
             color: #475569;
+        }
+
+        .account-name-cell {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 4px 8px;
+            min-width: 0;
+        }
+
+        .account-name-cell .tree-toggle-btn,
+        .account-name-cell .tree-spacer {
+            flex-shrink: 0;
         }
 
         .tree-toggle-btn {
@@ -67,8 +79,8 @@
         }
 
         .tree-toggle-btn:hover {
-            background-color: #7638ff;
-            color: #ffffff;
+            background-color: #f8fafc;
+            color: #f8fafc;
         }
 
         .tree-toggle-icon {
@@ -104,6 +116,39 @@
             padding: 3px 8px;
             border-radius: 12px;
         }
+
+        html[data-layout-mode="dark"] .account-row:hover,
+        html[data-layout-mode="dark"] .account-level-1 {
+            background-color: #20242b !important;
+        }
+
+        html[data-layout-mode="dark"] .account-level-2,
+        html[data-layout-mode="dark"] .account-level-3 {
+            background-color: #1b1e23 !important;
+        }
+
+        html[data-layout-mode="dark"] .account-row {
+            border-bottom-color: #2e3840;
+        }
+
+        html[data-layout-mode="dark"] .account-level-3,
+        html[data-layout-mode="dark"] .badge-subcount {
+            color: #cbd5e1 !important;
+        }
+
+        html[data-layout-mode="dark"] .badge-subcount {
+            background-color: #2e3840 !important;
+        }
+
+        .class-badge {
+            background-color: #e2e8f0 !important;
+            color: #334155 !important;
+        }
+
+        html[data-layout-mode="dark"] .class-badge {
+            background-color: #010101 !important;
+            color: #ffffff !important;
+        }
     </style>
 @endpush
 
@@ -114,7 +159,7 @@
         <div class="page-header mb-4">
             <div class="row align-items-center">
                 <div class="col">
-                    <h3 class="page-title font-weight-bold" style="color: #1e293b;">Chart of Accounts</h3>
+                    <h3 class="page-title font-weight-bold text-dark">Chart of Accounts</h3>
                 </div>
                 <div class="col-auto d-flex gap-2">
                     <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3 shadow-sm"
@@ -166,16 +211,16 @@
         <!-- Tree View Table -->
         <div class="card shadow-sm border-0" style="border-radius: 12px; overflow: visible !important;">
             <div class="card-body p-0" style="overflow: visible !important;">
-                <div class="table-responsive" style="overflow: visible !important; min-height: 220px;">
+                <div class="table-responsive" style="min-height: 220px;">
                     <table class="table table-hover align-middle mb-0" id="coaTable">
                         <thead
                             style="background-color: #1e293b; color: #ffffff; font-size: 11px; text-transform: uppercase;">
                             <tr>
-                                <th style="width: 160px;" class="ps-3">Account Code</th>
-                                <th>Account Name & Hierarchy (Click to Expand)</th>
-                                <th style="width: 140px;">Class</th>
-                                <th class="text-end" style="width: 150px;">Balance</th>
-                                <th class="text-center" style="width: 100px;">Status</th>
+                                <th style="width: 130px;" class="ps-3">Account Code</th>
+                                <th>Account Name & Hierarchy</th>
+                                <th style="width: 120px;">Class</th>
+                                <th class="text-end" style="width: 140px;">Balance</th>
+                                <th class="text-center" style="width: 90px;">Status</th>
                                 <th class="text-end pe-4" style="width: 80px;">Action</th>
                             </tr>
                         </thead>
@@ -189,10 +234,10 @@
                                 @endphp
                                 <tr class="account-row account-level-{{ $acc->level }}" data-id="{{ $acc->id }}"
                                     data-parent-id="{{ $acc->parent_id ?? 0 }}" data-level="{{ $acc->level }}">
-                                    <td class="fw-bold ps-3 font-monospace" style="color: #334155;">{{ $acc->account_code }}
+                                    <td class="fw-bold ps-3 font-monospace text-dark">{{ $acc->account_code }}
                                     </td>
                                     <td>
-                                        <div class="d-flex align-items-center" style="padding-left: {{ $indent }}px;">
+                                        <div class="account-name-cell" style="padding-left: {{ $indent }}px;">
                                             @if($hasChildren)
                                                 <span class="tree-toggle-btn me-2" data-id="{{ $acc->id }}"
                                                     data-level="{{ $acc->level }}" title="Click to Expand / Collapse">
@@ -234,13 +279,7 @@
                                         </div>
                                     </td>
                                     <td>
-                                        <span class="badge 
-                                                {{ $acc->account_type === 'asset' ? 'bg-success' : '' }}
-                                                {{ $acc->account_type === 'liability' ? 'bg-danger' : '' }}
-                                                {{ $acc->account_type === 'equity' ? 'bg-primary' : '' }}
-                                                {{ $acc->account_type === 'revenue' ? 'bg-info text-dark' : '' }}
-                                                {{ $acc->account_type === 'expense' ? 'bg-warning text-dark' : '' }}
-                                                text-uppercase" style="font-size: 10px;">
+                                        <span class="badge text-uppercase class-badge" style="font-size: 10px;">
                                             {{ $acc->account_type }}
                                         </span>
                                     </td>

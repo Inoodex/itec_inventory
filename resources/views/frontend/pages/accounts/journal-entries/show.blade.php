@@ -6,7 +6,7 @@
         <div class="page-header">
             <div class="row align-items-center">
                 <div class="col">
-                    <h3 class="page-title font-weight-bold" style="color: #1e293b;">Journal Voucher:
+                    <h3 class="page-title font-weight-bold text-dark">Journal Voucher:
                         {{ $journalEntry->journal_no }}</h3>
                 </div>
                 <div class="col-auto d-flex gap-2">
@@ -88,11 +88,10 @@
                         <tbody>
                             @foreach($journalEntry->items as $item)
                                 <tr>
-                                    <td class="fw-bold" style="color: #334155;">{{ $item->account->account_code }}</td>
+                                    <td class="fw-bold text-dark">{{ $item->account->account_code }}</td>
                                     <td>
                                         <span class="fw-semibold text-dark">{{ $item->account->account_name }}</span>
-                                        <span class="badge bg-light text-muted ms-1 text-uppercase"
-                                            style="font-size: 9px;">{{ $item->account->account_type }}</span>
+                                        <span class="badge text-uppercase class-badge ms-1" style="font-size: 9px;">{{ $item->account->account_type }}</span>
                                     </td>
                                     <td class="text-muted">{{ $item->description ?? '-' }}</td>
                                     <td class="text-end fw-bold text-dark">
