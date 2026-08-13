@@ -25,6 +25,24 @@
         .dropdown-menu {
             z-index: 9999 !important;
         }
+
+        .account-code {
+            color: #7638ff;
+        }
+
+        html[data-layout-mode="dark"] .account-code {
+            color: #a78bfa;
+        }
+
+        .class-badge {
+            background-color: #e2e8f0 !important;
+            color: #334155 !important;
+        }
+
+        html[data-layout-mode="dark"] .class-badge {
+            background-color: #010101 !important;
+            color: #ffffff !important;
+        }
     </style>
 @endpush
 
@@ -34,7 +52,7 @@
         <div class="page-header">
             <div class="row align-items-center">
                 <div class="col">
-                    <h3 class="page-title font-weight-bold" style="color: #1e293b;">Trial Balance</h3>
+                    <h3 class="page-title font-weight-bold text-dark">Trial Balance</h3>
                 </div>
                 <div class="col-auto">
                     <a href="{{ route('trial-balance.pdf', ['as_of_date' => $asOfDate]) }}"
@@ -92,7 +110,7 @@
                         <tbody>
                             @forelse($rows as $r)
                                 <tr>
-                                    <td class="fw-bold ps-3" style="color: #334155;">{{ $r['account']->account_code }}</td>
+                                    <td class="fw-bold account-code ps-3">{{ $r['account']->account_code }}</td>
                                     <td>
                                         <a href="{{ route('ledger.index', ['account_id' => $r['account']->id]) }}"
                                             class="fw-semibold text-primary">
@@ -100,7 +118,7 @@
                                         </a>
                                     </td>
                                     <td>
-                                        <span class="badge bg-secondary text-uppercase" style="font-size: 9px;">
+                                        <span class="badge text-uppercase class-badge" style="font-size: 9px;">
                                             {{ $r['account']->account_type }}
                                         </span>
                                     </td>
@@ -142,11 +160,11 @@
                                 </tr>
                             @endforelse
                         </tbody>
-                        <tfoot style="color: #ffffff; font-weight: 800; font-size: 14px;">
+                        <tfoot style="background-color: #1e293b; color: #ffffff; font-weight: 800; font-size: 14px;">
                             <tr>
                                 <td colspan="3" class="text-end text-uppercase ps-3">Total Trial Balance:</td>
-                                <td class="text-end text-success">৳{{ number_format($totalDebit, 2) }}</td>
-                                <td class="text-end text-success">৳{{ number_format($totalCredit, 2) }}</td>
+                                <td class="text-end">৳{{ number_format($totalDebit, 2) }}</td>
+                                <td class="text-end">৳{{ number_format($totalCredit, 2) }}</td>
                                 <td></td>
                             </tr>
                         </tfoot>

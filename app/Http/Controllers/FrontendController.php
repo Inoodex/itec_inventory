@@ -10,6 +10,9 @@ use App\Models\Product;
 use App\Models\Customer;
 use App\Models\Project;
 use App\Models\Employee;
+use App\Models\Vendor;
+use App\Models\Category;
+use App\Models\SalesItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
@@ -89,6 +92,102 @@ class FrontendController extends Controller
 
             $recentJournalEntries = \App\Models\JournalEntry::with('creator')->latest('entry_date')->latest('id')->take(5)->get();
 
+            // Monthly purchase / expense / project stats (for charts)
+            $monthlyPurch = [];
+            $monthlyExp = [];
+            $monthlyProj = [];
+            foreach ($months as $key => $monthName) {
+                $monthNumber = $key + 1;
+                $monthlyPurch[$monthName] = Purchase::whereYear('created_at', $currentYear)
+                    ->whereMonth('created_at', $monthNumber)
+                    ->sum('total_price');
+                $monthlyExp[$monthName] = DailyExpense::whereYear('date', $currentYear)
+                    ->whereMonth('date', $monthNumber)
+                    ->sum('amount');
+                $monthlyProj[$monthName] = Project::whereYear('created_at', $currentYear)
+                    ->whereMonth('created_at', $monthNumber)
+                    ->count();
+            }
+
+            // Month-over-month growth percentages
+            $currentMonthIdx = now()->month - 1;
+            $prevMonthIdx = $currentMonthIdx - 1;
+
+            if ($prevMonthIdx < 0) {
+                $prevMonthSales = Sale::whereYear('created_at', $currentYear - 1)->whereMonth('created_at', 12)->sum('payble');
+                $prevMonthPurchase = Purchase::whereYear('created_at', $currentYear - 1)->whereMonth('created_at', 12)->sum('total_price');
+                $prevMonthExpense = DailyExpense::whereYear('date', $currentYear - 1)->whereMonth('date', 12)->sum('amount');
+            } else {
+                $prevMonthSales = $monthlyRev[$months[$prevMonthIdx]];
+                $prevMonthPurchase = $monthlyPurch[$months[$prevMonthIdx]];
+                $prevMonthExpense = $monthlyExp[$months[$prevMonthIdx]];
+            }
+
+            $growthPct = function ($current, $previous) {
+                if ((float) $previous <= 0) {
+                    return 0;
+                }
+                return (int) round((($current - $previous) / $previous) * 100);
+            };
+
+            $salesGrowthPct = $growthPct($monthlyRev[$months[$currentMonthIdx]], $prevMonthSales);
+            $purchaseGrowthPct = $growthPct($monthlyPurch[$months[$currentMonthIdx]], $prevMonthPurchase);
+            $expenseGrowthPct = $growthPct($monthlyExp[$months[$currentMonthIdx]], $prevMonthExpense);
+
+            // Dashboard list / metric data
+            $totalCustomers = Customer::count();
+
+            $lowStockProducts = Product::with('inventory')
+                ->where(function ($q) {
+                    $q->whereHas('inventory', function ($qi) {
+                        $qi->where('current_stock', '<=', 5);
+                    })->orWhereDoesntHave('inventory');
+                })
+                ->take(8)
+                ->get();
+
+            $topProducts = SalesItem::selectRaw('product_id, SUM(qty) as total_qty, SUM(total_price) as total_revenue')
+                ->with('product')
+                ->groupBy('product_id')
+                ->orderByDesc('total_qty')
+                ->take(5)
+                ->get()
+                ->map(function ($item) {
+                    return (object) [
+                        'product_name'  => $item->product->name ?? 'N/A',
+                        'total_qty'     => $item->total_qty,
+                        'total_revenue' => $item->total_revenue,
+                    ];
+                });
+
+            $topCustomers = Sale::selectRaw('customer_id, COUNT(*) as total_sales, SUM(payble) as total_amount')
+                ->whereNotNull('customer_id')
+                ->with('customer')
+                ->groupBy('customer_id')
+                ->orderByDesc('total_sales')
+                ->take(5)
+                ->get()
+                ->map(function ($sale) {
+                    return (object) [
+                        'name'  => $sale->customer->name ?? 'Walk-in Customer',
+                        'phone' => $sale->customer->phone ?? null,
+                    ];
+                });
+
+            $expenseBreakdown = DailyExpense::join('expense_categories', 'expense_categories.id', '=', 'daily_expenses.expense_category_id')
+                ->selectRaw('expense_categories.name as category_name, SUM(daily_expenses.amount) as total')
+                ->groupBy('expense_categories.name')
+                ->orderByDesc('total')
+                ->take(5)
+                ->get();
+
+            $newCustomersCount = Customer::whereYear('created_at', now()->year)
+                ->whereMonth('created_at', now()->month)
+                ->count();
+            $newCustomerPct = $totalCustomers > 0 ? (int) round(($newCustomersCount / $totalCustomers) * 100) : 0;
+            $returningCustomersCount = $totalCustomers - $newCustomersCount;
+            $returningCustomerPct = 100 - $newCustomerPct;
+
             return [
                 'todaysSalesRevenue'     => Sale::whereDate('created_at', Carbon::today())->sum('payble'),
                 'thisWeeksSalesRevenue'  => Sale::whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])->sum('payble'),
@@ -105,15 +204,39 @@ class FrontendController extends Controller
                 'thisMonthsExpense' => DailyExpense::whereBetween('date', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()])->sum('amount'),
                 'thisYearsExpense'  => DailyExpense::whereBetween('date', [Carbon::now()->startOfYear(), Carbon::now()->endOfYear()])->sum('amount'),
 
-                'totalCustomers'    => Customer::count(),
+                'totalCustomers'    => $totalCustomers,
                 'totalProjects'     => Project::count(),
                 'totalEmployees'    => Employee::count(),
                 'totalProducts'     => Product::count(),
+                'totalVendors'      => Vendor::count(),
+                'totalSalesCount'   => Sale::count(),
+                'totalCategories'   => Category::count(),
+                'todayOrdersCount'  => Sale::whereDate('created_at', Carbon::today())->count(),
+                'totalInvoiceDue'   => Sale::sum('due_payment'),
+                'totalSalesReturnAmount' => \App\Models\ProductReturn::sum('total_refund_amount'),
+
+                'salesGrowthPct'    => $salesGrowthPct,
+                'purchaseGrowthPct' => $purchaseGrowthPct,
+                'expenseGrowthPct'  => $expenseGrowthPct,
+
+                'lowStockProducts'  => $lowStockProducts,
+                'topProducts'       => $topProducts,
+                'topCustomers'      => $topCustomers,
+                'recentTransactions' => Sale::with('customer')->latest()->take(10)->get(),
+                'expenseBreakdown'  => $expenseBreakdown,
+
+                'newCustomersCount'      => $newCustomersCount,
+                'returningCustomersCount' => $returningCustomersCount,
+                'newCustomerPct'         => $newCustomerPct,
+                'returningCustomerPct'   => $returningCustomerPct,
 
                 'recentSales'       => Sale::latest()->take(5)->get(),
                 'recentProjects'    => Project::with('client')->latest()->take(5)->get(),
 
                 'monthlyRevenue'        => $monthlyRev,
+                'monthlyPurchase'       => $monthlyPurch,
+                'monthlyExpense'        => $monthlyExp,
+                'monthlyProjects'       => $monthlyProj,
                 'yearlyRevenue'         => $yearlyRev,
                 'projectStatusCounts'   => $projectStatusCounts,
                 'projectChartNames'     => $projectChartNames,
@@ -131,7 +254,7 @@ class FrontendController extends Controller
             ];
         });
 
-        return view('frontend.pages.dashboard', $stats);
+        return view('frontend.pages.index', $stats);
     }
 
     public function productDetails($id)

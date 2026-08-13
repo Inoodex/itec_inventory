@@ -30,6 +30,76 @@
     <!-- Favicon -->
     <link rel="shortcut icon" href="{{ asset('assets') }}/img/logo.jpg">
 
+    <!-- Theme Switcher (Dark/Light) -->
+    <script>
+        (function () {
+            var key = 'dp-theme-mode', saved = null;
+            try { saved = localStorage.getItem(key); } catch (e) {}
+            var mode = (saved === 'dark' || saved === 'light') ? saved : null;
+            if (mode) {
+                document.documentElement.setAttribute('data-layout-mode', mode);
+                try { sessionStorage.setItem('data-layout-mode', mode); } catch (e) {}
+            }
+            window.dpThemeToggle = function () {
+                var cur = document.documentElement.getAttribute('data-layout-mode');
+                var next = cur === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-layout-mode', next);
+                try {
+                    localStorage.setItem(key, next);
+                    sessionStorage.setItem('data-layout-mode', next);
+                } catch (e) {}
+                var i = document.getElementById('theme-toggle-icon');
+                if (i) {
+                    i.className = 'fe ' + (next === 'dark' ? 'fe-sun' : 'fe-moon');
+                    i.classList.remove('theme-spin');
+                    void i.offsetWidth;
+                    i.classList.add('theme-spin');
+                }
+            };
+            document.addEventListener('DOMContentLoaded', function () {
+                var cur = document.documentElement.getAttribute('data-layout-mode');
+                var i = document.getElementById('theme-toggle-icon');
+                if (i) i.className = 'fe ' + (cur === 'dark' ? 'fe-sun' : 'fe-moon');
+            });
+        })();
+    </script>
+
+    <!-- Theme Switcher Styling -->
+    <style>
+        .theme-switch-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #3F4254;
+            font-size: 28px;
+            text-decoration: none !important;
+            padding: 4px;
+            transition: color 0.25s ease, opacity 0.25s ease;
+        }
+        .theme-switch-btn:hover {
+            color: #f97316;
+            opacity: 0.8;
+        }
+        .theme-switch-btn i {
+            display: inline-block;
+            font-size: 28px !important;
+            line-height: 1;
+        }
+        .theme-switch-btn i.theme-spin {
+            animation: themeIconSpin 0.4s ease;
+        }
+        @keyframes themeIconSpin {
+            0% { transform: rotate(0deg) scale(0.5); opacity: 0; }
+            100% { transform: rotate(360deg) scale(1); opacity: 1; }
+        }
+        html[data-layout-mode="dark"] .theme-switch-btn {
+            color: #AAAAAA;
+        }
+        html[data-layout-mode="dark"] .theme-switch-btn:hover {
+            color: #38bdf8;
+        }
+    </style>
+
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="{{ asset('assets') }}/css/bootstrap.min.css">
 
@@ -666,6 +736,251 @@
         .select2-container--default.select2-container--open .select2-selection--single .select2-selection__arrow b {
             border-color: transparent transparent #6c757d transparent !important;
             border-width: 0 4px 5px 4px !important;
+        }
+    </style>
+
+    <!-- Readonly/Disabled Fields: Consistent Look in Both Modes -->
+    <style>
+        .form-control[readonly],
+        .form-control:read-only,
+        .form-control:disabled,
+        .form-select[readonly],
+        .form-select:disabled,
+        input[readonly],
+        textarea[readonly] {
+            background-color: #eef2f7 !important;
+            color: #475569 !important;
+        }
+        html[data-layout-mode="dark"] .form-control[readonly],
+        html[data-layout-mode="dark"] .form-control:read-only,
+        html[data-layout-mode="dark"] .form-control:disabled,
+        html[data-layout-mode="dark"] .form-select[readonly],
+        html[data-layout-mode="dark"] .form-select:disabled,
+        html[data-layout-mode="dark"] input[readonly],
+        html[data-layout-mode="dark"] textarea[readonly] {
+            background-color: #22262d !important;
+            color: #aeb8c4 !important;
+        }
+    </style>
+
+    <!-- Dark Mode: Form Controls Fix -->
+    <style>
+        html[data-layout-mode="dark"] .form-control,
+        html[data-layout-mode="dark"] .form-select,
+        html[data-layout-mode="dark"] .form-control.bg-white,
+        html[data-layout-mode="dark"] .form-select.bg-white,
+        html[data-layout-mode="dark"] .form-control.bg-light,
+        html[data-layout-mode="dark"] .form-select.bg-light {
+            background-color: #1b1e23 !important;
+            border-color: #2e3840 !important;
+            color: #e6e9ef !important;
+        }
+        html[data-layout-mode="dark"] .form-control:focus,
+        html[data-layout-mode="dark"] .form-select:focus {
+            background-color: #1b1e23 !important;
+            border-color: #7638ff !important;
+            color: #e6e9ef !important;
+            box-shadow: 0 0 0 0.2rem rgba(118, 56, 255, 0.15) !important;
+        }
+        html[data-layout-mode="dark"] .form-control::placeholder,
+        html[data-layout-mode="dark"] .form-select::placeholder {
+            color: #7b8794 !important;
+        }
+        html[data-layout-mode="dark"] .form-control[readonly],
+        html[data-layout-mode="dark"] .form-control:read-only {
+            background-color: #22262d !important;
+            color: #aeb8c4 !important;
+        }
+        html[data-layout-mode="dark"] .form-control[style],
+        html[data-layout-mode="dark"] .form-select[style] {
+            background-color: #22262d !important;
+            color: #aeb8c4 !important;
+        }
+        html[data-layout-mode="dark"] .form-check-input {
+            background-color: #1b1e23;
+            border-color: #3a4550;
+        }
+        html[data-layout-mode="dark"] .form-check-input:checked {
+            background-color: #7638ff;
+            border-color: #7638ff;
+        }
+        html[data-layout-mode="dark"] .table thead.bg-light,
+        html[data-layout-mode="dark"] .table thead.bg-white {
+            background-color: #20242b !important;
+        }
+        html[data-layout-mode="dark"] .select2-container--default .select2-selection--single {
+            background-color: #1b1e23 !important;
+            border-color: #2e3840 !important;
+        }
+        html[data-layout-mode="dark"] .select2-container--default .select2-selection--single .select2-selection__rendered {
+            color: #e6e9ef !important;
+        }
+        html[data-layout-mode="dark"] .select2-container--default .select2-selection--single .select2-selection__arrow b {
+            border-color: #8a94a0 transparent transparent transparent !important;
+        }
+        html[data-layout-mode="dark"] .select2-container--default.select2-container--open .select2-selection--single .select2-selection__arrow b {
+            border-color: transparent transparent #8a94a0 transparent !important;
+        }
+        html[data-layout-mode="dark"] .select2-dropdown,
+        html[data-layout-mode="dark"] .select2-container--default .select2-results__option {
+            background-color: #1b1e23 !important;
+            color: #e6e9ef !important;
+        }
+        html[data-layout-mode="dark"] .select2-container--default .select2-results__option--highlighted.select2-results__option--selectable {
+            background-color: #7638ff !important;
+            color: #ffffff !important;
+        }
+        html[data-layout-mode="dark"] .select2-container--default .select2-search--dropdown .select2-search__field {
+            background-color: #14161a !important;
+            color: #e6e9ef !important;
+            border-color: #2e3840 !important;
+        }
+    </style>
+
+    <!-- Table Responsive & Dropdown Safeguards -->
+    <style>
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .table-responsive .dropdown-menu {
+            z-index: 1080 !important;
+        }
+    </style>
+
+    <!-- Page Headings Raised Up -->
+    <style>
+        .page-wrapper .content {
+            padding-top: 12px !important;
+        }
+        .page-header {
+            margin-top: -10px !important;
+        }
+        @media (max-width: 991.98px) {
+            .page-wrapper .content {
+                padding-top: 8px !important;
+            }
+            .page-header {
+                margin-top: -6px !important;
+            }
+        }
+    </style>
+
+    @stack('styles')
+
+    <!-- No Whole-Row Hover on Custom Tables (all pages) -->
+    <style>
+        .table-custom > tbody > tr:hover {
+            background-color: transparent !important;
+        }
+        .table-custom > tbody > tr:hover > * {
+            --bs-table-accent-bg: transparent !important;
+            --bs-table-bg-state: transparent !important;
+            --bs-table-hover-bg: transparent !important;
+        }
+        .table-custom > tbody > tr > td {
+            transition: background 0.25s ease;
+        }
+        .table-custom > tbody > tr > td:hover {
+            background: rgba(25, 25, 112, 0.05);
+            box-shadow: none;
+        }
+        html[data-layout-mode="dark"] .table-custom > tbody > tr > td:hover {
+            background: rgba(99, 102, 241, 0.10);
+        }
+    </style>
+
+    <!-- Dark Mode: Same Background as Dashboard (all pages) -->
+    <style>
+        html[data-layout-mode="dark"] body {
+            background-color: #0f172a !important;
+        }
+        html[data-layout-mode="dark"] .page-wrapper {
+            background-color: #0f172a !important;
+        }
+        html[data-layout-mode="dark"] .page-wrapper .content {
+            background-color: #0f172a !important;
+        }
+        html[data-layout-mode="dark"] .sidebar,
+        html[data-layout-mode="dark"] body .sidebar {
+            background-color: #0f172a !important;
+        }
+        html[data-layout-mode="dark"] .table thead,
+        html[data-layout-mode="dark"] .table tfoot {
+            background-color: #1b1e23 !important;
+            color: #e6e9ef !important;
+        }
+        html[data-layout-mode="dark"] .table tbody tr[style] {
+            background-color: #1b1e23 !important;
+        }
+        html[data-layout-mode="dark"] .bg-light {
+            background-color: #262b33 !important;
+        }
+        html[data-layout-mode="dark"] .bg-white {
+            background-color: #1b1e23 !important;
+        }
+        html[data-layout-mode="dark"] .alert-success {
+            background-color: #14261c !important;
+            border-color: #1f3a2a !important;
+            color: #9fe8bf !important;
+        }
+        html[data-layout-mode="dark"] .alert-success .alert-heading {
+            color: #bdf2d3 !important;
+        }
+        html[data-layout-mode="dark"] .alert-danger {
+            background-color: #2b1c1c !important;
+            border-color: #4a2c2c !important;
+            color: #f3a6a6 !important;
+        }
+        html[data-layout-mode="dark"] .alert-danger .alert-heading {
+            color: #f7c4c4 !important;
+        }
+        html[data-layout-mode="dark"] .alert-warning {
+            background-color: #2b2416 !important;
+            border-color: #4a3d22 !important;
+            color: #f0d48a !important;
+        }
+        html[data-layout-mode="dark"] .alert-warning .alert-heading {
+            color: #f7e3a8 !important;
+        }
+        html[data-layout-mode="dark"] .alert-info {
+            background-color: #142430 !important;
+            border-color: #1f3a4d !important;
+            color: #9fd8ef !important;
+        }
+        html[data-layout-mode="dark"] .alert-info .alert-heading {
+            color: #c2eafb !important;
+        }
+        html[data-layout-mode="dark"] .alert-primary {
+            background-color: #1d1b2e !important;
+            border-color: #332f4d !important;
+            color: #c4bdf2 !important;
+        }
+        html[data-layout-mode="dark"] .alert-primary .alert-heading {
+            color: #d8d3f8 !important;
+        }
+    </style>
+
+    <!-- Logo Design -->
+    <style>
+        .main-logo a,
+        .device-logo {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px;
+            transition: transform 0.25s ease;
+        }
+        .main-logo a:hover,
+        .device-logo:hover {
+            transform: translateY(-1px);
+        }
+        .main-logo img,
+        .device-logo img {
+            width: auto;
+            height: 38px;
+            object-fit: contain;
         }
     </style>
 

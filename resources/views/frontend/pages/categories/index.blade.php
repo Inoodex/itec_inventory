@@ -50,11 +50,7 @@
 
     .table-custom th, .table-custom td {
         white-space: nowrap;
-    }
-    .table-responsive {
-        overflow: visible !important;
-    }
-    .img-thumbnail-custom {
+    }.img-thumbnail-custom {
         width: 32px !important;
         height: 32px !important;
         max-width: 32px !important;

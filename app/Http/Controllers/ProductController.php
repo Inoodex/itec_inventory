@@ -145,7 +145,7 @@ class ProductController extends Controller
         $brands = Brand::where('status','1')->get();
 
         if(!$product){
-            return redirect()->back()->with(['error' => getNotify(10)])->withInput();
+            return redirect()->back()->with(['error' => 'Product not found. Please try again.'])->withInput();
         }
 
         return view('admin.pages.product.edit', compact('categories', 'product', 'id', 'subCategories','brands'));
@@ -317,7 +317,7 @@ class ProductController extends Controller
     {
         $product = Product::where('id', $id)->first();
         if(!$product){
-            return redirect()->back()->with(['error' => getNotify(10)])->withInput();
+            return redirect()->back()->with(['error' => 'Product not found. Please try again.'])->withInput();
         }
         $sizes = Size::where('status', '1')->get();
         return view('admin.pages.product.create_product_size', compact('id', 'sizes','product'));
@@ -327,11 +327,11 @@ class ProductController extends Controller
     {
         $productSize = ProductSize::find($id);
         if(!$productSize){
-            return redirect()->back()->with(['error' => getNotify(10)]);
+            return redirect()->back()->with(['error' => 'Product size not found. Please try again.']);
         }
         $product = Product::where('id', $productSize->product_id)->first();
         if(!$product){
-            return redirect()->back()->with(['error' => getNotify(10)]);
+            return redirect()->back()->with(['error' => 'Product not found. Please try again.']);
         }
 
         $sizes = Size::where('status', '1')->get();
@@ -356,7 +356,7 @@ class ProductController extends Controller
 
         $product = Product::where('id', $request->product_id)->first();
         if(!$product){
-            return redirect()->back()->with(['error' => getNotify(10)]);
+            return redirect()->back()->with(['error' => 'Product not found. Please try again.']);
         }
 
         if($product->is_size_wise_price == '1' && $request->price==""){
@@ -385,7 +385,7 @@ class ProductController extends Controller
         $size->image = $imageName;
         $size->save();
 
-        return redirect()->back()->with(['success' => getNotify(1)]);
+        return redirect()->back()->with(['success' => 'Product size created successfully.']);
     }
     //Assign topings
     public function topings($id)
@@ -444,7 +444,7 @@ class ProductController extends Controller
 
         $product = Product::where('id', $request->product_id)->first();
         if(!$product){
-            return redirect()->back()->with(['error' => getNotify(10)]);
+            return redirect()->back()->with(['error' => 'Product not found. Please try again.']);
         }
 
         if($product->is_size_wise_price != '1' && $request->price==""){
@@ -477,7 +477,7 @@ class ProductController extends Controller
             $size->updated_by = auth()->user()->id;
             $size->update();
 
-            return redirect()->back()->with(['success' => getNotify(2)]);
+            return redirect()->back()->with(['success' => 'Product size updated successfully.']);
         }
     }
 

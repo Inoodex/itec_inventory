@@ -162,7 +162,7 @@ class ServiceController extends Controller
 
         $validation = Validator::make($attributes, $rules);
         if ($validation->fails()) {
-            return redirect()->back()->with(['error' => getNotify(4)])->withErrors($validation)->withInput();
+            return redirect()->back()->with(['error' => 'Validation failed. Please check your inputs.'])->withErrors($validation)->withInput();
         }
 
         // Additional validation for existing client
@@ -239,7 +239,7 @@ class ServiceController extends Controller
             $payment->save();
         }
 
-        return redirect()->route('service.index')->with(['success' => getNotify(1)]);
+        return redirect()->route('service.index')->with(['success' => 'Service created successfully.']);
 
     }
 
@@ -297,7 +297,7 @@ class ServiceController extends Controller
         ];
         $validation = Validator::make($attributes, $rules);
         if ($validation->fails()) {
-            return redirect()->back()->with(['error' => getNotify(4)])->withErrors($validation)->withInput();
+            return redirect()->back()->with(['error' => 'Validation failed. Please check your inputs.'])->withErrors($validation)->withInput();
         }
 
         $product = Product::findOrFail($request->product_id);
@@ -345,7 +345,7 @@ class ServiceController extends Controller
         $service->repaired_by = $request->repaired_by;
         $service->update();
 
-        return redirect()->back()->with(['success' => getNotify(2)]);
+        return redirect()->back()->with(['success' => 'Service updated successfully.']);
     }
 
     /**
@@ -357,7 +357,7 @@ class ServiceController extends Controller
         if(!$service)abort(404);
         $service->delete();
 
-        return redirect()->back()->with(['success' => getNotify(3)]);
+        return redirect()->back()->with(['success' => 'Service deleted successfully.']);
     }
 
     public function makeInvoice(Request $request, $serviceId){
@@ -531,7 +531,7 @@ class ServiceController extends Controller
     //         } catch (\Twilio\Exceptions\RestException $e) {}
     //     }
 
-    //     return redirect()->back()->with(['success' => getNotify(2)]);
+    //     return redirect()->back()->with(['success' => 'Service updated successfully.']);
     // } 
 
     public function payments(Request $request){ 
@@ -591,7 +591,7 @@ class ServiceController extends Controller
         $service->rating = $request->rating;
         $service->review_comments = $request->comments;
         $service->update();
-        return redirect()->back()->with(['success' => getNotify(2)]);
+        return redirect()->back()->with(['success' => 'Rating updated successfully.']);
     }
 
 }

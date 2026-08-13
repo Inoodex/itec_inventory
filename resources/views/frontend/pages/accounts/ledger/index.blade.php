@@ -25,6 +25,16 @@
         .dropdown-menu {
             z-index: 9999 !important;
         }
+
+        .class-badge {
+            background-color: #e2e8f0 !important;
+            color: #334155 !important;
+        }
+
+        html[data-layout-mode="dark"] .class-badge {
+            background-color: #010101 !important;
+            color: #ffffff !important;
+        }
     </style>
 @endpush
 
@@ -34,7 +44,7 @@
         <div class="page-header">
             <div class="row align-items-center">
                 <div class="col">
-                    <h3 class="page-title font-weight-bold" style="color: #1e293b;">General Ledger</h3>
+                    <h3 class="page-title font-weight-bold text-dark">General Ledger</h3>
                 </div>
                 @if($selectedAccount)
                     <div class="col-auto">
@@ -84,7 +94,7 @@
                 <div class="card-body p-4">
                     <div class="row align-items-center">
                         <div class="col-md-6">
-                            <span class="badge bg-secondary text-uppercase mb-2">{{ $selectedAccount->account_type }}</span>
+                            <span class="badge text-uppercase class-badge mb-2">{{ $selectedAccount->account_type }}</span>
                             <h4 class="text-white fw-bold mb-1">[{{ $selectedAccount->account_code }}]
                                 {{ $selectedAccount->account_name }}</h4>
                             <p class="text-white-50 mb-0 font-monospace" style="font-size: 12px;">Period:

@@ -60,7 +60,7 @@ class CustomerController extends Controller
         ];
         $validation = Validator::make($attributes, $rules);
         if ($validation->fails()) {
-            return redirect()->back()->with(['error' => getNotify(4), 'error_code' => 'edit'])->withErrors($validation)->withInput();
+            return redirect()->back()->with(['error' => 'Validation failed. Please check your inputs.'])->withErrors($validation)->withInput();
         }
 
         $customer = new Customer;
@@ -71,7 +71,7 @@ class CustomerController extends Controller
         $customer->status = '1';
         $customer->save();
     
-        return redirect()->route('customers.index')->with(['success' => getNotify(1)]);
+        return redirect()->route('customers.index')->with('success', 'Customer created successfully.');
 
     }
 
@@ -109,7 +109,7 @@ class CustomerController extends Controller
         ];
         $validation = Validator::make($attributes, $rules);
         if ($validation->fails()) {
-            return redirect()->back()->with(['error' => getNotify(4), 'error_code' => 'edit'])->withErrors($validation)->withInput();
+            return redirect()->back()->with(['error' => 'Validation failed. Please check your inputs.'])->withErrors($validation)->withInput();
         }
 
         $customer = Customer::findOrFail($id);
@@ -119,7 +119,7 @@ class CustomerController extends Controller
         $customer->address = $request->address;
         $customer->save();
     
-        return redirect()->route('customers.index')->with(['success' => getNotify(2)]);
+        return redirect()->route('customers.index')->with('success', 'Customer updated successfully.');
     }
 
     /**
@@ -129,6 +129,6 @@ class CustomerController extends Controller
     {
        $customer = Customer::findOrFail($id);
        $customer->delete();
-       return redirect()->back()->with(['success' => getNotify(3)]);
+       return redirect()->back()->with('success', 'Customer deleted successfully.');
     }
 }

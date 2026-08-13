@@ -22,7 +22,7 @@
             border-color: #7638ff !important;
         }
 
-        .card, .card-body, .table-responsive {
+        .card, .card-body {
             overflow: visible !important;
         }
 
@@ -43,7 +43,7 @@
         <div class="page-header">
             <div class="row align-items-center">
                 <div class="col">
-                    <h3 class="page-title font-weight-bold" style="color: #1e293b;">Journal Vouchers</h3>
+                    <h3 class="page-title font-weight-bold text-dark">Journal Vouchers</h3>
                 </div>
                 <div class="col-auto">
                     <a href="{{ route('journal-entries.create') }}" class="btn btn-primary btn-sm">
@@ -99,7 +99,7 @@
         <!-- Vouchers Table -->
         <div class="card shadow-sm border-0" style="border-radius: 12px; overflow: visible !important;">
             <div class="card-body p-0" style="overflow: visible !important;">
-                <div class="table-responsive" style="overflow: visible !important;">
+                <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
                         <thead
                             style="background-color: #1e293b; color: #ffffff; font-size: 11px; text-transform: uppercase;">

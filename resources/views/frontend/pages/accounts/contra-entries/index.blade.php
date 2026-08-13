@@ -34,7 +34,7 @@
         <div class="page-header">
             <div class="row align-items-center">
                 <div class="col">
-                    <h3 class="page-title font-weight-bold" style="color: #1e293b;">Contra Transfers</h3>
+                    <h3 class="page-title font-weight-bold text-dark">Contra Transfers</h3>
                 </div>
                 <div class="col-auto">
                     <a href="{{ route('contra-entries.create') }}" class="btn btn-primary btn-sm">
@@ -68,7 +68,7 @@
         <!-- Contra Table -->
         <div class="card shadow-sm border-0" style="border-radius: 12px; overflow: visible !important;">
             <div class="card-body p-0" style="overflow: visible !important;">
-                <div class="table-responsive" style="overflow: visible !important; min-height: 220px;">
+                <div class="table-responsive" style="min-height: 220px;">
                     <table class="table table-hover table-custom align-middle mb-0">
                         <thead
                             style="background-color: #1e293b; color: #ffffff; font-size: 11px; text-transform: uppercase;">

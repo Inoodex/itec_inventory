@@ -26,8 +26,6 @@
     </div>
     <!-- /Main Wrapper -->
 
-    @include('frontend.layouts.right_sidebar')
-
     <!-- Bootstrap Core JS -->
     <script src="{{asset('assets')}}/js/bootstrap.bundle.min.js"></script>
 
@@ -61,6 +59,32 @@
                     $select.select2({
                         width: '100%',
                         dropdownParent: $modal.length ? $modal : $(document.body)
+                    });
+                });
+            }
+
+            // Wrap every table in .table-responsive so it scrolls horizontally
+            // instead of overflowing the card / getting cut off on smaller screens.
+            var dpWrapTables = function () {
+                $('table').each(function () {
+                    var $t = $(this);
+                    if ($t.parents('.table-responsive').length) return;
+                    $t.wrap('<div class="table-responsive"></div>');
+                });
+            };
+            dpWrapTables();
+            setTimeout(dpWrapTables, 500);
+            $(window).on('load', dpWrapTables);
+
+            // Dropdowns inside scrollable tables: use fixed positioning so the
+            // action menus are never clipped by the .table-responsive wrapper.
+            if (window.bootstrap && window.bootstrap.Dropdown) {
+                $('.table-responsive .dropdown-toggle').each(function () {
+                    var el = this;
+                    var instance = window.bootstrap.Dropdown.getInstance(el);
+                    if (instance) instance.dispose();
+                    new window.bootstrap.Dropdown(el, {
+                        popperConfig: { strategy: 'fixed' }
                     });
                 });
             }

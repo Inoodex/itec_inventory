@@ -34,7 +34,7 @@
         <div class="page-header">
             <div class="row align-items-center">
                 <div class="col">
-                    <h3 class="page-title font-weight-bold" style="color: #1e293b;">Bank Reconciliation</h3>
+                    <h3 class="page-title font-weight-bold text-dark">Bank Reconciliation</h3>
                 </div>
             </div>
         </div>
@@ -44,7 +44,7 @@
             <div class="col-lg-6 col-12 mb-3">
                 <div class="card shadow-sm border-0 h-100" style="border-radius: 12px;">
                     <div class="card-header bg-white border-bottom py-3">
-                        <h5 class="card-title mb-0 fw-bold" style="color: #0f172a;">1. Select Account & As of Date</h5>
+                        <h5 class="card-title mb-0 fw-bold text-dark">1. Select Account & As of Date</h5>
                     </div>
                     <div class="card-body p-4">
                         <form method="GET" action="{{ route('reconciliation.index') }}">
@@ -82,7 +82,7 @@
                 <div class="col-lg-6 col-12 mb-3">
                     <div class="card shadow-sm border-0 h-100" style="border-radius: 12px;">
                         <div class="card-header bg-white border-bottom py-3">
-                            <h5 class="card-title mb-0 fw-bold" style="color: #0f172a;">2. Enter Bank Statement Balance</h5>
+                            <h5 class="card-title mb-0 fw-bold text-dark">2. Enter Bank Statement Balance</h5>
                         </div>
                         <div class="card-body p-4">
                             <form method="POST" action="{{ route('reconciliation.store') }}" id="reconForm">
@@ -122,7 +122,7 @@
         <!-- Reconciliation History Table -->
         <div class="card shadow-sm border-0" style="border-radius: 12px;">
             <div class="card-header bg-white border-bottom py-3">
-                <h5 class="card-title mb-0 fw-bold" style="color: #0f172a;">Reconciliation Audit History</h5>
+                <h5 class="card-title mb-0 fw-bold text-dark">Reconciliation Audit History</h5>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">

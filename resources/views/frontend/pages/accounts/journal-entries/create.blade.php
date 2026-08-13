@@ -6,7 +6,7 @@
     <div class="page-header">
         <div class="row align-items-center">
             <div class="col">
-                <h3 class="page-title font-weight-bold" style="color: #1e293b;">Create Journal Voucher</h3>
+                <h3 class="page-title font-weight-bold text-dark">Create Journal Voucher</h3>
                 <ul class="breadcrumb">
                     <li class="breadcrumb-item"><a href="{{ route('journal-entries.index') }}">Journal Vouchers</a></li>
                     <li class="breadcrumb-item active">New Voucher</li>
@@ -51,7 +51,7 @@
         <!-- Line Items Table -->
         <div class="card shadow-sm border-0" style="border-radius: 12px;">
             <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
-                <h5 class="card-title mb-0 fw-bold" style="color: #0f172a;">Voucher Line Items (Debits & Credits)</h5>
+                <h5 class="card-title mb-0 fw-bold text-dark">Voucher Line Items (Debits & Credits)</h5>
                 <button type="button" class="btn btn-sm btn-outline-primary" id="addRowBtn">
                     <i class="fas fa-plus me-1"></i> Add Split Line
                 </button>

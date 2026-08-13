@@ -55,6 +55,13 @@
 
     <!-- Header Menu -->
     <ul class="nav nav-tabs user-menu">
+        <!-- Theme Switcher (Dark/Light) -->
+        <li class="nav-item ms-1">
+            <a href="javascript:void(0);" onclick="dpThemeToggle()" title="Dark / Light Mode"
+                class="theme-switch-btn">
+                <i id="theme-toggle-icon" class="fe fe-moon"></i>
+            </a>
+        </li>
         <li class="nav-item has-arrow dropdown-heads">
             <a href="javascript:void(0);" class="win-maximize">
                 <i class="fe fe-maximize"></i>

@@ -132,7 +132,7 @@ class ExpenseController extends Controller
 
     //     if ($validation->fails()) {
     //         return redirect()->back()
-    //             ->with(['error' => getNotify(4)])
+    //             ->with(['error' => 'Validation failed. Please check your inputs.'])
     //             ->withErrors($validation)
     //             ->withInput();
     //     }
@@ -145,7 +145,7 @@ class ExpenseController extends Controller
     //     $expense->remarks = $request->remarks;
     //     $expense->save();
 
-    //     // return redirect()->back()->with(['success' => getNotify(1)]);
+    //     // return redirect()->back()->with(['success' => 'Expense created successfully.']);
     //     return redirect()->route('dailyExpenses.index')->with('success', 'Created successfully.');
 
     // }
@@ -220,7 +220,7 @@ class ExpenseController extends Controller
         $validation = Validator::make($attributes, $rules);
         if ($validation->fails()) {
             return redirect()->back()
-                ->with(['error' => getNotify(4)])
+                ->with(['error' => 'Validation failed. Please check your inputs.'])
                 ->withErrors($validation)
                 ->withInput();
         }
@@ -237,7 +237,7 @@ class ExpenseController extends Controller
         $expense->save();
 
         // return redirect()->route('dailyExpenses.index')
-        //     ->with(['success' => getNotify(2)]);
+        //     ->with(['success' => 'Expense updated successfully.']);
         return redirect()->route('dailyExpenses.index')->with('success', 'Updated successfully.');
 
     }
@@ -249,7 +249,7 @@ class ExpenseController extends Controller
     {
         $expense = DailyExpense::findOrFail($id);
         $expense->delete();
-        return redirect()->back()->with(['success' => getNotify(3)]);
+        return redirect()->back()->with(['success' => 'Expense deleted successfully.']);
     }
 
     public function getAdvanceSum($employeeId)

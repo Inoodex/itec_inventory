@@ -1,5 +1,14 @@
 @extends('frontend.layouts.app')
 
+@push('styles')
+    <style>
+        html[data-layout-mode="dark"] .form-section-box {
+            background-color: #1b1e23 !important;
+            border-color: #2e3840 !important;
+        }
+    </style>
+@endpush
+
 @section('content')
 <div class="content container-fluid">
 
@@ -89,7 +98,7 @@
                 </div>
 
                 <!-- Instant Barcode / Serial Scanner Input -->
-                <div class="p-3 bg-white rounded-3 mb-4 border shadow-sm" style="border-left: 4px solid #7638ff !important;">
+                <div class="form-section-box p-3 bg-white rounded-3 mb-4 border shadow-sm" style="border-left: 4px solid #7638ff !important;">
                     <div class="row align-items-center g-2">
                         <div class="col-auto text-primary">
                             <i class="fas fa-barcode fs-3"></i>
@@ -106,7 +115,7 @@
                 </div>
 
                 <!-- Manual Product Add Builder Card -->
-                <div class="p-3 bg-light rounded-3 mb-4 border" id="form-group-item1">
+                <div class="form-section-box p-3 bg-light rounded-3 mb-4 border" id="form-group-item1">
                     <div class="row g-3 align-items-end">
                         <div class="col-lg-4 col-md-6 col-12">
                             <label class="form-label small text-secondary fw-semibold mb-1">Select Product (Manual) <span class="text-danger">*</span></label>

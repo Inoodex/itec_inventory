@@ -1,776 +1,1073 @@
 @extends('frontend.layouts.app')
 
-@push('styles')
-<style>
-    .stat-card {
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-        border: 1px solid rgba(0, 0, 0, 0.05) !important;
-    }
-    .stat-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08) !important;
-    }
-    .badge-soft-primary {
-        background-color: rgba(118, 56, 255, 0.12) !important;
-        color: #7638ff !important;
-        font-weight: 600;
-    }
-    .badge-soft-success {
-        background-color: rgba(25, 135, 84, 0.12) !important;
-        color: #198754 !important;
-        font-weight: 600;
-    }
-    .badge-soft-info {
-        background-color: rgba(13, 202, 240, 0.12) !important;
-        color: #0dcaf0 !important;
-        font-weight: 600;
-    }
-    .badge-soft-warning {
-        background-color: rgba(255, 193, 7, 0.15) !important;
-        color: #ffb000 !important;
-        font-weight: 600;
-    }
-    .btn-action-icon {
-        width: 32px;
-        height: 32px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border: 1px solid #dbe2ea !important;
-        border-radius: 8px !important;
-        background-color: #ffffff !important;
-        color: #555e6d !important;
-        padding: 0;
-        transition: all 0.2s ease;
-    }
-    .btn-action-icon:hover {
-        background-color: #7638ff !important;
-        color: #ffffff !important;
-        border-color: #7638ff !important;
-    }
-    .table-custom th, .table-custom td {
-        white-space: nowrap;
-    }
-    .table-responsive {
-        overflow: visible !important;
-    }
-</style>
-@endpush
-
 @section('content')
-<div class="content container-fluid">
+@php
+    $netToday = ($todaysSalesRevenue ?? 0) - ($todaysPurchaseRevenue ?? 0) - ($todaysExpense ?? 0);
+    $netMonth = ($thisMonthsSalesRevenue ?? 0) - ($thisMonthsPurchaseRevenue ?? 0) - ($thisMonthsExpense ?? 0);
+    $netYear  = ($thisYearsSalesRevenue ?? 0) - ($thisYearsPurchaseRevenue ?? 0) - ($thisYearsExpense ?? 0);
 
-    <!-- Page Header -->
-    <div class="page-header mb-4">
-        <div class="content-page-header d-flex flex-wrap justify-content-between align-items-center gap-3">
-            <div>
-                <h4 class="card-title fw-bold text-dark mb-1">Welcome back, {{ auth()->user()->name }}! </h4>
-                <p class="text-muted small mb-0">Here is a real-time summary of sales, purchases, operational expenses, and projects</p>
+    $user = auth()->user();
+    $userName = $user->name ?? 'Admin';
+    $appName = config('app.name', 'Inoodex Inventory');
+@endphp
+
+<div class="dash-body dreams-pos-theme premium-dashboard">
+
+    <!-- 1. HEADER WELCOME & ALERT SECTION -->
+    <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3 mb-4">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <h2 class="dp-welcome-title mb-0">Welcome, {{ $userName }}</h2>
+                <span class="dp-live-badge"><span class="dp-pulse-dot"></span> Live Analytics</span>
             </div>
-            <div class="d-flex flex-wrap gap-2">
-                <a href="{{ route('sales.create') }}" class="btn btn-primary px-3 py-2 rounded-3 shadow-sm d-inline-flex align-items-center gap-2">
-                    <i class="fe fe-shopping-cart fs-6"></i>
-                    <span>New Sale</span>
-                </a>
-                <a href="{{ route('purchase.create') }}" class="btn btn-outline-primary px-3 py-2 rounded-3 shadow-sm d-inline-flex align-items-center gap-2">
-                    <i class="fe fe-plus-circle fs-6"></i>
-                    <span>Add Purchase</span>
-                </a>
-                <a href="{{ route('dailyExpenses.create') }}" class="btn btn-outline-secondary px-3 py-2 rounded-3 shadow-sm d-inline-flex align-items-center gap-2">
-                    <i class="fe fe-dollar-sign fs-6"></i>
-                    <span>Add Expense</span>
-                </a>
+            <p class="dp-welcome-sub mb-0">You have <b class="text-warning">{{ number_format($todayOrdersCount ?? 0) }} Orders</b>, Today</p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <div class="dp-date-badge">
+                <i class="fe fe-calendar me-1"></i> {{ now()->subDays(6)->format('d/m/Y') }} - {{ now()->format('d/m/Y') }}
             </div>
         </div>
     </div>
-    <!-- /Page Header -->
 
-    <!-- Top Quick Metrics Bar -->
+    <!-- 2. ULTRA-PREMIUM 4 QUICK ACTION CARDS WITH MINI GRAPH SPARKLINES -->
     <div class="row g-3 mb-4">
-        <div class="col-xl-3 col-md-6 col-12">
-            <div class="card stat-card bg-white shadow-sm rounded-3 h-100 mb-0">
-                <div class="card-body d-flex align-items-center">
-                    <div class="avatar avatar-lg bg-primary-light text-primary rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0">
-                        <i class="fe fe-users fs-4"></i>
-                    </div>
+        <!-- Action 1: Add Sales -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="dp-action-card qa-card-orange h-100">
+                <div class="d-flex align-items-start justify-content-between">
                     <div>
-                        <h6 class="text-muted fw-normal mb-1">Total Customers</h6>
-                        <h4 class="mb-0 fw-bold text-dark">{{ number_format($totalCustomers ?? 0) }}</h4>
+                        <span class="qa-tag">Sales Metric</span>
+                        <h4 class="qa-val mb-1">৳{{ number_format($thisMonthsSalesRevenue ?? 0, 0) }}</h4>
+                        <span class="qa-subtext">This Month Sales</span>
                     </div>
+                    <div class="qa-icon-box ib-orange"><i class="fe fe-file-text"></i></div>
+                </div>
+                <!-- Mini Sparkline Graph -->
+                <div id="sparkline_sales" class="qa-sparkline-wrap"></div>
+                <div class="d-flex align-items-center justify-content-between mt-2 pt-2 border-top border-white border-opacity-10">
+                    <span class="qa-growth-badge gb-orange">{{ $salesGrowthPct >= 0 ? '+'.$salesGrowthPct : $salesGrowthPct }}% vs Mo</span>
+                    <a href="{{ route('sales.create') }}" class="dp-btn-glow btn-orange">
+                        <i class="fe fe-plus me-1"></i> Add Sales
+                    </a>
                 </div>
             </div>
         </div>
 
-        <div class="col-xl-3 col-md-6 col-12">
-            <div class="card stat-card bg-white shadow-sm rounded-3 h-100 mb-0">
-                <div class="card-body d-flex align-items-center">
-                    <div class="avatar avatar-lg bg-info-light text-info rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0">
-                        <i class="fe fe-layers fs-4"></i>
-                    </div>
+        <!-- Action 2: Add Purchase -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="dp-action-card qa-card-teal h-100">
+                <div class="d-flex align-items-start justify-content-between">
                     <div>
-                        <h6 class="text-muted fw-normal mb-1">Total Projects</h6>
-                        <h4 class="mb-0 fw-bold text-dark">{{ number_format($totalProjects ?? 0) }}</h4>
+                        <span class="qa-tag">Purchase Metric</span>
+                        <h4 class="qa-val mb-1">৳{{ number_format($thisMonthsPurchaseRevenue ?? 0, 0) }}</h4>
+                        <span class="qa-subtext">This Month Purchase</span>
                     </div>
+                    <div class="qa-icon-box ib-teal"><i class="fe fe-shopping-bag"></i></div>
+                </div>
+                <!-- Mini Sparkline Graph -->
+                <div id="sparkline_purchase" class="qa-sparkline-wrap"></div>
+                <div class="d-flex align-items-center justify-content-between mt-2 pt-2 border-top border-white border-opacity-10">
+                    <span class="qa-growth-badge gb-teal">{{ $purchaseGrowthPct >= 0 ? '+'.$purchaseGrowthPct : $purchaseGrowthPct }}% vs Mo</span>
+                    <a href="{{ route('purchase.create') }}" class="dp-btn-glow btn-teal">
+                        <i class="fe fe-plus me-1"></i> Add Purchase
+                    </a>
                 </div>
             </div>
         </div>
 
-        <div class="col-xl-3 col-md-6 col-12">
-            <div class="card stat-card bg-white shadow-sm rounded-3 h-100 mb-0">
-                <div class="card-body d-flex align-items-center">
-                    <div class="avatar avatar-lg bg-success-light text-success rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0">
-                        <i class="fe fe-user-check fs-4"></i>
-                    </div>
+        <!-- Action 3: Add Service -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="dp-action-card qa-card-sky h-100">
+                <div class="d-flex align-items-start justify-content-between">
                     <div>
-                        <h6 class="text-muted fw-normal mb-1">Total Employees</h6>
-                        <h4 class="mb-0 fw-bold text-dark">{{ number_format($totalEmployees ?? 0) }}</h4>
+                        <span class="qa-tag">Service Jobs</span>
+                        <h4 class="qa-val mb-1">{{ number_format($totalProjects ?? 0) }} Jobs</h4>
+                        <span class="qa-subtext">Active Services</span>
                     </div>
+                    <div class="qa-icon-box ib-sky"><i class="fe fe-layers"></i></div>
+                </div>
+                <!-- Mini Sparkline Graph -->
+                <div id="sparkline_service" class="qa-sparkline-wrap"></div>
+                <div class="d-flex align-items-center justify-content-between mt-2 pt-2 border-top border-white border-opacity-10">
+                    <span class="qa-growth-badge gb-sky">Active Orders</span>
+                    <a href="{{ route('service.create') }}" class="dp-btn-glow btn-sky">
+                        <i class="fe fe-plus me-1"></i> Add Service
+                    </a>
                 </div>
             </div>
         </div>
 
-        <div class="col-xl-3 col-md-6 col-12">
-            <div class="card stat-card bg-white shadow-sm rounded-3 h-100 mb-0">
-                <div class="card-body d-flex align-items-center">
-                    <div class="avatar avatar-lg bg-warning-light text-warning rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0">
-                        <i class="fe fe-package fs-4"></i>
-                    </div>
+        <!-- Action 4: Add Expense -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="dp-action-card qa-card-rose h-100">
+                <div class="d-flex align-items-start justify-content-between">
                     <div>
-                        <h6 class="text-muted fw-normal mb-1">Products Catalog</h6>
-                        <h4 class="mb-0 fw-bold text-dark">{{ number_format($totalProducts ?? 0) }}</h4>
+                        <span class="qa-tag">Expenses</span>
+                        <h4 class="qa-val mb-1">৳{{ number_format($thisMonthsExpense ?? 0, 0) }}</h4>
+                        <span class="qa-subtext">This Month Expense</span>
                     </div>
+                    <div class="qa-icon-box ib-rose"><i class="fe fe-file-minus"></i></div>
+                </div>
+                <!-- Mini Sparkline Graph -->
+                <div id="sparkline_expense" class="qa-sparkline-wrap"></div>
+                <div class="d-flex align-items-center justify-content-between mt-2 pt-2 border-top border-white border-opacity-10">
+                    <span class="qa-growth-badge gb-rose">{{ $expenseGrowthPct >= 0 ? '+'.$expenseGrowthPct : $expenseGrowthPct }}% vs Mo</span>
+                    <a href="{{ route('dailyExpenses.create') }}" class="dp-btn-glow btn-rose">
+                        <i class="fe fe-plus me-1"></i> Add Expense
+                    </a>
                 </div>
             </div>
         </div>
     </div>
-    <!-- /Top Quick Metrics Bar -->
 
-    <!-- Accounting & Financial Balances (Double-Entry Live Health) -->
-    @if(auth()->check() && auth()->user()->hasRole(['Super Admin', 'Admin', 'admin']))
-    <div class="mb-4">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="fw-bold text-dark mb-0"><i class="fe fe-shield me-2 text-primary"></i>Financial & Accounting Health</h5>
-            <div class="d-flex gap-2">
-                <a href="{{ route('chart-of-accounts.index') }}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
-                    <i class="fe fe-folder me-1"></i> Chart of Accounts
-                </a>
-                <a href="{{ route('journal-entries.create') }}" class="btn btn-sm btn-primary rounded-pill px-3">
-                    <i class="fe fe-plus me-1"></i> New Voucher
-                </a>
-                <a href="{{ route('trial-balance.index') }}" class="btn btn-sm btn-outline-success rounded-pill px-3">
-                    <i class="fe fe-check-square me-1"></i> Trial Balance
-                </a>
-            </div>
+    <!-- Low Stock Alert Banner -->
+    @if(isset($lowStockProducts) && count($lowStockProducts) > 0)
+    <div class="alert dp-alert-banner alert-dismissible fade show d-flex align-items-center justify-content-between p-3 mb-4" role="alert">
+        <div class="d-flex align-items-center gap-2">
+            <span class="dp-alert-icon"><i class="fe fe-alert-circle"></i></span>
+            <span class="fs-sm">
+                Your Product <b class="text-dark">{{ $lowStockProducts->first()->name ?? 'Item' }}</b> is running Low, already below {{ $lowStockProducts->first()->inventory->qty ?? 5 }} Pcs.
+                <a href="{{ route('products.index') }}" class="text-warning text-decoration-underline ms-1 fw-bold">Add Stock</a>
+            </span>
         </div>
-
-        <div class="row g-3">
-            <!-- Liquid Cash in Hand -->
-            <div class="col-xl-3 col-md-6 col-12">
-                <div class="card stat-card bg-white shadow-sm rounded-3 h-100 mb-0 border-start border-4 border-success">
-                    <div class="card-body d-flex align-items-center">
-                        <div class="avatar avatar-lg bg-success-light text-success rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0">
-                            <i class="fe fe-dollar-sign fs-4"></i>
-                        </div>
-                        <div>
-                            <h6 class="text-muted fw-normal mb-1">Cash in Hand (1110)</h6>
-                            <h4 class="mb-0 fw-bold text-dark">৳{{ number_format($liquidCash ?? 0, 2) }}</h4>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Total Bank Balances -->
-            <div class="col-xl-3 col-md-6 col-12">
-                <div class="card stat-card bg-white shadow-sm rounded-3 h-100 mb-0 border-start border-4 border-info">
-                    <div class="card-body d-flex align-items-center">
-                        <div class="avatar avatar-lg bg-info-light text-info rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0">
-                            <i class="fe fe-credit-card fs-4"></i>
-                        </div>
-                        <div>
-                            <h6 class="text-muted fw-normal mb-1">Total Bank Balance</h6>
-                            <h4 class="mb-0 fw-bold text-dark">৳{{ number_format($bankBalance ?? 0, 2) }}</h4>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Accounts Receivable -->
-            <div class="col-xl-3 col-md-6 col-12">
-                <div class="card stat-card bg-white shadow-sm rounded-3 h-100 mb-0 border-start border-4 border-warning">
-                    <div class="card-body d-flex align-items-center">
-                        <div class="avatar avatar-lg bg-warning-light text-warning rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0">
-                            <i class="fe fe-user-check fs-4"></i>
-                        </div>
-                        <div>
-                            <h6 class="text-muted fw-normal mb-1">Receivables (AR - 1130)</h6>
-                            <h4 class="mb-0 fw-bold text-dark">৳{{ number_format($receivables ?? 0, 2) }}</h4>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Accounts Payable -->
-            <div class="col-xl-3 col-md-6 col-12">
-                <div class="card stat-card bg-white shadow-sm rounded-3 h-100 mb-0 border-start border-4 border-danger">
-                    <div class="card-body d-flex align-items-center">
-                        <div class="avatar avatar-lg bg-danger-light text-danger rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0">
-                            <i class="fe fe-truck fs-4"></i>
-                        </div>
-                        <div>
-                            <h6 class="text-muted fw-normal mb-1">Payables (AP - 2110)</h6>
-                            <h4 class="mb-0 fw-bold text-dark">৳{{ number_format($payables ?? 0, 2) }}</h4>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <button type="button" class="btn-close btn-close-white ms-auto shadow-none" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
     @endif
 
-        <div class="col-xl-3 col-md-6 col-12">
-            <div class="card stat-card bg-white shadow-sm rounded-3 h-100 mb-0">
-                <div class="card-body d-flex align-items-center">
-                    <div class="avatar avatar-lg bg-info-light text-info rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0">
-                        <i class="fe fe-layers fs-4"></i>
-                    </div>
-                    <div>
-                        <h6 class="text-muted fw-normal mb-1">Total Projects</h6>
-                        <h4 class="mb-0 fw-bold text-dark">{{ number_format($totalProjects ?? 0) }}</h4>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6 col-12">
-            <div class="card stat-card bg-white shadow-sm rounded-3 h-100 mb-0">
-                <div class="card-body d-flex align-items-center">
-                    <div class="avatar avatar-lg bg-success-light text-success rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0">
-                        <i class="fe fe-user-check fs-4"></i>
-                    </div>
-                    <div>
-                        <h6 class="text-muted fw-normal mb-1">Total Employees</h6>
-                        <h4 class="mb-0 fw-bold text-dark">{{ number_format($totalEmployees ?? 0) }}</h4>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6 col-12">
-            <div class="card stat-card bg-white shadow-sm rounded-3 h-100 mb-0">
-                <div class="card-body d-flex align-items-center">
-                    <div class="avatar avatar-lg bg-warning-light text-warning rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0">
-                        <i class="fe fe-package fs-4"></i>
-                    </div>
-                    <div>
-                        <h6 class="text-muted fw-normal mb-1">Products Catalog</h6>
-                        <h4 class="mb-0 fw-bold text-dark">{{ number_format($totalProducts ?? 0) }}</h4>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- /Top Quick Metrics Bar -->
-
-    <!-- Sales Overview Section -->
-    <div class="mb-4">
-        <h5 class="fw-bold text-dark mb-3"><i class="fe fe-trending-up me-2 text-success"></i>Sales Revenues</h5>
-        <div class="row g-3">
-            <div class="col-xl-3 col-md-6 col-12">
-                <div class="card stat-card bg-white shadow-sm rounded-3 h-100 mb-0">
-                    <div class="card-body d-flex align-items-center">
-                        <div class="avatar avatar-lg bg-success-light text-success rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0">
-                            <i class="fe fe-dollar-sign fs-4"></i>
-                        </div>
-                        <div>
-                            <h6 class="text-muted fw-normal mb-1">Today's Sales</h6>
-                            <h4 class="mb-0 fw-bold text-dark">৳{{ number_format($todaysSalesRevenue, 2) }}</h4>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-xl-3 col-md-6 col-12">
-                <div class="card stat-card bg-white shadow-sm rounded-3 h-100 mb-0">
-                    <div class="card-body d-flex align-items-center">
-                        <div class="avatar avatar-lg bg-success-light text-success rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0">
-                            <i class="fe fe-calendar fs-4"></i>
-                        </div>
-                        <div>
-                            <h6 class="text-muted fw-normal mb-1">This Week Sales</h6>
-                            <h4 class="mb-0 fw-bold text-dark">৳{{ number_format($thisWeeksSalesRevenue, 2) }}</h4>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-xl-3 col-md-6 col-12">
-                <div class="card stat-card bg-white shadow-sm rounded-3 h-100 mb-0">
-                    <div class="card-body d-flex align-items-center">
-                        <div class="avatar avatar-lg bg-success-light text-success rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0">
-                            <i class="fe fe-bar-chart-2 fs-4"></i>
-                        </div>
-                        <div>
-                            <h6 class="text-muted fw-normal mb-1">This Month Sales</h6>
-                            <h4 class="mb-0 fw-bold text-dark">৳{{ number_format($thisMonthsSalesRevenue, 2) }}</h4>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-xl-3 col-md-6 col-12">
-                <div class="card stat-card bg-white shadow-sm rounded-3 h-100 mb-0">
-                    <div class="card-body d-flex align-items-center">
-                        <div class="avatar avatar-lg bg-success-light text-success rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0">
-                            <i class="fe fe-award fs-4"></i>
-                        </div>
-                        <div>
-                            <h6 class="text-muted fw-normal mb-1">This Year Sales</h6>
-                            <h4 class="mb-0 fw-bold text-dark">৳{{ number_format($thisYearsSalesRevenue, 2) }}</h4>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Purchase Overview Section -->
-    <div class="mb-4">
-        <h5 class="fw-bold text-dark mb-3"><i class="fe fe-shopping-bag me-2 text-info"></i>Purchases Overview</h5>
-        <div class="row g-3">
-            <div class="col-xl-3 col-md-6 col-12">
-                <div class="card stat-card bg-white shadow-sm rounded-3 h-100 mb-0">
-                    <div class="card-body d-flex align-items-center">
-                        <div class="avatar avatar-lg bg-info-light text-info rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0">
-                            <i class="fe fe-shopping-cart fs-4"></i>
-                        </div>
-                        <div>
-                            <h6 class="text-muted fw-normal mb-1">Today's Purchase</h6>
-                            <h4 class="mb-0 fw-bold text-dark">৳{{ number_format($todaysPurchaseRevenue, 2) }}</h4>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-xl-3 col-md-6 col-12">
-                <div class="card stat-card bg-white shadow-sm rounded-3 h-100 mb-0">
-                    <div class="card-body d-flex align-items-center">
-                        <div class="avatar avatar-lg bg-info-light text-info rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0">
-                            <i class="fe fe-calendar fs-4"></i>
-                        </div>
-                        <div>
-                            <h6 class="text-muted fw-normal mb-1">This Week Purchase</h6>
-                            <h4 class="mb-0 fw-bold text-dark">৳{{ number_format($thisWeeksPurchaseRevenue, 2) }}</h4>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-xl-3 col-md-6 col-12">
-                <div class="card stat-card bg-white shadow-sm rounded-3 h-100 mb-0">
-                    <div class="card-body d-flex align-items-center">
-                        <div class="avatar avatar-lg bg-info-light text-info rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0">
-                            <i class="fe fe-file-text fs-4"></i>
-                        </div>
-                        <div>
-                            <h6 class="text-muted fw-normal mb-1">This Month Purchase</h6>
-                            <h4 class="mb-0 fw-bold text-dark">৳{{ number_format($thisMonthsPurchaseRevenue, 2) }}</h4>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-xl-3 col-md-6 col-12">
-                <div class="card stat-card bg-white shadow-sm rounded-3 h-100 mb-0">
-                    <div class="card-body d-flex align-items-center">
-                        <div class="avatar avatar-lg bg-info-light text-info rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0">
-                            <i class="fe fe-archive fs-4"></i>
-                        </div>
-                        <div>
-                            <h6 class="text-muted fw-normal mb-1">This Year Purchase</h6>
-                            <h4 class="mb-0 fw-bold text-dark">৳{{ number_format($thisYearsPurchaseRevenue, 2) }}</h4>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Daily Expenses Overview Section -->
-    <div class="mb-4">
-        <h5 class="fw-bold text-dark mb-3"><i class="fe fe-file-minus me-2 text-danger"></i>Daily Expenses</h5>
-        <div class="row g-3">
-            <div class="col-xl-3 col-md-6 col-12">
-                <div class="card stat-card bg-white shadow-sm rounded-3 h-100 mb-0">
-                    <div class="card-body d-flex align-items-center">
-                        <div class="avatar avatar-lg bg-danger-light text-danger rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0">
-                            <i class="fe fe-credit-card fs-4"></i>
-                        </div>
-                        <div>
-                            <h6 class="text-muted fw-normal mb-1">Today's Expense</h6>
-                            <h4 class="mb-0 fw-bold text-dark">৳{{ number_format($todaysExpense, 2) }}</h4>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-xl-3 col-md-6 col-12">
-                <div class="card stat-card bg-white shadow-sm rounded-3 h-100 mb-0">
-                    <div class="card-body d-flex align-items-center">
-                        <div class="avatar avatar-lg bg-danger-light text-danger rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0">
-                            <i class="fe fe-calendar fs-4"></i>
-                        </div>
-                        <div>
-                            <h6 class="text-muted fw-normal mb-1">This Week Expense</h6>
-                            <h4 class="mb-0 fw-bold text-dark">৳{{ number_format($thisWeeksExpense, 2) }}</h4>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-xl-3 col-md-6 col-12">
-                <div class="card stat-card bg-white shadow-sm rounded-3 h-100 mb-0">
-                    <div class="card-body d-flex align-items-center">
-                        <div class="avatar avatar-lg bg-danger-light text-danger rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0">
-                            <i class="fe fe-pie-chart fs-4"></i>
-                        </div>
-                        <div>
-                            <h6 class="text-muted fw-normal mb-1">This Month Expense</h6>
-                            <h4 class="mb-0 fw-bold text-dark">৳{{ number_format($thisMonthsExpense, 2) }}</h4>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-xl-3 col-md-6 col-12">
-                <div class="card stat-card bg-white shadow-sm rounded-3 h-100 mb-0">
-                    <div class="card-body d-flex align-items-center">
-                        <div class="avatar avatar-lg bg-danger-light text-danger rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0">
-                            <i class="fe fe-trending-down fs-4"></i>
-                        </div>
-                        <div>
-                            <h6 class="text-muted fw-normal mb-1">This Year Expense</h6>
-                            <h4 class="mb-0 fw-bold text-dark">৳{{ number_format($thisYearsExpense, 2) }}</h4>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Charts & Analytics Section -->
+    <!-- 3. SECONDARY 4 METRIC CARDS ROW -->
     <div class="row g-3 mb-4">
-        <!-- Monthly Sales Chart -->
-        <div class="col-xl-7 col-12 d-flex">
-            <div class="card border-0 shadow-sm rounded-3 flex-fill">
-                <div class="card-header bg-white py-3 border-bottom border-light">
-                    <h6 class="fw-bold text-dark mb-0"><i class="fe fe-bar-chart-2 me-2 text-primary"></i>Monthly Sales Revenue ({{ date('Y') }})</h6>
+        <!-- Profit -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="dp-metric-card">
+                <div class="d-flex align-items-start justify-content-between">
+                    <div>
+                        <h4 class="dp-metric-val">৳{{ number_format($netMonth, 0) }}</h4>
+                        <span class="dp-metric-sub">Net Profit</span>
+                    </div>
+                    <div class="dp-m-icon-bg"><i class="fe fe-trending-up"></i></div>
                 </div>
-                <div class="card-body">
-                    <div id="monthly_sales_chart" style="min-height: 320px;"></div>
+                <div class="d-flex align-items-center justify-content-between mt-3 pt-2 border-top border-secondary border-opacity-25">
+                    <span class="{{ $salesGrowthPct >= 0 ? 'dp-badge-green' : 'dp-badge-red' }}"><i class="fe fe-trending-up"></i> {{ $salesGrowthPct >= 0 ? '+'.$salesGrowthPct : $salesGrowthPct }}% vs Last Month</span>
+                    <a href="{{ route('sales.index') }}" class="dp-view-link">View All</a>
                 </div>
             </div>
         </div>
 
-        <!-- Yearly Sales Chart -->
-        <div class="col-xl-5 col-12 d-flex">
-            <div class="card border-0 shadow-sm rounded-3 flex-fill">
-                <div class="card-header bg-white py-3 border-bottom border-light">
-                    <h6 class="fw-bold text-dark mb-0"><i class="fe fe-trending-up me-2 text-success"></i>Yearly Sales Revenue</h6>
+        <!-- Invoice Due -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="dp-metric-card">
+                <div class="d-flex align-items-start justify-content-between">
+                    <div>
+                        <h4 class="dp-metric-val">৳{{ number_format($totalInvoiceDue ?? 0, 0) }}</h4>
+                        <span class="dp-metric-sub">Invoice Due</span>
+                    </div>
+                    <div class="dp-m-icon-bg"><i class="fe fe-clock"></i></div>
                 </div>
-                <div class="card-body">
-                    <div id="yearly_sales_chart" style="min-height: 320px;"></div>
+                <div class="d-flex align-items-center justify-content-between mt-3 pt-2 border-top border-secondary border-opacity-25">
+                    <span class="dp-badge-green"><i class="fe fe-check-circle"></i> Active Pending</span>
+                    <a href="{{ route('sales.index') }}" class="dp-view-link">View All</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Expenses -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="dp-metric-card">
+                <div class="d-flex align-items-start justify-content-between">
+                    <div>
+                        <h4 class="dp-metric-val">৳{{ number_format($thisMonthsExpense ?? 0, 0) }}</h4>
+                        <span class="dp-metric-sub">Total Expenses</span>
+                    </div>
+                    <div class="dp-m-icon-bg"><i class="fe fe-dollar-sign"></i></div>
+                </div>
+                <div class="d-flex align-items-center justify-content-between mt-3 pt-2 border-top border-secondary border-opacity-25">
+                    <span class="{{ $expenseGrowthPct <= 0 ? 'dp-badge-green' : 'dp-badge-red' }}"><i class="fe fe-trending-up"></i> {{ $expenseGrowthPct >= 0 ? '+'.$expenseGrowthPct : $expenseGrowthPct }}% vs Last Month</span>
+                    <a href="{{ route('dailyExpenses.index') }}" class="dp-view-link">View All</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Payment Returns -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="dp-metric-card">
+                <div class="d-flex align-items-start justify-content-between">
+                    <div>
+                        <h4 class="dp-metric-val">৳{{ number_format($totalSalesReturnAmount ?? 0, 0) }}</h4>
+                        <span class="dp-metric-sub">Total Payment Returns</span>
+                    </div>
+                    <div class="dp-m-icon-bg"><i class="fe fe-refresh-cw"></i></div>
+                </div>
+                <div class="d-flex align-items-center justify-content-between mt-3 pt-2 border-top border-secondary border-opacity-25">
+                    <span class="dp-badge-red"><i class="fe fe-rotate-ccw"></i> Refunds Logged</span>
+                    <a href="{{ route('returns.index') }}" class="dp-view-link">View All</a>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Project Analytics Charts Section -->
+    <!-- 4. MIDDLE SECTION: CHART + OVERALL INFO (2 COLUMNS) -->
     <div class="row g-3 mb-4">
-        <!-- Project Status Breakdown Donut Chart -->
-        <div class="col-xl-5 col-12 d-flex">
-            <div class="card border-0 shadow-sm rounded-3 flex-fill">
-                <div class="card-header bg-white py-3 border-bottom border-light">
-                    <h6 class="fw-bold text-dark mb-0"><i class="fe fe-pie-chart me-2 text-info"></i>Projects by Status</h6>
-                </div>
-                <div class="card-body d-flex align-items-center justify-content-center">
-                    <div id="project_status_chart" style="min-height: 320px; width: 100%;"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Project Budget vs Actual Costs Bar Chart -->
-        <div class="col-xl-7 col-12 d-flex">
-            <div class="card border-0 shadow-sm rounded-3 flex-fill">
-                <div class="card-header bg-white py-3 border-bottom border-light">
-                    <h6 class="fw-bold text-dark mb-0"><i class="fe fe-layers me-2 text-warning"></i>Project Budget vs Actual Costs</h6>
-                </div>
-                <div class="card-body">
-                    <div id="project_budget_cost_chart" style="min-height: 320px;"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Recent Activity Tables -->
-    <div class="row g-3">
-        <!-- Recent Sales -->
-        <div class="col-xl-6 col-12">
-            <div class="card border-0 shadow-sm rounded-3 h-100">
-                <div class="card-header bg-white py-3 border-bottom border-light d-flex justify-content-between align-items-center">
-                    <h6 class="fw-bold text-dark mb-0"><i class="fe fe-shopping-cart me-2 text-success"></i>Recent Sales Orders</h6>
-                    <a href="{{ route('sales.index') }}" class="btn btn-sm btn-outline-primary rounded-2 px-3">View All</a>
-                </div>
-                <div class="card-body p-0" style="overflow: visible;">
-                    <div class="table-responsive" style="overflow: visible !important;">
-                        <table class="table table-hover table-custom align-middle mb-0">
-                            <thead class="bg-light text-secondary fs-7 text-uppercase">
-                                <tr>
-                                    <th class="ps-3">Invoice / Customer</th>
-                                    <th>Payable Amount</th>
-                                    <th>Date</th>
-                                    <th class="pe-3 text-end">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody class="border-top-0">
-                                @forelse ($recentSales ?? [] as $sale)
-                                    <tr>
-                                        <td class="ps-3">
-                                            <span class="fw-bold text-dark d-block">INV-{{ $sale->invoice_no ?? $sale->id }}</span>
-                                            <span class="text-muted small">{{ $sale->customer->name ?? 'Walk-in Customer' }}</span>
-                                        </td>
-                                        <td>
-                                            <span class="badge badge-soft-primary px-3 py-1 rounded-pill fs-7">৳{{ number_format($sale->payble ?? 0, 2) }}</span>
-                                        </td>
-                                        <td>
-                                            <span class="text-secondary small">{{ $sale->created_at ? $sale->created_at->format('d M, Y') : 'N/A' }}</span>
-                                        </td>
-                                        <td class="pe-3 text-end">
-                                            <a href="{{ route('sales.invoice', $sale->id) }}" class="btn btn-sm btn-outline-secondary rounded-2 px-2 py-1">
-                                                <i class="fe fe-eye"></i> Invoice
-                                            </a>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="4" class="text-center py-4 text-muted small">No recent sales records found</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+        <!-- Sales & Purchase Chart -->
+        <div class="col-12 col-lg-8">
+            <div class="dp-panel-card h-100">
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3 pb-2 border-bottom border-secondary border-opacity-25">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="dp-panel-icon"><i class="fe fe-bar-chart-2"></i></span>
+                        <h5 class="dp-panel-title mb-0">Sales &amp; Purchase Overview</h5>
+                    </div>
+                    <div class="dp-tabs-wrap">
+                        <button class="dp-tab-btn active">1M</button>
+                        <button class="dp-tab-btn">1Y</button>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- Recent Projects -->
-        <div class="col-xl-6 col-12">
-            <div class="card border-0 shadow-sm rounded-3 h-100">
-                <div class="card-header bg-white py-3 border-bottom border-light d-flex justify-content-between align-items-center">
-                    <h6 class="fw-bold text-dark mb-0"><i class="fe fe-layers me-2 text-info"></i>Recent Projects</h6>
-                    <a href="{{ route('projects.index') }}" class="btn btn-sm btn-outline-primary rounded-2 px-3">View All</a>
-                </div>
-                <div class="card-body p-0" style="overflow: visible;">
-                    <div class="table-responsive" style="overflow: visible !important;">
-                        <table class="table table-hover table-custom align-middle mb-0">
-                            <thead class="bg-light text-secondary fs-7 text-uppercase">
-                                <tr>
-                                    <th class="ps-3">Project Name</th>
-                                    <th>Client Name</th>
-                                    <th>Budget</th>
-                                    <th class="pe-3 text-end">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody class="border-top-0">
-                                @forelse ($recentProjects ?? [] as $proj)
-                                    <tr>
-                                        <td class="ps-3">
-                                            <span class="fw-bold text-dark d-block">{{ $proj->project_name }}</span>
-                                            <span class="badge badge-soft-info px-2 py-1 rounded-pill fs-7 text-capitalize">{{ str_replace('_', ' ', $proj->status) }}</span>
-                                        </td>
-                                        <td>
-                                            <span class="text-dark small fw-semibold">{{ $proj->client->name ?? 'N/A' }}</span>
-                                        </td>
-                                        <td>
-                                            <span class="badge badge-soft-success px-3 py-1 rounded-pill fs-7">৳{{ number_format($proj->budget ?? 0, 2) }}</span>
-                                        </td>
-                                        <td class="pe-3 text-end">
-                                            <a href="{{ route('projects.show', $proj->id) }}" class="btn btn-sm btn-outline-secondary rounded-2 px-2 py-1">
-                                                <i class="fe fe-eye"></i> Details
-                                            </a>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="4" class="text-center py-4 text-muted small">No recent project records found</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+                <div class="d-flex align-items-center gap-4 mb-3 fs-xs">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="dp-legend-dot bg-warning"></span>
+                        <span class="text-secondary">Total Purchase (<b>৳{{ number_format($thisMonthsPurchaseRevenue ?? 0, 0) }}</b>)</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="dp-legend-dot bg-orange"></span>
+                        <span class="text-secondary">Total Sales (<b>৳{{ number_format($thisMonthsSalesRevenue ?? 0, 0) }}</b>)</span>
                     </div>
                 </div>
+
+                <div id="sales_purchase_chart" class="dp-chart-area" style="min-height: 280px;"></div>
             </div>
         </div>
-    </div>
 
-    <!-- Accounting: Recent Journal Vouchers & Connected Bank Accounts -->
-    @if(auth()->check() && auth()->user()->hasRole(['Super Admin', 'Admin', 'admin']))
-    <div class="row g-3 mb-4">
-        <!-- Recent Journal Vouchers -->
-        <div class="col-xl-8 col-12 d-flex">
-            <div class="card border-0 shadow-sm rounded-3 flex-fill">
-                <div class="card-header bg-white py-3 border-bottom border-light d-flex justify-content-between align-items-center">
-                    <h6 class="fw-bold text-dark mb-0"><i class="fe fe-file-text me-2 text-primary"></i>Recent Journal Vouchers</h6>
-                    <a href="{{ route('journal-entries.index') }}" class="btn btn-sm btn-outline-primary rounded-2 px-3">View All Vouchers</a>
-                </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover table-custom align-middle mb-0">
-                            <thead class="bg-light text-secondary fs-7 text-uppercase">
-                                <tr>
-                                    <th class="ps-3">Voucher #</th>
-                                    <th>Date</th>
-                                    <th>Description</th>
-                                    <th>Total Debit/Credit</th>
-                                    <th>Status</th>
-                                    <th class="pe-3 text-end">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody class="border-top-0">
-                                @forelse ($recentJournalEntries ?? [] as $entry)
-                                    <tr>
-                                        <td class="ps-3 fw-bold text-primary">{{ $entry->journal_number }}</td>
-                                        <td>{{ \Carbon\Carbon::parse($entry->entry_date)->format('M d, Y') }}</td>
-                                        <td class="text-truncate" style="max-width: 200px;">{{ $entry->description ?? 'N/A' }}</td>
-                                        <td class="fw-bold text-dark">৳{{ number_format($entry->total_debit, 2) }}</td>
-                                        <td>
-                                            <span class="badge {{ $entry->status == 'posted' ? 'badge-soft-success' : 'badge-soft-warning' }} px-2 py-1 rounded-pill">
-                                                {{ ucfirst($entry->status) }}
-                                            </span>
-                                        </td>
-                                        <td class="pe-3 text-end">
-                                            <a href="{{ route('journal-entries.show', $entry->id) }}" class="btn btn-sm btn-outline-secondary rounded-2 px-2 py-1">
-                                                <i class="fe fe-eye"></i> View
-                                            </a>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="6" class="text-center py-4 text-muted small">No journal vouchers posted yet</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+        <!-- Overall Info & Customers Overview -->
+        <div class="col-12 col-lg-4">
+            <div class="d-flex flex-column gap-3 h-100">
+                <!-- Overall Information -->
+                <div class="dp-panel-card">
+                    <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom border-secondary border-opacity-25">
+                        <span class="dp-panel-icon"><i class="fe fe-info"></i></span>
+                        <h5 class="dp-panel-title mb-0">Overall Information</h5>
+                    </div>
+                    <div class="row g-2 text-center">
+                        <div class="col-4">
+                            <div class="dp-sub-kpi">
+                                <i class="fe fe-truck text-info mb-1"></i>
+                                <span class="dp-sk-label">Suppliers</span>
+                                <h5 class="dp-sk-val mb-0">{{ number_format($totalVendors ?? 0) }}</h5>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="dp-sub-kpi">
+                                <i class="fe fe-users text-warning mb-1"></i>
+                                <span class="dp-sk-label">Customer</span>
+                                <h5 class="dp-sk-val mb-0">{{ number_format($totalCustomers ?? 0) }}</h5>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="dp-sub-kpi">
+                                <i class="fe fe-shopping-bag text-teal mb-1"></i>
+                                <span class="dp-sk-label">Orders</span>
+                                <h5 class="dp-sk-val mb-0">{{ number_format($totalSalesCount ?? 0) }}</h5>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- Connected Bank Accounts -->
-        <div class="col-xl-4 col-12 d-flex">
-            <div class="card border-0 shadow-sm rounded-3 flex-fill">
-                <div class="card-header bg-white py-3 border-bottom border-light d-flex justify-content-between align-items-center">
-                    <h6 class="fw-bold text-dark mb-0"><i class="fe fe-credit-card me-2 text-info"></i>Bank Account Balances</h6>
-                    <a href="{{ route('chart-of-accounts.index') }}" class="btn btn-sm btn-outline-info rounded-2 px-2 py-1">COA</a>
-                </div>
-                <div class="card-body p-3">
-                    @forelse($bankAccounts ?? [] as $bank)
-                        <div class="d-flex justify-content-between align-items-center p-2 mb-2 bg-light rounded-3">
+                <!-- Customers Overview -->
+                <div class="dp-panel-card flex-grow-1">
+                    <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom border-secondary border-opacity-25">
+                        <h5 class="dp-panel-title mb-0">Customers Overview</h5>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-around my-2">
+                        <div id="customers_donut_chart" style="width: 110px; height: 110px;"></div>
+                        <div class="d-flex flex-column gap-2">
                             <div>
-                                <h6 class="mb-0 fw-bold text-dark fs-7">{{ $bank->account_name }}</h6>
-                                <span class="text-muted small">Code: {{ $bank->account_code }}</span>
+                                <h5 class="mb-0 fw-bold">{{ number_format($newCustomersCount ?? 0) }}</h5>
+                                <span class="text-secondary fs-xs">First Time</span>
+                                <span class="dp-badge-green ms-1">{{ $newCustomerPct ?? 0 }}%</span>
                             </div>
-                            <div class="text-end">
-                                <span class="fw-bold text-success d-block">৳{{ number_format($bank->balance, 2) }}</span>
+                            <div>
+                                <h5 class="mb-0 fw-bold">{{ number_format($returningCustomersCount ?? 0) }}</h5>
+                                <span class="text-secondary fs-xs">Return</span>
+                                <span class="dp-badge-green ms-1">{{ $returningCustomerPct ?? 0 }}%</span>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. 3-COLUMN SECTION (TOP SELLING PRODUCTS, LOW STOCK, RECENT SALES) -->
+    <div class="row g-3 mb-4">
+        <!-- Top Selling Products -->
+        <div class="col-12 col-lg-4">
+            <div class="dp-panel-card h-100">
+                <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom border-secondary border-opacity-25">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="dp-panel-icon bg-rose-soft text-rose"><i class="fe fe-award"></i></span>
+                        <h5 class="dp-panel-title mb-0">Top Selling Products</h5>
+                    </div>
+                    <span class="badge dp-badge-dark">Top</span>
+                </div>
+                <div class="dp-list-wrap">
+                    @forelse($topProducts as $tp)
+                    <div class="dp-list-item">
+                        <div class="dp-item-img"><i class="fe fe-box"></i></div>
+                        <div class="flex-grow-1 min-w-0">
+                            <h6 class="dp-item-title mb-0 truncate">{{ $tp->product_name }}</h6>
+                            <span class="dp-item-sub">৳{{ number_format($tp->total_revenue, 0) }} · {{ $tp->total_qty }}+ Sales</span>
+                        </div>
+                    </div>
                     @empty
-                        <div class="text-center py-4 text-muted small">No sub-bank accounts registered</div>
+                    <p class="text-secondary text-center py-4 fs-xs">No products sold yet</p>
+                    @endforelse
+                </div>
+            </div>
+        </div>
+
+        <!-- Low Stock Products -->
+        <div class="col-12 col-lg-4">
+            <div class="dp-panel-card h-100">
+                <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom border-secondary border-opacity-25">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="dp-panel-icon bg-warning-soft text-warning"><i class="fe fe-alert-triangle"></i></span>
+                        <h5 class="dp-panel-title mb-0">Low Stock Products</h5>
+                    </div>
+                    <a href="{{ route('products.index') }}" class="dp-view-link">View All</a>
+                </div>
+                <div class="dp-list-wrap">
+                    @forelse($lowStockProducts as $lp)
+                    <div class="dp-list-item">
+                        <div class="dp-item-img bg-warning-soft text-warning"><i class="fe fe-package"></i></div>
+                        <div class="flex-grow-1 min-w-0">
+                            <h6 class="dp-item-title mb-0 truncate">{{ $lp->name }}</h6>
+                            <span class="dp-item-sub">ID: #{{ $lp->id }}</span>
+                        </div>
+                        <div class="text-end">
+                            <span class="dp-stock-text">In Stock</span>
+                            <b class="text-danger d-block fs-xs">{{ (int) ($lp->inventory->qty ?? 5) }}</b>
+                        </div>
+                    </div>
+                    @empty
+                    <p class="text-secondary text-center py-4 fs-xs">No low stock items</p>
+                    @endforelse
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Sales -->
+        <div class="col-12 col-lg-4">
+            <div class="dp-panel-card h-100">
+                <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom border-secondary border-opacity-25">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="dp-panel-icon bg-emerald-soft text-emerald"><i class="fe fe-shopping-cart"></i></span>
+                        <h5 class="dp-panel-title mb-0">Recent Sales</h5>
+                    </div>
+                    <a href="{{ route('sales.index') }}" class="dp-view-link">View All</a>
+                </div>
+                <div class="dp-list-wrap">
+                    @forelse($recentSales as $rs)
+                    <div class="dp-list-item">
+                        <div class="dp-item-img bg-emerald-soft text-emerald"><i class="fe fe-file"></i></div>
+                        <div class="flex-grow-1 min-w-0">
+                            <h6 class="dp-item-title mb-0 truncate">Order #{{ $rs->order_no ?? $rs->id }}</h6>
+                            <span class="dp-item-sub">Sales · ৳{{ number_format($rs->payble, 0) }}</span>
+                        </div>
+                        <span class="dp-status-badge sb-completed">Completed</span>
+                    </div>
+                    @empty
+                    <p class="text-secondary text-center py-4 fs-xs">No recent sales</p>
                     @endforelse
                 </div>
             </div>
         </div>
     </div>
-    @endif
+
+    <!-- 6. 2-COLUMN SECTION (SALES STATICS CHART & RECENT TRANSACTIONS TABLE) -->
+    <div class="row g-3 mb-4">
+        <!-- Sales Statics -->
+        <div class="col-12 col-lg-6">
+            <div class="dp-panel-card h-100">
+                <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom border-secondary border-opacity-25">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="dp-panel-icon bg-warning-soft text-warning"><i class="fe fe-bar-chart"></i></span>
+                        <h5 class="dp-panel-title mb-0">Sales Statics</h5>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center gap-4 mb-3 fs-xs">
+                    <div>
+                        <span class="text-emerald fw-bold me-1">৳{{ number_format($thisMonthsSalesRevenue ?? 0, 0) }}</span>
+                        <span class="dp-badge-green">{{ $salesGrowthPct >= 0 ? '+'.$salesGrowthPct : $salesGrowthPct }}%</span>
+                        <span class="text-secondary d-block">Revenue</span>
+                    </div>
+                    <div>
+                        <span class="text-orange fw-bold me-1">৳{{ number_format($thisMonthsExpense ?? 0, 0) }}</span>
+                        <span class="dp-badge-red">{{ $expenseGrowthPct >= 0 ? '+'.$expenseGrowthPct : $expenseGrowthPct }}%</span>
+                        <span class="text-secondary d-block">Expense</span>
+                    </div>
+                </div>
+
+                <div id="sales_statics_chart" style="min-height: 250px;"></div>
+            </div>
+        </div>
+
+        <!-- Recent Transactions -->
+        <div class="col-12 col-lg-6">
+            <div class="dp-panel-card h-100">
+                <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom border-secondary border-opacity-25">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="dp-panel-icon bg-sky-soft text-sky"><i class="fe fe-list"></i></span>
+                        <h5 class="dp-panel-title mb-0">Recent Transactions</h5>
+                    </div>
+                    <a href="{{ route('sales.index') }}" class="dp-view-link">View All</a>
+                </div>
+
+                <!-- Table -->
+                <div class="table-responsive">
+                    <table class="table dp-table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Customer</th>
+                                <th>Status</th>
+                                <th class="text-end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($recentTransactions as $rt)
+                            <tr>
+                                <td class="fs-xs text-secondary">{{ $rt->created_at->format('d M Y') }}</td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="dp-user-avatar">{{ strtoupper(substr($rt->customer->name ?? 'C', 0, 1)) }}</div>
+                                        <div>
+                                            <b class="d-block fs-xs text-white">{{ $rt->customer->name ?? 'Walk-in Customer' }}</b>
+                                            <span class="text-secondary fs-xxs">#{{ $rt->id }}</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="dp-status-badge sb-completed">Completed</span></td>
+                                <td class="text-end fw-bold text-white fs-xs">৳{{ number_format($rt->payble, 0) }}</td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="4" class="text-center text-secondary py-3 fs-xs">No transactions available</td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 7. 3-COLUMN SECTION (TOP CUSTOMERS, TOP CATEGORIES, ORDER STATISTICS) -->
+    <div class="row g-3 mb-4">
+        <!-- Top Customers -->
+        <div class="col-12 col-lg-4">
+            <div class="dp-panel-card h-100">
+                <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom border-secondary border-opacity-25">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="dp-panel-icon bg-violet-soft text-violet"><i class="fe fe-users"></i></span>
+                        <h5 class="dp-panel-title mb-0">Top Customers</h5>
+                    </div>
+                    <a href="{{ route('customers.index') }}" class="dp-view-link">View All</a>
+                </div>
+                <div class="dp-list-wrap">
+                    @forelse($topCustomers as $tc)
+                    <div class="dp-list-item">
+                        <div class="dp-user-avatar lg">{{ strtoupper(substr($tc->name ?? 'C', 0, 1)) }}</div>
+                        <div class="flex-grow-1 min-w-0">
+                            <h6 class="dp-item-title mb-0 truncate">{{ $tc->name }}</h6>
+                            <span class="dp-item-sub">{{ $tc->phone ?? 'Customer' }}</span>
+                        </div>
+                    </div>
+                    @empty
+                    <p class="text-secondary text-center py-4 fs-xs">No customer data</p>
+                    @endforelse
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Categories -->
+        <div class="col-12 col-lg-4">
+            <div class="dp-panel-card h-100">
+                <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom border-secondary border-opacity-25">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="dp-panel-icon bg-amber-soft text-amber"><i class="fe fe-pie-chart"></i></span>
+                        <h5 class="dp-panel-title mb-0">Top Categories</h5>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center justify-content-around my-3">
+                    <div id="category_donut_chart" style="width: 120px; height: 120px;"></div>
+                    <div class="fs-xs space-y-1">
+                        @forelse($expenseBreakdown->take(3) as $eb)
+                        <div><span class="dp-legend-dot bg-warning"></span> {{ $eb->category_name }} <b class="d-block text-white">৳{{ number_format($eb->total, 0) }}</b></div>
+                        @empty
+                        <div><span class="dp-legend-dot bg-warning"></span> General <b class="d-block text-white">Categories</b></div>
+                        @endforelse
+                    </div>
+                </div>
+
+                <div class="pt-2 border-top border-secondary border-opacity-25 fs-xs text-secondary">
+                    <div class="d-flex justify-content-between py-1">
+                        <span>Total Number Of Categories</span>
+                        <b class="text-white">{{ $totalCategories ?? 0 }}</b>
+                    </div>
+                    <div class="d-flex justify-content-between py-1">
+                        <span>Total Number Of Products</span>
+                        <b class="text-white">{{ $totalProducts ?? 0 }}</b>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Order Statistics Heatmap -->
+        <div class="col-12 col-lg-4">
+            <div class="dp-panel-card h-100">
+                <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom border-secondary border-opacity-25">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="dp-panel-icon bg-sky-soft text-sky"><i class="fe fe-grid"></i></span>
+                        <h5 class="dp-panel-title mb-0">Order Statistics</h5>
+                    </div>
+                </div>
+                <div id="order_statistics_heatmap" style="min-height: 220px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 8. FOOTER -->
+    <div class="dp-footer d-flex flex-column flex-sm-row align-items-center justify-content-between gap-2 mt-4 pt-3 border-top border-secondary border-opacity-25 fs-xs text-secondary">
+        <span>2014 - {{ date('Y') }} &copy; <b>{{ $appName }}</b>. All Rights Reserved.</span>
+        <span>Designed &amp; Developed By <b class="text-white">Inoodex</b></span>
+    </div>
+
 </div>
 
+<!-- ULTRA PREMIUM CUSTOM STYLING -->
+<style>
+    .dreams-pos-theme {
+        --dp-bg: #f4f6fb;
+        --dp-card-bg: #ffffff;
+        --dp-border: rgba(15, 23, 42, 0.08);
+        --dp-text: #0f172a;
+        --dp-subtext: #64748b;
+        --dp-soft: #f1f5f9;
+        --dp-tabs-bg: #e2e8f0;
+        --dp-tab-active: #ffffff;
+        --dp-heading: #0f172a;
+        --dp-muted: #475569;
+        --dp-icon-bg: rgba(15, 23, 42, 0.05);
+        --dp-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
+        --dp-shadow-lg: 0 14px 32px rgba(15, 23, 42, 0.10);
+        --dp-shadow-xl: 0 18px 40px rgba(15, 23, 42, 0.14);
+        --dp-grad-end: rgba(255, 255, 255, 0.92);
+        --dp-grid: rgba(15, 23, 42, 0.08);
+        --dp-label: #64748b;
+        --dp-green: #059669;
+        --dp-red: #dc2626;
+        --dp-orange-ic: #ea580c;
+        --dp-teal-ic: #0d9488;
+        --dp-sky-ic: #0284c7;
+        --dp-rose-ic: #e11d48;
+        --dp-violet-ic: #7c3aed;
+        --dp-orange-txt: #ea580c;
+        --dp-teal-txt: #0f766e;
+        --dp-sky-txt: #0369a1;
+        --dp-rose-txt: #be123c;
+
+        font-family: 'Inter', sans-serif;
+        color: var(--dp-text);
+        padding: clamp(14px, 2vw, 24px);
+        padding-top: 5px;
+    }
+
+    html[data-layout-mode="dark"] .dreams-pos-theme {
+        --dp-bg: #0f172a;
+        --dp-card-bg: #151e32;
+        --dp-border: rgba(255, 255, 255, 0.08);
+        --dp-text: #f8fafc;
+        --dp-subtext: #94a3b8;
+        --dp-soft: #0b1120;
+        --dp-tabs-bg: #0f172a;
+        --dp-tab-active: #334155;
+        --dp-heading: #ffffff;
+        --dp-muted: #cbd5e1;
+        --dp-icon-bg: rgba(255, 255, 255, 0.06);
+        --dp-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        --dp-shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.35);
+        --dp-shadow-xl: 0 16px 36px rgba(0, 0, 0, 0.5);
+        --dp-grad-end: rgba(15, 23, 42, 0.95);
+        --dp-grid: rgba(255, 255, 255, 0.06);
+        --dp-label: #94a3b8;
+        --dp-green: #34d399;
+        --dp-red: #f87171;
+        --dp-orange-ic: #f97316;
+        --dp-teal-ic: #2dd4bf;
+        --dp-sky-ic: #38bdf8;
+        --dp-rose-ic: #fb7185;
+        --dp-violet-ic: #c4b5fd;
+        --dp-orange-txt: #ffedd5;
+        --dp-teal-txt: #ccfbf1;
+        --dp-sky-txt: #e0f2fe;
+        --dp-rose-txt: #ffe4e6;
+    }
+
+    body:has(.dreams-pos-theme) {
+        background-color: #f4f6fb !important;
+    }
+
+    html[data-layout-mode="dark"] body:has(.dreams-pos-theme) {
+        background-color: #0f172a !important;
+    }
+
+    .dp-welcome-title { font-weight: 800; font-size: 1.65rem; color: var(--dp-heading); letter-spacing: -0.5px; }
+    .dp-welcome-sub { font-size: 0.85rem; color: var(--dp-subtext); }
+
+    .dp-live-badge {
+        background: rgba(16, 185, 129, 0.12);
+        color: #34d399;
+        border: 1px solid rgba(16, 185, 129, 0.25);
+        font-size: 0.7rem;
+        font-weight: 700;
+        padding: 3px 10px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .dp-pulse-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background-color: #34d399;
+        box-shadow: 0 0 8px #34d399;
+        animation: pulse 1.8s infinite;
+    }
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+
+    .dp-date-badge {
+        background: var(--dp-card-bg);
+        border: 1px solid var(--dp-border);
+        border-radius: 10px;
+        padding: 8px 16px;
+        font-size: 0.8rem;
+        color: var(--dp-muted);
+        font-weight: 600;
+        box-shadow: var(--dp-shadow);
+    }
+
+    /* ULTRA PREMIUM ACTION CARDS WITH MINI SPARKLINES */
+    .dp-action-card {
+        border-radius: 20px;
+        padding: 18px;
+        position: relative;
+        overflow: hidden;
+        backdrop-filter: blur(12px);
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+        box-shadow: var(--dp-shadow-lg);
+    }
+    .dp-action-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--dp-shadow-xl);
+    }
+
+    .qa-card-orange {
+        background: linear-gradient(135deg, rgba(249, 115, 22, 0.22) 0%, var(--dp-grad-end) 100%);
+        border: 1px solid rgba(249, 115, 22, 0.4);
+    }
+    .qa-card-teal {
+        background: linear-gradient(135deg, rgba(13, 148, 136, 0.22) 0%, var(--dp-grad-end) 100%);
+        border: 1px solid rgba(13, 148, 136, 0.4);
+    }
+    .qa-card-sky {
+        background: linear-gradient(135deg, rgba(56, 189, 248, 0.22) 0%, var(--dp-grad-end) 100%);
+        border: 1px solid rgba(56, 189, 248, 0.4);
+    }
+    .qa-card-rose {
+        background: linear-gradient(135deg, rgba(244, 63, 94, 0.22) 0%, var(--dp-grad-end) 100%);
+        border: 1px solid rgba(244, 63, 94, 0.4);
+    }
+
+    .qa-tag { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; color: var(--dp-subtext); letter-spacing: 0.5px; }
+    .qa-val { font-weight: 900; font-size: 1.45rem; color: var(--dp-heading); }
+    .qa-subtext { font-size: 0.75rem; color: var(--dp-subtext); }
+
+    .qa-icon-box {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.15rem;
+    }
+    .ib-orange { background: rgba(249, 115, 22, 0.25); color: var(--dp-orange-ic); }
+    .ib-teal { background: rgba(13, 148, 136, 0.25); color: var(--dp-teal-ic); }
+    .ib-sky { background: rgba(56, 189, 248, 0.25); color: var(--dp-sky-ic); }
+    .ib-rose { background: rgba(244, 63, 94, 0.25); color: var(--dp-rose-ic); }
+
+    .qa-sparkline-wrap { height: 45px; margin-top: 5px; margin-bottom: -5px; }
+
+    .qa-growth-badge { font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 6px; }
+    .gb-orange { background: rgba(249, 115, 22, 0.2); color: var(--dp-orange-txt); }
+    .gb-teal { background: rgba(13, 148, 136, 0.2); color: var(--dp-teal-txt); }
+    .gb-sky { background: rgba(56, 189, 248, 0.2); color: var(--dp-sky-txt); }
+    .gb-rose { background: rgba(244, 63, 94, 0.2); color: var(--dp-rose-txt); }
+
+    .dp-btn-glow {
+        padding: 5px 12px;
+        border-radius: 8px;
+        font-size: 0.74rem;
+        font-weight: 800;
+        color: #fff;
+        text-decoration: none;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        transition: transform .2s ease, filter .2s ease;
+    }
+    .dp-btn-glow:hover { transform: scale(1.05); color: #fff; filter: brightness(1.15); }
+    .btn-orange { background: linear-gradient(135deg, #f97316, #ea580c); }
+    .btn-teal { background: linear-gradient(135deg, #0d9488, #0f766e); }
+    .btn-sky { background: linear-gradient(135deg, #0284c7, #0369a1); }
+    .btn-rose { background: linear-gradient(135deg, #e11d48, #be123c); }
+
+    /* METRIC CARDS & PANELS */
+    .dp-metric-card, .dp-panel-card {
+        background: var(--dp-card-bg);
+        border: 1px solid var(--dp-border);
+        border-radius: 18px;
+        padding: 18px;
+        box-shadow: var(--dp-shadow);
+    }
+    .dp-metric-val { font-weight: 900; font-size: 1.45rem; color: var(--dp-heading); margin-bottom: 2px; }
+    .dp-metric-sub { font-size: 0.78rem; color: var(--dp-subtext); font-weight: 600; }
+    .dp-m-icon-bg {
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        background: var(--dp-icon-bg);
+        color: var(--dp-heading);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+    }
+    .dp-badge-green { background: rgba(16, 185, 129, 0.15); color: var(--dp-green); padding: 3px 8px; border-radius: 6px; font-size: 0.72rem; font-weight: 700; }
+    .dp-badge-red { background: rgba(239, 68, 68, 0.15); color: var(--dp-red); padding: 3px 8px; border-radius: 6px; font-size: 0.72rem; font-weight: 700; }
+    .dp-view-link { font-size: 0.75rem; color: var(--dp-subtext); text-decoration: underline; font-weight: 600; }
+
+    .dp-panel-icon {
+        width: 32px; height: 32px; border-radius: 8px; background: var(--dp-icon-bg); color: var(--dp-sky-ic); display: inline-flex; align-items: center; justify-content: center; font-size: 0.95rem;
+    }
+    .dp-panel-title { font-weight: 800; font-size: 0.95rem; color: var(--dp-heading); }
+    .dp-tabs-wrap { display: flex; gap: 4px; background: var(--dp-tabs-bg); padding: 3px; border-radius: 8px; }
+    .dp-tab-btn { background: transparent; border: none; color: var(--dp-subtext); font-size: 0.72rem; font-weight: 700; padding: 4px 10px; border-radius: 6px; }
+    .dp-tab-btn.active { background: var(--dp-tab-active); color: var(--dp-heading); box-shadow: var(--dp-shadow); }
+
+    .dp-sub-kpi { background: var(--dp-soft); border: 1px solid var(--dp-border); border-radius: 12px; padding: 12px 8px; }
+    .dp-sk-label { font-size: 0.7rem; color: var(--dp-subtext); display: block; }
+    .dp-sk-val { font-weight: 800; font-size: 1.1rem; color: var(--dp-heading); }
+
+    .dp-list-wrap { display: flex; flex-direction: column; gap: 10px; }
+    .dp-list-item { display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 12px; background: var(--dp-soft); border: 1px solid var(--dp-border); }
+    .dp-list-item > .flex-grow-1 { flex: 1 1 auto; min-width: 0; }
+    .dp-list-item > .text-end { flex-shrink: 0; white-space: nowrap; }
+    .dp-item-img { width: 38px; height: 38px; border-radius: 10px; background: rgba(249, 115, 22, 0.15); color: var(--dp-orange-ic); display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
+    .dp-item-title { font-weight: 700; font-size: 0.82rem; color: var(--dp-heading); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .dp-item-sub { font-size: 0.72rem; color: var(--dp-subtext); display: block; }
+    .dp-stock-text { font-size: 0.6rem; color: var(--dp-subtext); display: block; text-transform: uppercase; letter-spacing: 0.02em; line-height: 1.2; }
+    .dp-list-item .text-end { display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 1px; }
+
+    .bg-rose-soft { background: rgba(244, 63, 94, 0.15); }
+    .text-rose { color: var(--dp-rose-ic); }
+    .bg-warning-soft { background: rgba(245, 158, 11, 0.15); }
+    .bg-emerald-soft { background: rgba(16, 185, 129, 0.15); }
+    .text-emerald { color: var(--dp-green); }
+    .bg-sky-soft { background: rgba(56, 189, 248, 0.15); }
+    .text-sky { color: var(--dp-sky-ic); }
+    .bg-violet-soft { background: rgba(167, 139, 250, 0.15); }
+    .text-violet { color: var(--dp-violet-ic); }
+    .dp-badge-dark { background: var(--dp-soft); color: var(--dp-subtext); font-weight: 600; font-size: 0.7rem; }
+
+    .dp-status-badge { padding: 3px 8px; border-radius: 999px; font-size: 0.68rem; font-weight: 700; }
+    .sb-completed { background: rgba(16, 185, 129, 0.2); color: var(--dp-green); }
+
+    .dp-table { --bs-table-bg: transparent; --bs-table-color: var(--dp-muted); }
+    .dp-table th { font-size: 0.7rem; text-transform: uppercase; color: var(--dp-subtext); border-bottom-color: var(--dp-border); }
+    .dp-table td { border-bottom-color: var(--dp-border); vertical-align: middle; }
+
+    .dp-user-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #6366f1, #3b82f6); color: #fff; font-weight: 800; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .dp-user-avatar.lg { width: 38px; height: 38px; font-size: 0.9rem; }
+    .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .fs-xxs { font-size: 0.68rem; }
+
+    /* Text color on light cards */
+    .dreams-pos-theme .text-white { color: var(--dp-heading); }
+    .dreams-pos-theme .dp-alert-banner .text-white { color: #fff; }
+    .dreams-pos-theme .dp-btn-glow .text-white,
+    .dreams-pos-theme .dp-user-avatar { color: #fff; }
+
+    /* MOBILE RESPONSIVE POLISH */
+    @media (max-width: 575.98px) {
+        .dreams-pos-theme {
+            padding: 12px 12px 20px;
+        }
+        .dp-welcome-title { font-size: 1.35rem; }
+        .dp-live-badge { font-size: 0.62rem; padding: 2px 8px; }
+        .dp-date-badge {
+            font-size: 0.68rem;
+            padding: 6px 10px;
+            max-width: 100%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .qa-val { font-size: 1.25rem; }
+        .dp-action-card, .dp-metric-card, .dp-panel-card { padding: 15px; }
+        .dp-action-card .d-flex.justify-content-between,
+        .dp-metric-card .d-flex.justify-content-between {
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .dp-chart-legend,
+        .d-flex.gap-4.mb-3.fs-xs { flex-wrap: wrap; gap: 6px 14px !important; }
+        .dp-panel-card .d-flex.align-items-center.justify-content-around { flex-wrap: wrap; gap: 8px; }
+        .dp-footer { text-align: center; gap: 4px !important; }
+        .dp-metric-val { font-size: 1.3rem; }
+        .dp-sk-val { font-size: 1rem; }
+        .dp-tabs-wrap { padding: 2px; }
+        .dp-tab-btn { font-size: 0.68rem; padding: 3px 8px; }
+        .dp-table { white-space: nowrap; }
+        .dp-table th, .dp-table td { padding: 0.45rem 0.3rem; font-size: 0.68rem; }
+        .dp-table .dp-user-avatar { width: 26px; height: 26px; font-size: 0.7rem; }
+        .dp-table td:nth-child(2) .fs-xs,
+        .dp-table td:nth-child(2) .fs-xxs {
+            display: block;
+            max-width: 130px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .dp-list-item { gap: 10px; padding: 8px; }
+        .dp-item-img { width: 34px; height: 34px; }
+    }
+
+    @media (min-width: 576px) and (max-width: 767.98px) {
+        .dp-action-card .d-flex.justify-content-between,
+        .dp-metric-card .d-flex.justify-content-between {
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+    }
+</style>
+
+@endsection
+
+@push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const monthlyRevData = @json($monthlyRevenue ?? []);
-    const yearlyRevData = @json($yearlyRevenue ?? []);
-    const projStatusData = @json($projectStatusCounts ?? []);
-    const projNames = @json($projectChartNames ?? []);
-    const projBudgets = @json($projectChartBudgets ?? []);
-    const projCosts = @json($projectChartCosts ?? []);
+    const monthlyRevData = @json(array_values($monthlyRevenue ?? []));
+    const monthlyPurchData = @json(array_values($monthlyPurchase ?? []));
+    const monthlyExpData = @json(array_values($monthlyExpense ?? []));
+    const monthlyProjData = @json(array_values($monthlyProjects ?? []));
+    const newCustPct = {{ $newCustomerPct ?? 50 }};
+    const retCustPct = {{ $returningCustomerPct ?? 50 }};
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const monthlyValues = months.map(m => monthlyRevData[m] || 0);
+    let charts = [];
 
-    const years = Object.keys(yearlyRevData).reverse();
-    const yearlyValues = years.map(y => yearlyRevData[y] || 0);
-
-    // 1. Monthly Sales Chart
-    const monthlyEl = document.querySelector('#monthly_sales_chart');
-    if (monthlyEl && typeof ApexCharts !== 'undefined') {
-        new ApexCharts(monthlyEl, {
-            series: [{ name: 'Sales Revenue (৳)', data: monthlyValues }],
-            chart: { type: 'bar', height: 320, toolbar: { show: false } },
-            colors: ['#7638ff'],
-            plotOptions: { bar: { borderRadius: 6, columnWidth: '55%' } },
-            dataLabels: { enabled: false },
-            xaxis: { categories: months },
-            yaxis: { labels: { formatter: val => '৳' + val.toLocaleString() } },
-            tooltip: { y: { formatter: val => '৳' + val.toLocaleString() } }
-        }).render();
+    function isDarkMode() {
+        return document.documentElement.getAttribute('data-layout-mode') === 'dark';
     }
 
-    // 2. Yearly Sales Chart
-    const yearlyEl = document.querySelector('#yearly_sales_chart');
-    if (yearlyEl && typeof ApexCharts !== 'undefined') {
-        new ApexCharts(yearlyEl, {
-            series: [{ name: 'Total Revenue (৳)', data: yearlyValues }],
-            chart: { type: 'area', height: 320, toolbar: { show: false } },
-            colors: ['#10b981'],
-            stroke: { curve: 'smooth', width: 3 },
-            fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.45, opacityTo: 0.05 } },
-            xaxis: { categories: years },
-            yaxis: { labels: { formatter: val => '৳' + val.toLocaleString() } },
-            tooltip: { y: { formatter: val => '৳' + val.toLocaleString() } }
-        }).render();
+    function themeColors() {
+        return {
+            mode: isDarkMode() ? 'dark' : 'light',
+            label: isDarkMode() ? '#94a3b8' : '#64748b',
+            grid: isDarkMode() ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.08)'
+        };
     }
 
-    // 3. Project Status Donut Chart
-    const projStatusEl = document.querySelector('#project_status_chart');
-    if (projStatusEl && typeof ApexCharts !== 'undefined') {
-        const statusLabels = Object.keys(projStatusData);
-        const statusSeries = Object.values(projStatusData);
-
-        new ApexCharts(projStatusEl, {
-            series: statusSeries.length ? statusSeries : [1],
-            labels: statusSeries.length ? statusLabels : ['No Projects'],
-            chart: { type: 'donut', height: 320 },
-            colors: ['#0dcaf0', '#198754', '#ffb000', '#dc3545'],
-            legend: { position: 'bottom' },
-            dataLabels: { enabled: true }
-        }).render();
+    function renderSparkline(elementId, dataArray, colorHex) {
+        const el = document.querySelector(elementId);
+        if (!el || typeof ApexCharts === 'undefined') return;
+        const data = dataArray && dataArray.length ? dataArray : [10, 15, 8, 22, 18, 25, 30];
+        const chart = new ApexCharts(el, {
+            series: [{ data: data }],
+            chart: {
+                type: 'area',
+                height: 45,
+                sparkline: { enabled: true },
+                background: 'transparent'
+            },
+            stroke: { curve: 'smooth', width: 2 },
+            fill: {
+                type: 'gradient',
+                gradient: {
+                    shadeIntensity: 1,
+                    opacityFrom: 0.45,
+                    opacityTo: 0.05,
+                    stops: [0, 100]
+                }
+            },
+            colors: [colorHex],
+            tooltip: { enabled: false }
+        });
+        charts.push(chart);
     }
 
-    // 4. Project Budget vs Costs Bar Chart
-    const projBudgetEl = document.querySelector('#project_budget_cost_chart');
-    if (projBudgetEl && typeof ApexCharts !== 'undefined') {
-        new ApexCharts(projBudgetEl, {
-            series: [
-                { name: 'Allocated Budget (৳)', data: projBudgets },
-                { name: 'Actual Expenses (৳)', data: projCosts }
-            ],
-            chart: { type: 'bar', height: 320, toolbar: { show: false } },
-            colors: ['#7638ff', '#ffb000'],
-            plotOptions: { bar: { horizontal: false, columnWidth: '50%', borderRadius: 4 } },
-            dataLabels: { enabled: false },
-            xaxis: { categories: projNames.length ? projNames : ['Sample Project'] },
-            yaxis: { labels: { formatter: val => '৳' + val.toLocaleString() } },
-            tooltip: { y: { formatter: val => '৳' + val.toLocaleString() } }
-        }).render();
+    function initCharts() {
+        if (typeof ApexCharts === 'undefined') return;
+        const tc = themeColors();
+
+        // 4 ACTION CARDS MINI SPARKLINES
+        renderSparkline('#sparkline_sales', monthlyRevData, '#f97316');
+        renderSparkline('#sparkline_purchase', monthlyPurchData, '#2dd4bf');
+        renderSparkline('#sparkline_service', monthlyProjData, '#38bdf8');
+        renderSparkline('#sparkline_expense', monthlyExpData, '#fb7185');
+
+        // 1. Sales & Purchase Stacked Bar Chart
+        const spChartEl = document.querySelector('#sales_purchase_chart');
+        if (spChartEl) {
+            charts.push(new ApexCharts(spChartEl, {
+                series: [{
+                    name: 'Total Sales',
+                    data: monthlyRevData.length ? monthlyRevData : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                }, {
+                    name: 'Total Purchase',
+                    data: monthlyPurchData.length ? monthlyPurchData : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                }],
+                chart: {
+                    type: 'bar',
+                    height: 280,
+                    stacked: true,
+                    toolbar: { show: false },
+                    background: 'transparent'
+                },
+                colors: ['#f97316', '#fbbf24'],
+                plotOptions: {
+                    bar: { columnWidth: '40%', borderRadius: 6 }
+                },
+                dataLabels: { enabled: false },
+                legend: { show: false },
+                grid: { borderColor: tc.grid },
+                xaxis: {
+                    categories: months,
+                    labels: { style: { colors: tc.label, fontSize: '11px' } }
+                },
+                yaxis: { labels: { style: { colors: tc.label, fontSize: '11px' } } },
+                theme: { mode: tc.mode }
+            }));
+        }
+
+        // 2. Customers Donut Chart
+        const donutEl = document.querySelector('#customers_donut_chart');
+        if (donutEl) {
+            charts.push(new ApexCharts(donutEl, {
+                series: [newCustPct, retCustPct],
+                chart: { type: 'donut', height: 110 },
+                colors: ['#0d9488', '#f97316'],
+                dataLabels: { enabled: false },
+                legend: { show: false },
+                stroke: { width: 0 }
+            }));
+        }
+
+        // 3. Sales Statics Dual Chart
+        const staticsEl = document.querySelector('#sales_statics_chart');
+        if (staticsEl) {
+            charts.push(new ApexCharts(staticsEl, {
+                series: [{
+                    name: 'Revenue',
+                    data: monthlyRevData.length ? monthlyRevData : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                }, {
+                    name: 'Expense',
+                    data: monthlyExpData.length ? monthlyExpData.map(v => -Math.abs(v)) : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                }],
+                chart: { type: 'bar', height: 250, toolbar: { show: false } },
+                colors: ['#7c3aed', '#ea580c'],
+                plotOptions: { bar: { columnWidth: '35%', borderRadius: 5, borderRadiusApplication: 'end', borderRadiusWhenStacked: 'last' } },
+                fill: {
+                    type: 'gradient',
+                    gradient: {
+                        type: 'vertical',
+                        shadeIntensity: 1,
+                        gradientToColors: ['#06b6d4', '#ef4444'],
+                        inverseColors: false,
+                        opacityFrom: 1,
+                        opacityTo: 0.9,
+                        stops: [0, 100]
+                    }
+                },
+                dataLabels: { enabled: false },
+                legend: { show: false },
+                grid: { borderColor: tc.grid },
+                xaxis: {
+                    categories: months,
+                    labels: { style: { colors: tc.label, fontSize: '10px' } }
+                },
+                yaxis: { labels: { style: { colors: tc.label, fontSize: '10px' } } }
+            }));
+        }
+
+        // 4. Category Donut Chart
+        const catDonutEl = document.querySelector('#category_donut_chart');
+        if (catDonutEl) {
+            charts.push(new ApexCharts(catDonutEl, {
+                series: [45, 30, 25],
+                chart: { type: 'donut', height: 120 },
+                colors: ['#f59e0b', '#f97316', '#38bdf8'],
+                dataLabels: { enabled: false },
+                legend: { show: false },
+                stroke: { width: 0 }
+            }));
+        }
+
+        // 5. Order Heatmap Matrix
+        const heatmapEl = document.querySelector('#order_statistics_heatmap');
+        if (heatmapEl) {
+            charts.push(new ApexCharts(heatmapEl, {
+                series: [
+                    { name: '10 Am', data: [20, 30, 40, 20, 50, 30, 40] },
+                    { name: '12 Am', data: [10, 40, 20, 60, 30, 20, 10] },
+                    { name: '2 Pm', data: [30, 20, 50, 40, 70, 40, 30] },
+                    { name: '4 Pm', data: [40, 50, 30, 30, 40, 50, 60] }
+                ],
+                chart: { type: 'heatmap', height: 220, toolbar: { show: false } },
+                colors: ['#f97316'],
+                dataLabels: { enabled: false },
+                xaxis: {
+                    categories: days,
+                    labels: { style: { colors: tc.label, fontSize: '10px' } }
+                },
+                yaxis: { labels: { style: { colors: tc.label, fontSize: '10px' } } },
+                grid: { borderColor: tc.grid }
+            }));
+        }
+
+        charts.forEach(function (c) {
+            try { c.render(); } catch (e) {}
+        });
     }
+
+    function destroyCharts() {
+        charts.forEach(function (c) {
+            try { c.destroy(); } catch (e) {}
+        });
+        charts = [];
+    }
+
+    initCharts();
+
+    // Re-render charts when the theme mode is toggled via the customizer
+    new MutationObserver(function () {
+        destroyCharts();
+        initCharts();
+    }).observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['data-layout-mode']
+    });
 });
 </script>
-@endsection
+@endpush

@@ -278,7 +278,7 @@ public function store(StoreSaleRequest $request)
 
             DB::commit();
 
-            return redirect()->route('sales.index', $sale->id);
+            return redirect()->route('sales.index', $sale->id)->with('success', 'Sale updated successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()->with(['error' => $e->getMessage()]);
@@ -295,7 +295,7 @@ public function store(StoreSaleRequest $request)
         if (!$service) abort(404);
         $service->delete();
 
-        return redirect()->back()->with(['success' => getNotify(3)]);
+        return redirect()->back()->with(['success' => 'Sale deleted successfully.']);
     }
 
     public function makeInvoice(Request $request, $serviceId)

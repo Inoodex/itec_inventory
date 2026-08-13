@@ -59,12 +59,7 @@
         .table-custom th,
         .table-custom td {
             white-space: nowrap;
-        }
-
-        .table-responsive {
-            overflow: visible !important;
-        }
-    </style>
+        }</style>
 @endpush
 
 @section('content')
@@ -98,6 +93,283 @@
             </div>
         </div>
         <!-- /Page Header -->
+
+        <!-- Main Modules Navigation (Serial Order) -->
+        @if(auth()->check() && auth()->user()->hasRole(['Super Admin', 'Admin', 'admin']))
+            <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold text-dark mb-0"><i class="fe fe-grid me-2 text-primary"></i>Main Modules</h5>
+                    <span class="text-muted small d-none d-sm-inline">Quick access to all business modules</span>
+                </div>
+                <div class="row g-3">
+                    <!-- 1. Project Management -->
+                    <div class="col-xl-3 col-lg-4 col-md-6 col-12">
+                        <a href="{{ route('projects.index') }}" class="text-decoration-none d-block h-100">
+                            <div class="card stat-card bg-white shadow-sm rounded-3 h-100 mb-0">
+                                <div class="card-body d-flex align-items-center">
+                                    <div
+                                        class="avatar avatar-lg bg-info-light text-info rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0">
+                                        <i class="fe fe-briefcase fs-4"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="fw-bold text-dark mb-0">Project Management</h6>
+                                        <span class="text-muted small">Projects, clients, items & costs</span>
+                                    </div>
+                                    <i class="fe fe-chevron-right text-muted ms-2 flex-shrink-0"></i>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- 2. Sales Management -->
+                    <div class="col-xl-3 col-lg-4 col-md-6 col-12">
+                        <a href="{{ route('sales.index') }}" class="text-decoration-none d-block h-100">
+                            <div class="card stat-card bg-white shadow-sm rounded-3 h-100 mb-0">
+                                <div class="card-body d-flex align-items-center">
+                                    <div
+                                        class="avatar avatar-lg bg-success-light text-success rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0">
+                                        <i class="fe fe-shopping-cart fs-4"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="fw-bold text-dark mb-0">Sales Management</h6>
+                                        <span class="text-muted small">Sales, invoices & returns</span>
+                                    </div>
+                                    <i class="fe fe-chevron-right text-muted ms-2 flex-shrink-0"></i>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- 3. Purchase -->
+                    <div class="col-xl-3 col-lg-4 col-md-6 col-12">
+                        <a href="{{ route('purchase.index') }}" class="text-decoration-none d-block h-100">
+                            <div class="card stat-card bg-white shadow-sm rounded-3 h-100 mb-0">
+                                <div class="card-body d-flex align-items-center">
+                                    <div
+                                        class="avatar avatar-lg bg-primary-light text-primary rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0">
+                                        <i class="fe fe-shopping-bag fs-4"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="fw-bold text-dark mb-0">Purchase</h6>
+                                        <span class="text-muted small">Purchase orders & records</span>
+                                    </div>
+                                    <i class="fe fe-chevron-right text-muted ms-2 flex-shrink-0"></i>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- 4. Stock -->
+                    <div class="col-xl-3 col-lg-4 col-md-6 col-12">
+                        <a href="{{ route('inventory.index') }}" class="text-decoration-none d-block h-100">
+                            <div class="card stat-card bg-white shadow-sm rounded-3 h-100 mb-0">
+                                <div class="card-body d-flex align-items-center">
+                                    <div
+                                        class="avatar avatar-lg bg-info-light text-info rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0">
+                                        <i class="fe fe-database fs-4"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="fw-bold text-dark mb-0">Stock</h6>
+                                        <span class="text-muted small">Inventory levels & serials</span>
+                                    </div>
+                                    <i class="fe fe-chevron-right text-muted ms-2 flex-shrink-0"></i>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- 5. Warranty -->
+                    <div class="col-xl-3 col-lg-4 col-md-6 col-12">
+                        <a href="{{ route('warranties.index') }}" class="text-decoration-none d-block h-100">
+                            <div class="card stat-card bg-white shadow-sm rounded-3 h-100 mb-0">
+                                <div class="card-body d-flex align-items-center">
+                                    <div
+                                        class="avatar avatar-lg bg-warning-light text-warning rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0">
+                                        <i class="fe fe-shield fs-4"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="fw-bold text-dark mb-0">Warranty</h6>
+                                        <span class="text-muted small">Claims, lookup & print</span>
+                                    </div>
+                                    <i class="fe fe-chevron-right text-muted ms-2 flex-shrink-0"></i>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- 6. Service -->
+                    <div class="col-xl-3 col-lg-4 col-md-6 col-12">
+                        <a href="{{ route('service.index') }}" class="text-decoration-none d-block h-100">
+                            <div class="card stat-card bg-white shadow-sm rounded-3 h-100 mb-0">
+                                <div class="card-body d-flex align-items-center">
+                                    <div
+                                        class="avatar avatar-lg bg-danger-light text-danger rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0">
+                                        <i class="fe fe-settings fs-4"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="fw-bold text-dark mb-0">Service</h6>
+                                        <span class="text-muted small">Service jobs & invoices</span>
+                                    </div>
+                                    <i class="fe fe-chevron-right text-muted ms-2 flex-shrink-0"></i>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- 7. Customer -->
+                    <div class="col-xl-3 col-lg-4 col-md-6 col-12">
+                        <a href="{{ route('customers.index') }}" class="text-decoration-none d-block h-100">
+                            <div class="card stat-card bg-white shadow-sm rounded-3 h-100 mb-0">
+                                <div class="card-body d-flex align-items-center">
+                                    <div
+                                        class="avatar avatar-lg bg-primary-light text-primary rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0">
+                                        <i class="fe fe-users fs-4"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="fw-bold text-dark mb-0">Customer</h6>
+                                        <span class="text-muted small">Customer records & PDF</span>
+                                    </div>
+                                    <i class="fe fe-chevron-right text-muted ms-2 flex-shrink-0"></i>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- 8. Vendor -->
+                    <div class="col-xl-3 col-lg-4 col-md-6 col-12">
+                        <a href="{{ route('vendors.index') }}" class="text-decoration-none d-block h-100">
+                            <div class="card stat-card bg-white shadow-sm rounded-3 h-100 mb-0">
+                                <div class="card-body d-flex align-items-center">
+                                    <div
+                                        class="avatar avatar-lg bg-info-light text-info rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0">
+                                        <i class="fe fe-truck fs-4"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="fw-bold text-dark mb-0">Vendor</h6>
+                                        <span class="text-muted small">Vendor records & PDF</span>
+                                    </div>
+                                    <i class="fe fe-chevron-right text-muted ms-2 flex-shrink-0"></i>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- 9. Accounts & Expenses -->
+                    <div class="col-xl-3 col-lg-4 col-md-6 col-12">
+                        <a href="{{ route('dailyExpenses.index') }}" class="text-decoration-none d-block h-100">
+                            <div class="card stat-card bg-white shadow-sm rounded-3 h-100 mb-0">
+                                <div class="card-body d-flex align-items-center">
+                                    <div
+                                        class="avatar avatar-lg bg-danger-light text-danger rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0">
+                                        <i class="fe fe-credit-card fs-4"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="fw-bold text-dark mb-0">Accounts & Expenses</h6>
+                                        <span class="text-muted small">Expenses, TA/DA, salary & bank</span>
+                                    </div>
+                                    <i class="fe fe-chevron-right text-muted ms-2 flex-shrink-0"></i>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- 10. Accounting & Bookkeeping -->
+                    <div class="col-xl-3 col-lg-4 col-md-6 col-12">
+                        <a href="{{ route('chart-of-accounts.index') }}" class="text-decoration-none d-block h-100">
+                            <div class="card stat-card bg-white shadow-sm rounded-3 h-100 mb-0">
+                                <div class="card-body d-flex align-items-center">
+                                    <div
+                                        class="avatar avatar-lg bg-primary-light text-primary rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0">
+                                        <i class="fe fe-book fs-4"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="fw-bold text-dark mb-0">Accounting & Bookkeeping</h6>
+                                        <span class="text-muted small">COA, journal, ledger & statements</span>
+                                    </div>
+                                    <i class="fe fe-chevron-right text-muted ms-2 flex-shrink-0"></i>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- 11. Billing & Payment -->
+                    <div class="col-xl-3 col-lg-4 col-md-6 col-12">
+                        <a href="{{ route('due-payments.index') }}" class="text-decoration-none d-block h-100">
+                            <div class="card stat-card bg-white shadow-sm rounded-3 h-100 mb-0">
+                                <div class="card-body d-flex align-items-center">
+                                    <div
+                                        class="avatar avatar-lg bg-success-light text-success rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0">
+                                        <i class="fe fe-dollar-sign fs-4"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="fw-bold text-dark mb-0">Billing & Payment</h6>
+                                        <span class="text-muted small">Due payments, bills, challans</span>
+                                    </div>
+                                    <i class="fe fe-chevron-right text-muted ms-2 flex-shrink-0"></i>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- 12. Company & Cost -->
+                    <div class="col-xl-3 col-lg-4 col-md-6 col-12">
+                        <a href="{{ route('company-details.index') }}" class="text-decoration-none d-block h-100">
+                            <div class="card stat-card bg-white shadow-sm rounded-3 h-100 mb-0">
+                                <div class="card-body d-flex align-items-center">
+                                    <div
+                                        class="avatar avatar-lg bg-warning-light text-warning rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0">
+                                        <i class="fe fe-folder fs-4"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="fw-bold text-dark mb-0">Company & Cost</h6>
+                                        <span class="text-muted small">Company details & cost config</span>
+                                    </div>
+                                    <i class="fe fe-chevron-right text-muted ms-2 flex-shrink-0"></i>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- 13. Reports & Analytics -->
+                    <div class="col-xl-3 col-lg-4 col-md-6 col-12">
+                        <a href="{{ route('sales.report') }}" class="text-decoration-none d-block h-100">
+                            <div class="card stat-card bg-white shadow-sm rounded-3 h-100 mb-0">
+                                <div class="card-body d-flex align-items-center">
+                                    <div
+                                        class="avatar avatar-lg bg-info-light text-info rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0">
+                                        <i class="fe fe-bar-chart-2 fs-4"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="fw-bold text-dark mb-0">Reports & Analytics</h6>
+                                        <span class="text-muted small">Sales, purchase & revenue reports</span>
+                                    </div>
+                                    <i class="fe fe-chevron-right text-muted ms-2 flex-shrink-0"></i>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- 14. System Security -->
+                    <div class="col-xl-3 col-lg-4 col-md-6 col-12">
+                        <a href="{{ route('users.index') }}" class="text-decoration-none d-block h-100">
+                            <div class="card stat-card bg-white shadow-sm rounded-3 h-100 mb-0">
+                                <div class="card-body d-flex align-items-center">
+                                    <div
+                                        class="avatar avatar-lg bg-danger-light text-danger rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0">
+                                        <i class="fe fe-lock fs-4"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="fw-bold text-dark mb-0">System Security</h6>
+                                        <span class="text-muted small">Users, roles & permissions</span>
+                                    </div>
+                                    <i class="fe fe-chevron-right text-muted ms-2 flex-shrink-0"></i>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        @endif
 
         <!-- Top Quick Metrics Bar -->
         <div class="row g-3 mb-4">
@@ -522,7 +794,7 @@
                             All</a>
                     </div>
                     <div class="card-body p-0" style="overflow: visible;">
-                        <div class="table-responsive" style="overflow: visible !important;">
+                        <div class="table-responsive">
                             <table class="table table-hover table-custom align-middle mb-0">
                                 <thead class="bg-light text-secondary fs-7 text-uppercase">
                                     <tr>
@@ -579,7 +851,7 @@
                             All</a>
                     </div>
                     <div class="card-body p-0" style="overflow: visible;">
-                        <div class="table-responsive" style="overflow: visible !important;">
+                        <div class="table-responsive">
                             <table class="table table-hover table-custom align-middle mb-0">
                                 <thead class="bg-light text-secondary fs-7 text-uppercase">
                                     <tr>

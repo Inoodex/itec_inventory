@@ -6,7 +6,7 @@
         <div class="page-header">
             <div class="row align-items-center">
                 <div class="col">
-                    <h3 class="page-title font-weight-bold" style="color: #1e293b;">Profit & Loss Statement (P&L)</h3>
+                    <h3 class="page-title font-weight-bold text-dark">Profit & Loss Statement (P&L)</h3>
                 </div>
                 <div class="col-auto">
                     <a href="{{ route('reports.profit-loss.pdf', ['from_date' => $fromDate, 'to_date' => $toDate]) }}"

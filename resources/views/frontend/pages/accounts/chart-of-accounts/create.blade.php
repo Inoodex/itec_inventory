@@ -6,7 +6,7 @@
     <div class="page-header">
         <div class="row align-items-center">
             <div class="col">
-                <h3 class="page-title font-weight-bold" style="color: #1e293b;">Create New Account</h3>
+                <h3 class="page-title font-weight-bold text-dark">Create New Account</h3>
                 <ul class="breadcrumb">
                     <li class="breadcrumb-item"><a href="{{ route('chart-of-accounts.index') }}">Chart of Accounts</a></li>
                     <li class="breadcrumb-item active">New Account</li>

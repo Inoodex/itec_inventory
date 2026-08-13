@@ -14,12 +14,18 @@
         transition: background-color 0.15s ease;
     }
     .table-custom tbody tr:hover {
-        background-color: #fcfbff !important;
+        background-color: transparent !important;
     }
     .badge-soft-info {
         background-color: rgba(13, 202, 240, 0.12) !important;
         color: #0dcaf0 !important;
         font-weight: 600;
+        transition: all 0.15s ease;
+    }
+    .badge-soft-info:hover {
+        background-color: rgba(13, 202, 240, 0.28) !important;
+        color: #0560a3 !important;
+        box-shadow: 0 0 0 3px rgba(13, 202, 240, 0.15);
     }
     .btn-action-icon {
         width: 32px;
@@ -41,11 +47,7 @@
     }
     .table-custom th, .table-custom td {
         white-space: nowrap;
-    }
-    .table-responsive {
-        overflow: visible !important;
-    }
-</style>
+    }</style>
 @endpush
 
 @section('content')
@@ -103,8 +105,8 @@
         </div>
 
         <div class="card-body p-0" style="overflow: visible;">
-            <div class="table-responsive" style="overflow: visible !important;">
-                <table class="table table-hover table-custom align-middle mb-0" id="permissionsTable">
+            <div class="table-responsive">
+                <table class="table table-custom align-middle mb-0" id="permissionsTable">
                     <thead class="bg-light text-secondary fs-7 text-uppercase">
                         <tr>
                             <th class="ps-4" style="width: 60px;">#</th>
