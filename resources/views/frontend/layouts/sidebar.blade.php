@@ -20,24 +20,19 @@
                     </a>
                 </li>
 
-                <!-- 2. Project & Client Management -->
-                @if($canView('Project Management'))
-                    <li class="menu-title"><span>Project Management</span></li>
+                                <!-- 15. Product Catalog -->
+                @if($canView('Product Management'))
+                    <li class="menu-title"><span>Product Catalog</span></li>
                     <li>
-                        <a href="{{ route('projects.index') }}" class="{{ request()->routeIs('projects.*') ? 'active' : '' }}">
-                            <i class="fe fe-briefcase"></i> <span>Projects List</span>
+                        <a href="{{ route('products.index') }}" class="{{ request()->routeIs('products.*') ? 'active' : '' }}">
+                            <i class="fe fe-box"></i> <span> Product List</span>
                         </a>
-                        <a href="{{ route('project-items.index') }}" class="{{ request()->routeIs('project-items.*') ? 'active' : '' }}">
-                            <i class="fe fe-plus-circle"></i> <span>Add Projects Items</span>
+                        <a href="{{ route('categories.index') }}" class="{{ request()->routeIs('categories.*') ? 'active' : '' }}">
+                            <i class="fe fe-layers"></i> <span> Category List</span>
                         </a>
-                        <a href="{{ route('project-costs.index') }}" class="{{ request()->routeIs('project-costs.*') ? 'active' : '' }}">
-                            <i class="fe fe-dollar-sign"></i> <span>Projects Cost List</span>
+                        <a href="{{ route('brands.index') }}" class="{{ request()->routeIs('brands.*') ? 'active' : '' }}">
+                            <i class="fe fe-tag"></i> <span> Brand List</span>
                         </a>
-                        @if($canView('Client Management'))
-                            <a href="{{ route('clients.index') }}" class="{{ request()->routeIs('clients.*') ? 'active' : '' }}">
-                                <i class="fe fe-users"></i> <span> Clients List</span>
-                            </a>
-                        @endif
                     </li>
                 @endif
 
@@ -238,7 +233,28 @@
                     </li>
                 @endif
 
-                <!-- 14. System Authorization & Users -->
+                  <!-- 2. Project & Client Management -->
+                @if($canView('Project Management'))
+                    <li class="menu-title"><span>Project Management</span></li>
+                    <li>
+                        <a href="{{ route('projects.index') }}" class="{{ request()->routeIs('projects.*') ? 'active' : '' }}">
+                            <i class="fe fe-briefcase"></i> <span>Projects List</span>
+                        </a>
+                        <a href="{{ route('project-items.index') }}" class="{{ request()->routeIs('project-items.*') ? 'active' : '' }}">
+                            <i class="fe fe-plus-circle"></i> <span>Add Projects Items</span>
+                        </a>
+                        <a href="{{ route('project-costs.index') }}" class="{{ request()->routeIs('project-costs.*') ? 'active' : '' }}">
+                            <i class="fe fe-dollar-sign"></i> <span>Projects Cost List</span>
+                        </a>
+                        @if($canView('Client Management'))
+                            <a href="{{ route('clients.index') }}" class="{{ request()->routeIs('clients.*') ? 'active' : '' }}">
+                                <i class="fe fe-users"></i> <span> Clients List</span>
+                            </a>
+                        @endif
+                    </li>
+                @endif
+
+                 <!-- 14. System Authorization & Users -->
                 @if($canView('Administration'))
                     <li class="menu-title"><span>System & Security</span></li>
                     <li>
@@ -250,22 +266,6 @@
                         </a>
                         <a href="{{ route('permission.index') }}" class="{{ request()->routeIs('permission.*') ? 'active' : '' }}">
                             <i class="fe fe-lock"></i> <span> Permissions</span>
-                        </a>
-                    </li>
-                @endif
-
-                <!-- 15. Product Catalog -->
-                @if($canView('Product Management'))
-                    <li class="menu-title"><span>Product Catalog</span></li>
-                    <li>
-                        <a href="{{ route('products.index') }}" class="{{ request()->routeIs('products.*') ? 'active' : '' }}">
-                            <i class="fe fe-box"></i> <span> Product List</span>
-                        </a>
-                        <a href="{{ route('categories.index') }}" class="{{ request()->routeIs('categories.*') ? 'active' : '' }}">
-                            <i class="fe fe-layers"></i> <span> Category List</span>
-                        </a>
-                        <a href="{{ route('brands.index') }}" class="{{ request()->routeIs('brands.*') ? 'active' : '' }}">
-                            <i class="fe fe-tag"></i> <span> Brand List</span>
                         </a>
                     </li>
                 @endif
