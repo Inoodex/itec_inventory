@@ -200,6 +200,27 @@
                     </li>
                 @endif
 
+                   <!-- 2. Project & Client Management -->
+                @if($canView('Project Management'))
+                    <li class="menu-title"><span>Project Management</span></li>
+                    <li>
+                        <a href="{{ route('projects.index') }}" class="{{ request()->routeIs('projects.*') ? 'active' : '' }}">
+                            <i class="fe fe-briefcase"></i> <span>Projects List</span>
+                        </a>
+                        <a href="{{ route('project-items.index') }}" class="{{ request()->routeIs('project-items.*') ? 'active' : '' }}">
+                            <i class="fe fe-plus-circle"></i> <span>Add Projects Items</span>
+                        </a>
+                        <a href="{{ route('project-costs.index') }}" class="{{ request()->routeIs('project-costs.*') ? 'active' : '' }}">
+                            <i class="fe fe-dollar-sign"></i> <span>Projects Cost List</span>
+                        </a>
+                        @if($canView('Client Management'))
+                            <a href="{{ route('clients.index') }}" class="{{ request()->routeIs('clients.*') ? 'active' : '' }}">
+                                <i class="fe fe-users"></i> <span> Clients List</span>
+                            </a>
+                        @endif
+                    </li>
+                @endif
+
                 <!-- 12. Cost & Company Details -->
                 @if($canView('Cost Management') || $canView('Company Management'))
                     <li class="menu-title"><span>Company & Cost Config</span></li>
@@ -230,27 +251,6 @@
                         <a href="{{ route('revenues.index') }}" class="{{ request()->routeIs('revenues.*') ? 'active' : '' }}">
                             <i class="fe fe-bar-chart-2"></i> <span> Revenue Report</span>
                         </a>
-                    </li>
-                @endif
-
-                  <!-- 2. Project & Client Management -->
-                @if($canView('Project Management'))
-                    <li class="menu-title"><span>Project Management</span></li>
-                    <li>
-                        <a href="{{ route('projects.index') }}" class="{{ request()->routeIs('projects.*') ? 'active' : '' }}">
-                            <i class="fe fe-briefcase"></i> <span>Projects List</span>
-                        </a>
-                        <a href="{{ route('project-items.index') }}" class="{{ request()->routeIs('project-items.*') ? 'active' : '' }}">
-                            <i class="fe fe-plus-circle"></i> <span>Add Projects Items</span>
-                        </a>
-                        <a href="{{ route('project-costs.index') }}" class="{{ request()->routeIs('project-costs.*') ? 'active' : '' }}">
-                            <i class="fe fe-dollar-sign"></i> <span>Projects Cost List</span>
-                        </a>
-                        @if($canView('Client Management'))
-                            <a href="{{ route('clients.index') }}" class="{{ request()->routeIs('clients.*') ? 'active' : '' }}">
-                                <i class="fe fe-users"></i> <span> Clients List</span>
-                            </a>
-                        @endif
                     </li>
                 @endif
 
