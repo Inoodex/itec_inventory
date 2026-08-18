@@ -96,10 +96,10 @@
                 <p class="text-muted small mb-0">Manage stock purchases, vendor payments, unit costs, and serial numbers</p>
             </div>
             <div>
-                <button type="button" class="btn btn-primary px-4 py-2 rounded-3 shadow-sm d-inline-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#add-purchase-modal">
+                <a href="{{ route('purchase.create') }}" class="btn btn-primary px-4 py-2 rounded-3 shadow-sm d-inline-flex align-items-center gap-2">
                     <i class="fe fe-plus-circle fs-6"></i>
                     <span>Add Purchase</span>
-                </button>
+                </a>
             </div>
         </div>
     </div>
@@ -299,9 +299,9 @@
                                         </div>
                                         <h5 class="fw-bold text-dark mb-1">No Purchase Records Found</h5>
                                         <p class="text-muted small mb-3">Add a new purchase to update product inventory and vendor bills</p>
-                                        <button type="button" class="btn btn-primary btn-sm px-3 rounded-2" data-bs-toggle="modal" data-bs-target="#add-purchase-modal">
+                                        <a href="{{ route('purchase.create') }}" class="btn btn-primary btn-sm px-3 rounded-2">
                                             Add Purchase
-                                        </button>
+                                        </a>
                                     </div>
                                 </td>
                             </tr>
@@ -315,119 +315,6 @@
                     {{ $purchases->links() }}
                 </div>
             @endif
-        </div>
-    </div>
-</div>
-
-<!-- Add Purchase Modal -->
-<div class="modal fade" id="add-purchase-modal" aria-hidden="true" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content border-0 shadow-lg rounded-3">
-            <div class="modal-header bg-light py-3 border-bottom">
-                <h5 class="modal-title fw-bold text-dark">Add New Purchase</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form method="POST" action="{{ route('purchase.store') }}">
-                @csrf
-                <div class="modal-body p-4">
-                    <div class="row g-3">
-                        <!-- Quick Barcode Scanner for Product -->
-                        <div class="col-12">
-                            <div class="p-2 px-3 bg-light rounded-3 border d-flex align-items-center gap-2">
-                                <i class="fas fa-barcode text-primary fs-5"></i>
-                                <div class="flex-grow-1">
-                                    <input type="text" id="purchase_barcode_scanner" class="form-control form-control-sm border-0 bg-transparent shadow-none" placeholder="Scan Vendor Product Barcode to Auto-Select..." autocomplete="off">
-                                </div>
-                                <span class="badge bg-white text-secondary border small px-2 py-1">Scanner Ready</span>
-                            </div>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label for="product_id" class="form-label fw-semibold small text-secondary">Product <span class="text-danger">*</span></label>
-                            <select class="form-select select2" name="product_id" id="product_id" required>
-                                <option value="">Select Product</option>
-                                @foreach ($products as $product)
-                                    <option value="{{ $product->id }}" data-barcode="{{ $product->barcode }}" data-is-serialized="{{ $product->is_serialized }}" title="{{ $product->name }}">
-                                        {{ Str::limit($product->name, 45) }} ({{ $product->model ?? 'N/A' }}) {{ $product->barcode ? '[' . $product->barcode . ']' : '' }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label for="vendor" class="form-label fw-semibold small text-secondary">Vendor <span class="text-danger">*</span></label>
-                            <select id="vendor" name="vendor_id" class="form-select select2" required>
-                                <option value="">Select Vendor</option>
-                                @foreach ($vendors as $vendor)
-                                    <option value="{{ $vendor->id }}">
-                                        {{ $vendor->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div class="col-12" id="serial-section" style="display: none;">
-                            <div class="p-3 bg-light rounded-3 border border-info-subtle">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <label class="form-label fw-semibold text-info mb-0">
-                                        <i class="fas fa-barcode me-1"></i> Scan Received Unit Serials
-                                    </label>
-                                    <span class="badge badge-soft-info" id="scanned-serials-count">0 Scanned</span>
-                                </div>
-                                
-                                <div class="input-group mb-2">
-                                    <span class="input-group-text bg-white"><i class="fas fa-qrcode text-info"></i></span>
-                                    <input type="text" id="scan_serial_input" class="form-control" placeholder="Scan each box serial barcode here..." autocomplete="off">
-                                    <button type="button" class="btn btn-outline-info" onclick="addScannedSerial()"><i class="fas fa-plus me-1"></i>Add</button>
-                                </div>
-
-                                <div id="serial-tags-container" class="d-flex flex-wrap gap-1 mb-2">
-                                    <!-- Scanned tags will appear here -->
-                                </div>
-
-                                <div id="serial-inputs-container" class="mb-2">
-                                    <!-- Hidden / text inputs -->
-                                </div>
-                                <small class="text-muted d-block" id="serial-help-text">Scan barcodes one-by-one or type and press Enter. Quantity will auto-increment.</small>
-                            </div>
-                        </div>
-
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold small text-secondary">Quantity <span class="text-danger">*</span></label>
-                            <input type="number" name="quantity" class="form-control" min="1" required placeholder="0">
-                        </div>
-
-                        <div class="col-md-4">
-                            <label for="unit_price" class="form-label fw-semibold small text-secondary">Unit Cost Price <span class="text-danger">*</span></label>
-                            <input type="number" step="0.01" name="unit_price" id="unit_price" class="form-control" required placeholder="0.00">
-                        </div>
-
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold small text-secondary">Sub Price</label>
-                            <input type="number" step="0.01" name="sub_price" class="form-control bg-light" readonly placeholder="0.00">
-                        </div>
-
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold small text-secondary">Payable Total Price <span class="text-danger">*</span></label>
-                            <input type="number" step="0.01" name="total_price" class="form-control" required placeholder="0.00">
-                        </div>
-
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold small text-secondary">Payment Amount <span class="text-danger">*</span></label>
-                            <input type="number" step="0.01" name="payment" class="form-control" required placeholder="0.00">
-                        </div>
-
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold small text-secondary">Outstanding Due</label>
-                            <input type="number" step="0.01" name="due" class="form-control bg-light" readonly placeholder="0.00">
-                        </div>
-                    </div>
-                </div>
-                <div class="d-flex justify-content-end gap-2 p-3 border-top bg-light">
-                    <button type="button" class="btn btn-light px-4 rounded-3 text-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary px-4 rounded-3 shadow-sm">Submit Purchase</button>
-                </div>
-            </form>
         </div>
     </div>
 </div>
@@ -513,183 +400,6 @@
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const quantityInput = document.querySelector('#add-purchase-modal input[name="quantity"]');
-        const unitPriceInput = document.querySelector('#add-purchase-modal input[name="unit_price"]');
-        const subPriceInput = document.querySelector('#add-purchase-modal input[name="sub_price"]');
-        const totalPriceInput = document.querySelector('#add-purchase-modal input[name="total_price"]');
-        const paymentInput = document.querySelector('#add-purchase-modal input[name="payment"]');
-        const dueInput = document.querySelector('#add-purchase-modal input[name="due"]');
-
-        function calculateSubPrice() {
-            if (!quantityInput || !unitPriceInput) return;
-            const quantity = parseFloat(quantityInput.value) || 0;
-            const unitPrice = parseFloat(unitPriceInput.value) || 0;
-            const sub = (quantity * unitPrice).toFixed(2);
-            if (subPriceInput) subPriceInput.value = sub;
-            if (totalPriceInput && !totalPriceInput.value) totalPriceInput.value = sub;
-        }
-
-        function calculateDue() {
-            if (!totalPriceInput || !paymentInput) return;
-            const total = parseFloat(totalPriceInput.value) || 0;
-            const payment = parseFloat(paymentInput.value) || 0;
-            if (dueInput) dueInput.value = (total - payment).toFixed(2);
-        }
-
-        if (quantityInput) quantityInput.addEventListener('input', calculateSubPrice);
-        if (unitPriceInput) unitPriceInput.addEventListener('input', calculateSubPrice);
-        if (totalPriceInput) totalPriceInput.addEventListener('input', calculateDue);
-        if (paymentInput) paymentInput.addEventListener('input', calculateDue);
-
-        // Barcode Product Auto-Select
-        const barcodeScanner = document.getElementById('purchase_barcode_scanner');
-        if (barcodeScanner) {
-            barcodeScanner.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    const code = this.value.trim();
-                    if (!code) return;
-
-                    fetch(`{{ route('products.barcode_lookup') }}?code=${encodeURIComponent(code)}`)
-                        .then(res => res.json())
-                        .then(data => {
-                            if (data.success && data.product) {
-                                $('#product_id').val(data.product.id).trigger('change');
-                                barcodeScanner.value = '';
-                                
-                                if (data.product.is_serialized) {
-                                    setTimeout(() => {
-                                        const scanSerial = document.getElementById('scan_serial_input');
-                                        if (scanSerial) scanSerial.focus();
-                                    }, 200);
-                                } else {
-                                    if (quantityInput) quantityInput.focus();
-                                }
-                            } else {
-                                alert(data.message || 'Product not found with this barcode.');
-                            }
-                        })
-                        .catch(() => alert('Error scanning barcode.'));
-                }
-            });
-        }
-
-        // Serial Scanner Array & Tag Manager
-        window.scannedSerials = [];
-
-        window.addScannedSerial = function() {
-            const input = document.getElementById('scan_serial_input');
-            if (!input) return;
-            const val = input.value.trim();
-            if (!val) return;
-
-            if (window.scannedSerials.includes(val)) {
-                alert(`Serial [${val}] is already added in this purchase!`);
-                input.value = '';
-                return;
-            }
-
-            window.scannedSerials.push(val);
-            input.value = '';
-            renderScannedSerials();
-            input.focus();
-        };
-
-        window.removeScannedSerial = function(index) {
-            window.scannedSerials.splice(index, 1);
-            renderScannedSerials();
-        };
-
-        function renderScannedSerials() {
-            const container = document.getElementById('serial-tags-container');
-            const inputsContainer = document.getElementById('serial-inputs-container');
-            const badge = document.getElementById('scanned-serials-count');
-            
-            if (!container || !inputsContainer) return;
-            
-            container.innerHTML = '';
-            inputsContainer.innerHTML = '';
-
-            window.scannedSerials.forEach((sn, idx) => {
-                // Tag UI
-                const tag = document.createElement('span');
-                tag.className = 'badge bg-white text-dark border px-2 py-1 fs-7 d-inline-flex align-items-center gap-1';
-                tag.innerHTML = `<span><i class="fas fa-barcode text-info me-1"></i>${sn}</span> <a href="javascript:void(0)" onclick="removeScannedSerial(${idx})" class="text-danger ms-1 fw-bold">&times;</a>`;
-                container.appendChild(tag);
-
-                // Hidden Input for submission
-                const hiddenInput = document.createElement('input');
-                hiddenInput.type = 'hidden';
-                hiddenInput.name = 'serial_numbers[]';
-                hiddenInput.value = sn;
-                inputsContainer.appendChild(hiddenInput);
-            });
-
-            if (badge) badge.innerText = `${window.scannedSerials.length} Scanned`;
-            
-            // Auto update quantity input to match scanned serials count
-            if (quantityInput && window.scannedSerials.length > 0) {
-                quantityInput.value = window.scannedSerials.length;
-                calculateSubPrice();
-            }
-        }
-
-        const scanSerialInput = document.getElementById('scan_serial_input');
-        if (scanSerialInput) {
-            scanSerialInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    addScannedSerial();
-                }
-            });
-        }
-
-        // Serial Number UI Logic on product change
-        const serialSection = document.getElementById('serial-section');
-        const productSelect = document.getElementById('product_id');
-
-        function updateSerialUI() {
-            if (!productSelect || !serialSection) return;
-            const selectedOption = productSelect.options[productSelect.selectedIndex];
-            const isSerialized = selectedOption ? selectedOption.getAttribute('data-is-serialized') == '1' : false;
-
-            if (isSerialized) {
-                serialSection.style.display = 'block';
-            } else {
-                serialSection.style.display = 'none';
-                window.scannedSerials = [];
-                renderScannedSerials();
-            }
-        }
-
-        if (productSelect) productSelect.addEventListener('change', updateSerialUI);
-
-        // Fetch Latest Product Price via AJAX
-        if (typeof $ !== 'undefined') {
-            $('#product_id').on('change', function() {
-                var productId = $(this).val();
-                if (productId) {
-                    var urlTemplate = "{{ route('purchase.latest_price', ':id') }}";
-                    var url = urlTemplate.replace(':id', productId);
-                    $.ajax({
-                        url: url,
-                        type: 'GET',
-                        success: function(response) {
-                            $('#unit_price').val(response.price || 0);
-                            calculateSubPrice();
-                        },
-                        error: function() {
-                            $('#unit_price').val(0);
-                        }
-                    });
-                }
-            });
-        }
-    });
-</script>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
         @foreach ($purchases as $purchase)
             const qInput_{{ $purchase->id }} = document.getElementById('edit-quantity-{{ $purchase->id }}');
             const uInput_{{ $purchase->id }} = document.getElementById('edit-unit_price-{{ $purchase->id }}');
@@ -721,3 +431,4 @@
 </script>
 @endpush
 @endsection
+

@@ -8,6 +8,7 @@ use App\Models\Purchase;
 use App\Models\Inventory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use App\Http\Requests\StorePurchaseRequest;
 use App\Services\PurchaseService;
 use Carbon\Carbon;
@@ -64,11 +65,14 @@ class PurchaseController extends Controller
      */
     public function create()
     {
-        //
+        $products = Product::with('latestPurchase')->latest()->get();
+        $vendors = Vendor::latest()->get();
+
+        return view('frontend.pages.purchase.create', compact('products', 'vendors'));
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store a newly created resource in storage (single item modal/API fallback).
      */
     public function store(StorePurchaseRequest $request)
     {
@@ -89,7 +93,89 @@ class PurchaseController extends Controller
         }
     }
 
+    /**
+     * Store batch/multi-item purchase from the dedicated create page.
+     */
+    public function storeBatch(Request $request)
+    {
+        $validated = $request->validate([
+            'vendor_id' => 'required|exists:vendors,id',
+            'purchase_date' => 'nullable|date',
+            'items' => 'required|array|min:1',
+            'items.*.product_id' => 'required|exists:products,id',
+            'items.*.quantity' => 'required|numeric|min:1',
+            'items.*.unit_price' => 'required|numeric|min:0',
+            'items.*.serial_numbers' => 'nullable|array',
+            'items.*.serial_numbers.*' => 'string|max:100',
+            'discount' => 'nullable|numeric|min:0',
+            'payment' => 'nullable|numeric|min:0',
+        ]);
 
+        try {
+            DB::beginTransaction();
+
+            $vendorId = $validated['vendor_id'];
+            $items = $validated['items'];
+            $totalPayment = (float)($request->payment ?? 0);
+            $totalDiscount = (float)($request->discount ?? 0);
+
+            // Compute total gross amount
+            $grossTotal = 0;
+            foreach ($items as $item) {
+                $grossTotal += ((float)$item['unit_price'] * (int)$item['quantity']);
+            }
+
+            $netTotal = max(0, $grossTotal - $totalDiscount);
+            $remainingPayment = min($totalPayment, $netTotal);
+
+            // Process each item purchase
+            foreach ($items as $item) {
+                $itemQty = (int)$item['quantity'];
+                $unitPrice = (float)$item['unit_price'];
+                $itemGross = $unitPrice * $itemQty;
+
+                // Allocate discount proportionally if any
+                $itemDiscount = $grossTotal > 0 ? ($itemGross / $grossTotal) * $totalDiscount : 0;
+                $itemNet = max(0, $itemGross - $itemDiscount);
+
+                // Allocate payment
+                $itemPayment = min($remainingPayment, $itemNet);
+                $remainingPayment -= $itemPayment;
+                $itemDue = max(0, $itemNet - $itemPayment);
+
+                $purchaseData = [
+                    'product_id' => $item['product_id'],
+                    'vendor_id' => $vendorId,
+                    'quantity' => $itemQty,
+                    'unit_price' => $unitPrice,
+                    'sub_price' => $itemGross,
+                    'total_price' => $itemNet,
+                    'payment' => $itemPayment,
+                    'due' => $itemDue,
+                    'serial_numbers' => $item['serial_numbers'] ?? [],
+                ];
+
+                $this->purchaseService->createPurchase($purchaseData);
+            }
+
+            DB::commit();
+
+            return redirect()->route('purchase.index')
+                ->with('success', 'Purchases created and inventory updated successfully.');
+
+        } catch (\RuntimeException $e) {
+            DB::rollBack();
+            return redirect()->back()
+                ->with('error', $e->getMessage())
+                ->withInput();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Batch purchase error: ' . $e->getMessage());
+            return redirect()->back()
+                ->with('error', 'An unexpected error occurred: ' . $e->getMessage())
+                ->withInput();
+        }
+    }
 
     /**
      * Display the specified resource.
@@ -120,10 +206,8 @@ class PurchaseController extends Controller
             'total_price' => 'required|numeric|min:0',
             'payment'     => 'required|numeric|min:0',
             'due'         => 'required|numeric|min:0',
-            'vendor_id'         => 'required|exists:vendors,id',
+            'vendor_id'   => 'required|exists:vendors,id',
         ]);
-
-    
 
         $purchase = Purchase::findOrFail($purchase->id);
         $inventory = Inventory::where('product_id', $purchase->product_id)->first();
@@ -131,8 +215,8 @@ class PurchaseController extends Controller
             $inventory->current_stock -= $purchase->quantity;
             $inventory->current_stock += $request->quantity;
             $inventory->update();        
-        }else{
-            $newInventory  = new Inventory();
+        } else {
+            $newInventory = new Inventory();
             $newInventory->product_id = $request->product_id;
             $newInventory->current_stock = $request->quantity;
             $newInventory->opening_stock = $request->quantity;
@@ -146,14 +230,13 @@ class PurchaseController extends Controller
         $purchase->total_price = $request->total_price;
         $purchase->payment     = $request->payment;
         $purchase->due         = $request->due;
-        $purchase->vendor_id         = $request->vendor_id;    
+        $purchase->vendor_id   = $request->vendor_id;    
         $purchase->updated_by  = Auth::id();
 
         $purchase->update();
 
         return redirect()->back()->with('success', 'Purchase updated and inventory adjusted successfully.');
     }
-
 
     /**
      * Remove the specified resource from storage.
@@ -176,9 +259,6 @@ class PurchaseController extends Controller
 
         return response()->json(['price' => $price]);
     }
-
-
-
 
     public function reportIndex(Request $request)
     {
@@ -205,7 +285,6 @@ class PurchaseController extends Controller
 
         return view('frontend.pages.report.purchase.index', compact('purchases', 'products', 'vendors'));
     }
-
 
     public function report(Request $request)
     {
@@ -277,5 +356,4 @@ class PurchaseController extends Controller
 
         return $query;
     }
-
 }

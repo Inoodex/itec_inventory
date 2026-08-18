@@ -66,6 +66,7 @@ Route::middleware(['auth', 'role:Super Admin'])->group(function () {
     Route::resource('warranties', WarrantyController::class);
    
 
+    Route::post('purchase/store-batch', [PurchaseController::class, 'storeBatch'])->name('purchase.store.batch');
     Route::resource('purchase', PurchaseController::class);
     Route::get('purchase/latest-price/{id}', [PurchaseController::class, 'getLatestPrice'])->name('purchase.latest_price');
 
@@ -214,4 +215,5 @@ Route::middleware(['auth', 'role:Super Admin'])->group(function () {
             Route::post('fiscal-years/{fiscalYear}/close', [FiscalYearController::class, 'closeYear'])->name('fiscal-years.close');
         });
 });
+
 

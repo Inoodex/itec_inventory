@@ -56,6 +56,9 @@
                 @if($canView('Purchase Management'))
                     <li class="menu-title"><span>Purchases</span></li>
                     <li>
+                        <a href="{{ route('purchase.create') }}" class="{{ request()->routeIs('purchase.create') ? 'active' : '' }}">
+                            <i class="fe fe-plus-circle"></i> <span> Add Purchase</span>
+                        </a>
                         <a href="{{ route('purchase.index') }}" class="{{ request()->routeIs('purchase.index') ? 'active' : '' }}">
                             <i class="fe fe-shopping-cart"></i> <span> Purchase List</span>
                         </a>
@@ -343,3 +346,4 @@ document.addEventListener('DOMContentLoaded', function () {
     setTimeout(scrollToActiveSidebar, 350);
 });
 </script>
+
