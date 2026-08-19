@@ -25,6 +25,7 @@ Route::middleware(['auth', 'role:Super Admin|Employee'])->group(function () {
 
     // Dashboard - now accessible by both roles
     Route::get('/', [FrontendController::class, 'index'])->name('index');
+    Route::get('/dashboard', [FrontendController::class, 'index'])->name('dashboard');
 
     // Employee TA/DA section (they need this too)
     Route::prefix('employee')->name('employee.')->group(function () {
@@ -215,5 +216,7 @@ Route::middleware(['auth', 'role:Super Admin'])->group(function () {
             Route::post('fiscal-years/{fiscalYear}/close', [FiscalYearController::class, 'closeYear'])->name('fiscal-years.close');
         });
 });
+
+
 
 

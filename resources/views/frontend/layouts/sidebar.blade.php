@@ -1,7 +1,7 @@
 @php
     $canView = function($permission) {
         if (!auth()->check()) {
-            return true;
+            return false;
         }
         $user = auth()->user();
         return $user->hasRole(['Super Admin', 'Admin', 'admin']) || $user->can($permission);

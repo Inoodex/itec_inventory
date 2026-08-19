@@ -1,31 +1,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description"
-        content="Kanakku provides clean Admin Templates for managing Sales, Payment, Invoice, Accounts and Expenses in HTML, Bootstrap 5, ReactJs, Angular, VueJs and Laravel.">
-    <meta name="keywords"
-        content="admin, estimates, bootstrap, business, corporate, creative, management, minimal, modern, accounts, invoice, html5, responsive, CRM, Projects">
-    <meta name="author" content="Dreamguys - Bootstrap Admin Template">
-    <!-- Twitter -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:site" content="@dreamstechnologies">
-    <meta name="twitter:title" content="FInoodexInventory">
-    <meta name="twitter:description"
-        content="Kanakku is a Sales, Invoices & Accounts Admin template for Accountant or Companies/Offices with various features for all your needs. Try Demo and Buy Now.">
-    <meta name="twitter:image" content="../../assets/img/kanakku.html">
-    <meta name="twitter:image:alt" content="Kanakku">
 
-    <!-- Facebook -->
-    <meta property="og:url" content="https://kanakku.dreamstechnologies.com/">
-    <meta property="og:title" content="FInoodexInventory">
-    <meta property="og:description"
-        content="Kanakku is a Sales, Invoices & Accounts Admin template for Accountant or Companies/Offices with various features for all your needs. Try Demo and Buy Now.">
-    <meta property="og:image" content="../../assets/img/kanakku.html">
-    <meta property="og:image:secure_url" content="../../assets/img/kanakku.html">
-    <meta property="og:image:type" content="image/png">
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="600">
-    <title>Inoodex Inventory</title>
+    <title>Itec Inventory</title>
 
     <!-- Favicon -->
     <link rel="shortcut icon" href="{{ asset('assets') }}/img/logo.jpg">

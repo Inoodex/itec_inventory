@@ -18,6 +18,11 @@ use Illuminate\Support\Facades\Cache;
 
 class FrontendController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
     public function index()
     {
         $user = auth()->user();
