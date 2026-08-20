@@ -334,7 +334,7 @@
         </form>
 
         <div class="login-footer">
-            &copy; {{ date('Y') }} Inoodex Inventory. All rights reserved.
+            &copy; {{ date('Y') }} Itec Inventory. All rights reserved.
         </div>
     </div>
 
