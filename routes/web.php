@@ -20,6 +20,10 @@ use Illuminate\Support\Facades\{Auth, Route};
 
 Auth::routes(['register' => false, 'reset' => false, 'verify' => false]);
 
+// Legacy / alias redirects
+Route::redirect('/admin/dashboard', '/');
+Route::redirect('/home', '/');
+
 // 1. DASHBOARD + EMPLOYEE-ONLY ROUTES → accessible by Super Admin AND Employee
 Route::middleware(['auth', 'role:Super Admin|Employee'])->group(function () {
 
