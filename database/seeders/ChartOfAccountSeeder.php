@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\BankDetail;
 use App\Models\ChartOfAccount;
 use App\Models\FiscalYear;
+use App\Models\JournalEntryItem;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -12,6 +13,8 @@ class ChartOfAccountSeeder extends Seeder
 {
     /**
      * Run the database seeds.
+     * Seeds the simplified 2-tier Chart of Accounts (14 core accounts)
+     * and cleanly consolidates/removes legacy bloated accounts from live databases.
      */
     public function run(): void
     {
@@ -195,16 +198,7 @@ class ChartOfAccountSeeder extends Seeder
                 ],
             ];
 
-            // Clean up old unused intermediate header accounts
-            $keepCodes = ['1000', '1110', '1120', '1130', '1140', '1210', '2000', '2110', '2120', '3000', '3100', '3200', '4000', '4110', '4120', '4140', '5000', '5110', '5210', '5230'];
-            
-            // Delete old unused accounts that have no journal items and no bank detail
-            ChartOfAccount::whereNotIn('account_code', $keepCodes)
-                ->whereNull('bank_detail_id')
-                ->whereDoesntHave('journalItems')
-                ->delete();
-
-            // Inserter / updater
+            // 3. Upsert Root & Child Accounts
             $insertNode = function ($node, $parentId = null) use (&$insertNode) {
                 $account = ChartOfAccount::updateOrCreate(
                     ['account_code' => $node['code']],
@@ -231,7 +225,7 @@ class ChartOfAccountSeeder extends Seeder
                 $insertNode($rootAccount);
             }
 
-            // 3. Auto-sync existing BankDetail records under Bank & Mobile Accounts (1120)
+            // 4. Auto-sync existing BankDetail records under Bank & Mobile Accounts (1120)
             $bankParent = ChartOfAccount::where('account_code', '1120')->first();
             if ($bankParent) {
                 $bankDetails = BankDetail::all();
@@ -252,6 +246,74 @@ class ChartOfAccountSeeder extends Seeder
                     );
                 }
             }
+
+            // 5. Re-map legacy journal entry items to simplified accounts (Protects all transaction data!)
+            $legacyMapping = [
+                '1100' => '1000',
+                '1111' => '1110', // Petty Cash -> Cash in Hand
+                '1112' => '1110', // Cash Register -> Cash in Hand
+                '1121' => '1120',
+                '1122' => '1120',
+                '1123' => '1120',
+                '1131' => '1130', // Trade Debtors -> Accounts Receivable
+                '1132' => '1130',
+                '1141' => '1140', // Merchandise -> Stock
+                '1142' => '1140',
+                '1200' => '1000',
+                '1211' => '1210', // Computers -> Office Equipment
+                '1212' => '1210', // Furniture -> Office Equipment
+                '2100' => '2000',
+                '2111' => '2110', // Creditors -> Accounts Payable
+                '2112' => '2110',
+                '2121' => '2120', // VAT -> VAT Payable
+                '2122' => '2120',
+                '2200' => '2000',
+                '3110' => '3100', // Capital -> Owner Capital
+                '3120' => '3100',
+                '4100' => '4000',
+                '4111' => '4110', // Retail -> Sales Revenue
+                '4112' => '4110', // Wholesale -> Sales Revenue
+                '4121' => '4120', // Project Income -> Service & Project
+                '4122' => '4120',
+                '4130' => '4140',
+                '4131' => '4140',
+                '5100' => '5000',
+                '5111' => '5110', // Purchases -> COGS
+                '5112' => '5110',
+                '5200' => '5000',
+                '5211' => '5210', // Basic Salary -> Salaries
+                '5212' => '5210', // TA/DA -> Salaries
+                '5220' => '5230', // Rent -> Office Expenses
+                '5221' => '5230',
+                '5231' => '5230', // Supplies -> Office Expenses
+                '5232' => '5230', // Utilities -> Office Expenses
+                '5233' => '5230', // Misc -> Office Expenses
+            ];
+
+            foreach ($legacyMapping as $oldCode => $newCode) {
+                $oldAcc = ChartOfAccount::where('account_code', $oldCode)->first();
+                $newAcc = ChartOfAccount::where('account_code', $newCode)->first();
+
+                if ($oldAcc && $newAcc && $oldAcc->id !== $newAcc->id) {
+                    JournalEntryItem::where('account_id', $oldAcc->id)
+                        ->update(['account_id' => $newAcc->id]);
+                }
+            }
+
+            // 6. Permanently delete all old redundant accounts from live database
+            $keepCodes = [
+                '1000', '1110', '1120', '1130', '1140', '1210',
+                '2000', '2110', '2120',
+                '3000', '3100', '3200',
+                '4000', '4110', '4120', '4140',
+                '5000', '5110', '5210', '5230'
+            ];
+
+            // Safely delete accounts not in keep list and not a linked bank account
+            ChartOfAccount::whereNotIn('account_code', $keepCodes)
+                ->whereNull('bank_detail_id')
+                ->where('level', '!=', 3) // Protect custom level 3 bank/MFS accounts
+                ->delete();
         });
     }
 }
