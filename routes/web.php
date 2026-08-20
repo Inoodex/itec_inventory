@@ -145,6 +145,7 @@ Route::middleware(['auth', 'role:Super Admin'])->group(function () {
     Route::get('purchase/report', [PurchaseController::class, 'report'])->name('purchase.report.get');
     Route::get('purchase/report/pdf', [PurchaseController::class, 'reportPdf'])->name('purchase.report.pdf');
     Route::get('sales-report', [SalesController::class, 'report'])->name('sales.report');
+    Route::get('sales-report/pdf', [SalesController::class, 'reportPdf'])->name('sales.report.pdf');
     Route::get('/revenues/pdf', [RevenueController::class, 'downloadPdf'])->name('revenues.pdf');
     Route::get('/revenues', [RevenueController::class, 'index'])->name('revenues.index');
     Route::post('/revenues/generate', [RevenueController::class, 'generate'])->name('revenues.generate');
