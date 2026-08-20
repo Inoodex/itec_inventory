@@ -30,10 +30,9 @@ class ChartOfAccountSeeder extends Seeder
                 ]
             );
 
-            // Set any other fiscal year active to false if exists
             FiscalYear::where('id', '!=', $fiscalYear->id)->update(['is_active' => false]);
 
-            // 2. Define Master Hierarchical Chart of Accounts
+            // 2. Define Clean Simplified 2-Tier Chart of Accounts
             $accounts = [
                 // ==================== ASSETS (1000) ====================
                 [
@@ -44,71 +43,39 @@ class ChartOfAccountSeeder extends Seeder
                     'is_system' => true,
                     'children' => [
                         [
-                            'code' => '1100',
-                            'name' => 'Current Assets',
+                            'code' => '1110',
+                            'name' => 'Cash in Hand',
                             'type' => 'asset',
                             'level' => 2,
                             'is_system' => true,
-                            'children' => [
-                                [
-                                    'code' => '1110',
-                                    'name' => 'Cash in Hand',
-                                    'type' => 'asset',
-                                    'level' => 3,
-                                    'is_system' => true,
-                                ],
-                                [
-                                    'code' => '1120',
-                                    'name' => 'Bank Accounts',
-                                    'type' => 'asset',
-                                    'level' => 3,
-                                    'is_system' => true,
-                                ],
-                                [
-                                    'code' => '1130',
-                                    'name' => 'Accounts Receivable (Debtors)',
-                                    'type' => 'asset',
-                                    'level' => 3,
-                                    'is_system' => true,
-                                ],
-                                [
-                                    'code' => '1140',
-                                    'name' => 'Inventory Asset / Merchandise',
-                                    'type' => 'asset',
-                                    'level' => 3,
-                                    'is_system' => true,
-                                ],
-                                [
-                                    'code' => '1150',
-                                    'name' => 'Employee Advance & Loans',
-                                    'type' => 'asset',
-                                    'level' => 3,
-                                    'is_system' => true,
-                                ],
-                            ],
                         ],
                         [
-                            'code' => '1200',
-                            'name' => 'Fixed Assets',
+                            'code' => '1120',
+                            'name' => 'Bank & Mobile Accounts',
                             'type' => 'asset',
                             'level' => 2,
                             'is_system' => true,
-                            'children' => [
-                                [
-                                    'code' => '1210',
-                                    'name' => 'Office Equipment & Machinery',
-                                    'type' => 'asset',
-                                    'level' => 3,
-                                    'is_system' => false,
-                                ],
-                                [
-                                    'code' => '1220',
-                                    'name' => 'Furniture & Fixtures',
-                                    'type' => 'asset',
-                                    'level' => 3,
-                                    'is_system' => false,
-                                ],
-                            ],
+                        ],
+                        [
+                            'code' => '1130',
+                            'name' => 'Accounts Receivable (Customer Dues)',
+                            'type' => 'asset',
+                            'level' => 2,
+                            'is_system' => true,
+                        ],
+                        [
+                            'code' => '1140',
+                            'name' => 'Inventory Asset / Stock',
+                            'type' => 'asset',
+                            'level' => 2,
+                            'is_system' => true,
+                        ],
+                        [
+                            'code' => '1210',
+                            'name' => 'Office Equipment & Fixed Assets',
+                            'type' => 'asset',
+                            'level' => 2,
+                            'is_system' => false,
                         ],
                     ],
                 ],
@@ -122,50 +89,18 @@ class ChartOfAccountSeeder extends Seeder
                     'is_system' => true,
                     'children' => [
                         [
-                            'code' => '2100',
-                            'name' => 'Current Liabilities',
+                            'code' => '2110',
+                            'name' => 'Accounts Payable (Supplier / Vendor Dues)',
                             'type' => 'liability',
                             'level' => 2,
                             'is_system' => true,
-                            'children' => [
-                                [
-                                    'code' => '2110',
-                                    'name' => 'Accounts Payable (Creditors / Vendors)',
-                                    'type' => 'liability',
-                                    'level' => 3,
-                                    'is_system' => true,
-                                ],
-                                [
-                                    'code' => '2120',
-                                    'name' => 'VAT / Tax Payable',
-                                    'type' => 'liability',
-                                    'level' => 3,
-                                    'is_system' => true,
-                                ],
-                                [
-                                    'code' => '2130',
-                                    'name' => 'Salary & Wages Payable',
-                                    'type' => 'liability',
-                                    'level' => 3,
-                                    'is_system' => true,
-                                ],
-                            ],
                         ],
                         [
-                            'code' => '2200',
-                            'name' => 'Long-Term Liabilities',
+                            'code' => '2120',
+                            'name' => 'VAT / Tax Payable',
                             'type' => 'liability',
                             'level' => 2,
                             'is_system' => true,
-                            'children' => [
-                                [
-                                    'code' => '2210',
-                                    'name' => 'Bank Loans',
-                                    'type' => 'liability',
-                                    'level' => 3,
-                                    'is_system' => false,
-                                ],
-                            ],
                         ],
                     ],
                 ],
@@ -204,57 +139,25 @@ class ChartOfAccountSeeder extends Seeder
                     'is_system' => true,
                     'children' => [
                         [
-                            'code' => '4100',
-                            'name' => 'Operating Revenue',
+                            'code' => '4110',
+                            'name' => 'Sales Revenue',
                             'type' => 'revenue',
                             'level' => 2,
                             'is_system' => true,
-                            'children' => [
-                                [
-                                    'code' => '4110',
-                                    'name' => 'Sales Revenue',
-                                    'type' => 'revenue',
-                                    'level' => 3,
-                                    'is_system' => true,
-                                ],
-                                [
-                                    'code' => '4120',
-                                    'name' => 'Service / Workshop Revenue',
-                                    'type' => 'revenue',
-                                    'level' => 3,
-                                    'is_system' => true,
-                                ],
-                                [
-                                    'code' => '4130',
-                                    'name' => 'Project Revenue',
-                                    'type' => 'revenue',
-                                    'level' => 3,
-                                    'is_system' => true,
-                                ],
-                                [
-                                    'code' => '4140',
-                                    'name' => 'Delivery Charge Income',
-                                    'type' => 'revenue',
-                                    'level' => 3,
-                                    'is_system' => true,
-                                ],
-                            ],
                         ],
                         [
-                            'code' => '4200',
-                            'name' => 'Other Income',
+                            'code' => '4120',
+                            'name' => 'Service & Project Revenue',
                             'type' => 'revenue',
                             'level' => 2,
-                            'is_system' => false,
-                            'children' => [
-                                [
-                                    'code' => '4210',
-                                    'name' => 'Interest Income',
-                                    'type' => 'revenue',
-                                    'level' => 3,
-                                    'is_system' => false,
-                                ],
-                            ],
+                            'is_system' => true,
+                        ],
+                        [
+                            'code' => '4140',
+                            'name' => 'Delivery Charge Income',
+                            'type' => 'revenue',
+                            'level' => 2,
+                            'is_system' => true,
                         ],
                     ],
                 ],
@@ -268,77 +171,40 @@ class ChartOfAccountSeeder extends Seeder
                     'is_system' => true,
                     'children' => [
                         [
-                            'code' => '5100',
-                            'name' => 'Cost of Goods Sold (COGS) / Purchase Expense',
+                            'code' => '5110',
+                            'name' => 'Cost of Goods Sold (Purchase Expense)',
                             'type' => 'expense',
                             'level' => 2,
                             'is_system' => true,
-                            'children' => [
-                                [
-                                    'code' => '5110',
-                                    'name' => 'Product Purchase Expense',
-                                    'type' => 'expense',
-                                    'level' => 3,
-                                    'is_system' => true,
-                                ],
-                                [
-                                    'code' => '5120',
-                                    'name' => 'Sales Returns (Contra Revenue)',
-                                    'type' => 'expense',
-                                    'level' => 3,
-                                    'is_system' => true,
-                                ],
-                                [
-                                    'code' => '5130',
-                                    'name' => 'Sales Discounts Given',
-                                    'type' => 'expense',
-                                    'level' => 3,
-                                    'is_system' => true,
-                                ],
-                            ],
                         ],
                         [
-                            'code' => '5200',
-                            'name' => 'Operating & Administrative Expenses',
+                            'code' => '5210',
+                            'name' => 'Salaries & Staff Expenses',
                             'type' => 'expense',
                             'level' => 2,
                             'is_system' => true,
-                            'children' => [
-                                [
-                                    'code' => '5210',
-                                    'name' => 'Employee Salary Expense',
-                                    'type' => 'expense',
-                                    'level' => 3,
-                                    'is_system' => true,
-                                ],
-                                [
-                                    'code' => '5220',
-                                    'name' => 'Travel & Daily Allowance (TA/DA)',
-                                    'type' => 'expense',
-                                    'level' => 3,
-                                    'is_system' => true,
-                                ],
-                                [
-                                    'code' => '5230',
-                                    'name' => 'Office Daily Expenses',
-                                    'type' => 'expense',
-                                    'level' => 3,
-                                    'is_system' => true,
-                                ],
-                                [
-                                    'code' => '5240',
-                                    'name' => 'Project Direct Costs',
-                                    'type' => 'expense',
-                                    'level' => 3,
-                                    'is_system' => true,
-                                ],
-                            ],
+                        ],
+                        [
+                            'code' => '5230',
+                            'name' => 'Daily Office Expenses',
+                            'type' => 'expense',
+                            'level' => 2,
+                            'is_system' => true,
                         ],
                     ],
                 ],
             ];
 
-            // Recursive inserter
+            // Clean up old unused intermediate header accounts
+            $keepCodes = ['1000', '1110', '1120', '1130', '1140', '1210', '2000', '2110', '2120', '3000', '3100', '3200', '4000', '4110', '4120', '4140', '5000', '5110', '5210', '5230'];
+            
+            // Delete old unused accounts that have no journal items and no bank detail
+            ChartOfAccount::whereNotIn('account_code', $keepCodes)
+                ->whereNull('bank_detail_id')
+                ->whereDoesntHave('journalItems')
+                ->delete();
+
+            // Inserter / updater
             $insertNode = function ($node, $parentId = null) use (&$insertNode) {
                 $account = ChartOfAccount::updateOrCreate(
                     ['account_code' => $node['code']],
@@ -365,7 +231,7 @@ class ChartOfAccountSeeder extends Seeder
                 $insertNode($rootAccount);
             }
 
-            // 3. Auto-sync existing BankDetail records under Bank Accounts (1120)
+            // 3. Auto-sync existing BankDetail records under Bank & Mobile Accounts (1120)
             $bankParent = ChartOfAccount::where('account_code', '1120')->first();
             if ($bankParent) {
                 $bankDetails = BankDetail::all();
@@ -379,7 +245,7 @@ class ChartOfAccountSeeder extends Seeder
                             'account_name' => "{$bank->bank_name} ({$bank->account_number})",
                             'account_type' => 'asset',
                             'parent_id' => $bankParent->id,
-                            'level' => 4,
+                            'level' => 3,
                             'is_active' => $bank->is_active,
                             'is_system' => false,
                         ]

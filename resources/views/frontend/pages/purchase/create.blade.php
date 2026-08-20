@@ -192,7 +192,6 @@
                         <label class="form-label small text-secondary fw-semibold mb-1">Grand Total (Payable)</label>
                         <input type="number" step="0.01" id="grandTotal" name="grand_total" class="form-control bg-light border-light-subtle fw-bold" readonly value="0.00">
                     </div>
-                    <div class="col-lg-3 col-md-6 col-12"></div>
                     <div class="col-lg-3 col-md-6 col-12">
                         <label class="form-label small text-secondary fw-semibold mb-1">Payment Amount</label>
                         <input type="number" step="0.01" id="paymentAmount" name="payment" class="form-control border-light-subtle" value="0.00" oninput="calculateGrandTotal()">
@@ -200,6 +199,44 @@
                     <div class="col-lg-3 col-md-6 col-12">
                         <label class="form-label small text-secondary fw-semibold mb-1">Due Amount</label>
                         <input type="number" step="0.01" id="dueAmount" name="due" class="form-control bg-light border-light-subtle text-danger fw-bold" readonly value="0.00">
+                    </div>
+                </div>
+
+                <!-- Payment Method & Source Account (Chart of Accounts) -->
+                <div class="row g-3 mt-3 p-3 bg-white rounded-3 border" id="purchasePaymentBox">
+                    <div class="col-12 d-flex align-items-center justify-content-between">
+                        <span class="badge bg-primary-subtle text-primary fw-semibold px-2 py-1">
+                            <i class="fe fe-credit-card me-1"></i> Payment Method &amp; Source Account (Chart of Accounts)
+                        </span>
+                        <small class="text-muted"><i class="fas fa-info-circle me-1"></i> Credits selected Account in General Ledger</small>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 col-12">
+                        <label class="form-label small text-secondary fw-semibold mb-1">Payment Method</label>
+                        <select name="payment_method" id="payment_method" class="form-select border-light-subtle">
+                            @foreach($paymentMethods ?? getPaymentMethodList() as $key => $label)
+                                <option value="{{ $key }}">{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="col-lg-5 col-md-6 col-12">
+                        <label class="form-label small text-secondary fw-semibold mb-1">Payment From Account <span class="text-danger">*</span></label>
+                        <select name="account_id" id="account_id" class="form-select border-light-subtle">
+                            @foreach($paymentAccounts ?? getPaymentAccounts() as $acc)
+                                @php
+                                    $accType = (str_starts_with($acc->account_code, '1110') || stripos($acc->account_name, 'Cash') !== false) ? 'cash' : 'bank';
+                                @endphp
+                                <option value="{{ $acc->id }}" data-type="{{ $accType }}" {{ $acc->account_code == '1110' ? 'selected' : '' }}>
+                                    [{{ $acc->account_code }}] {{ $acc->account_name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="col-lg-3 col-md-12 col-12">
+                        <label class="form-label small text-secondary fw-semibold mb-1">Cheque / Trx ID / Note</label>
+                        <input type="text" name="payment_ref" id="payment_ref" class="form-control border-light-subtle" placeholder="e.g. Cheque # / Bank Ref">
                     </div>
                 </div>
             </div>
@@ -486,6 +523,49 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('grandTotal').value = grandTotal.toFixed(2);
         document.getElementById('dueAmount').value = due.toFixed(2);
     };
+
+    // Dynamic Payment Method to Account Filtering
+    const payMethodSelect = document.getElementById('payment_method');
+    const payAccountSelect = document.getElementById('account_id');
+
+    function filterPaymentAccounts() {
+        if (!payMethodSelect || !payAccountSelect) return;
+        const method = payMethodSelect.value;
+        let firstAvailable = null;
+
+        Array.from(payAccountSelect.options).forEach(opt => {
+            const type = opt.getAttribute('data-type');
+            let visible = true;
+            if (method === 'cash') {
+                visible = (type === 'cash');
+            } else if (method === 'bank_transfer') {
+                visible = (type === 'bank');
+            }
+
+            if (visible) {
+                opt.hidden = false;
+                opt.disabled = false;
+                opt.style.display = '';
+                if (!firstAvailable) firstAvailable = opt;
+            } else {
+                opt.hidden = true;
+                opt.disabled = true;
+                opt.style.display = 'none';
+            }
+        });
+
+        const currentOpt = payAccountSelect.options[payAccountSelect.selectedIndex];
+        if (!currentOpt || currentOpt.disabled || currentOpt.hidden) {
+            if (firstAvailable) {
+                payAccountSelect.value = firstAvailable.value;
+            }
+        }
+    }
+
+    if (payMethodSelect && payAccountSelect) {
+        payMethodSelect.addEventListener('change', filterPaymentAccounts);
+        filterPaymentAccounts();
+    }
 });
 </script>
 @endpush

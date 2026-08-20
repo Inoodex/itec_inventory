@@ -67,8 +67,10 @@ class PurchaseController extends Controller
     {
         $products = Product::with('latestPurchase')->latest()->get();
         $vendors = Vendor::latest()->get();
+        $paymentAccounts = getPaymentAccounts();
+        $paymentMethods = getPaymentMethodList();
 
-        return view('frontend.pages.purchase.create', compact('products', 'vendors'));
+        return view('frontend.pages.purchase.create', compact('products', 'vendors', 'paymentAccounts', 'paymentMethods'));
     }
 
     /**
@@ -109,6 +111,9 @@ class PurchaseController extends Controller
             'items.*.serial_numbers.*' => 'string|max:100',
             'discount' => 'nullable|numeric|min:0',
             'payment' => 'nullable|numeric|min:0',
+            'payment_method' => 'nullable|string|max:50',
+            'account_id' => 'nullable|exists:chart_of_accounts,id',
+            'payment_ref' => 'nullable|string|max:100',
         ]);
 
         try {
@@ -118,6 +123,9 @@ class PurchaseController extends Controller
             $items = $validated['items'];
             $totalPayment = (float)($request->payment ?? 0);
             $totalDiscount = (float)($request->discount ?? 0);
+            $paymentMethod = $validated['payment_method'] ?? 'cash';
+            $accountId = $validated['account_id'] ?? null;
+            $paymentRef = $validated['payment_ref'] ?? null;
 
             // Compute total gross amount
             $grossTotal = 0;
@@ -153,6 +161,9 @@ class PurchaseController extends Controller
                     'payment' => $itemPayment,
                     'due' => $itemDue,
                     'serial_numbers' => $item['serial_numbers'] ?? [],
+                    'payment_method' => $paymentMethod,
+                    'account_id' => $accountId,
+                    'payment_ref' => $paymentRef,
                 ];
 
                 $this->purchaseService->createPurchase($purchaseData);

@@ -12,8 +12,8 @@ use App\Http\Controllers\{
     TaDaController, UserController, VendorController, BankDetailController,
     CompanyDetailController, PaymentController, ReturnController, WarrantyController,
     ChartOfAccountController, JournalEntryController, LedgerController,
-    TrialBalanceController, FinancialStatementController, ContraEntryController,
-    ReconciliationController, FiscalYearController
+    TrialBalanceController, FinancialStatementController,
+    FiscalYearController, VendorDueController
 };
 
 use Illuminate\Support\Facades\{Auth, Route};
@@ -145,15 +145,20 @@ Route::middleware(['auth', 'role:Super Admin'])->group(function () {
     Route::get('purchase/report', [PurchaseController::class, 'report'])->name('purchase.report.get');
     Route::get('purchase/report/pdf', [PurchaseController::class, 'reportPdf'])->name('purchase.report.pdf');
     Route::get('sales-report', [SalesController::class, 'report'])->name('sales.report');
-    Route::get('sales-report/pdf', [SalesController::class, 'reportPdf'])->name('sales.report.pdf');
     Route::get('/revenues/pdf', [RevenueController::class, 'downloadPdf'])->name('revenues.pdf');
     Route::get('/revenues', [RevenueController::class, 'index'])->name('revenues.index');
     Route::post('/revenues/generate', [RevenueController::class, 'generate'])->name('revenues.generate');
     Route::get('/revenues/export/{id}', [RevenueController::class, 'export'])->name('revenues.export');
+    
+    // === Customer Due & Vendor Due Management ===
     Route::get('/due-payments', [SalesController::class, 'duePayments'])->name('due-payments.index');
     Route::get('/due-payments/pdf', [SalesController::class, 'duePaymentsPdf'])->name('due-payments.pdf');
-
     Route::post('/sales/process-payment', [SalesController::class, 'processPayment'])->name('sales.process-payment');
+    
+    Route::get('/vendor-due', [VendorDueController::class, 'index'])->name('vendor-due.index');
+    Route::get('/vendor-due/pdf', [VendorDueController::class, 'downloadPdf'])->name('vendor-due.pdf');
+    Route::post('/vendor-due/pay', [VendorDueController::class, 'processPayment'])->name('vendor-due.process-payment');
+
     Route::post('/projects/process-payment', [ProjectController::class, 'processPayment'])->name('projects.process-payment');
     Route::get('/sales/search-orders', [SalesController::class, 'searchOrders'])->name('sales.search-orders');
 
@@ -204,13 +209,6 @@ Route::middleware(['auth', 'role:Super Admin'])->group(function () {
             Route::get('reports/balance-sheet', [FinancialStatementController::class, 'balanceSheet'])->name('reports.balance-sheet');
             Route::get('reports/balance-sheet/pdf', [FinancialStatementController::class, 'balanceSheetPdf'])->name('reports.balance-sheet.pdf');
             Route::get('reports/cash-flow', [FinancialStatementController::class, 'cashFlow'])->name('reports.cash-flow');
-
-            // Contra Entries (Transfers)
-            // Route::resource('contra-entries', ContraEntryController::class)->only(['index', 'create', 'store']);
-
-            // // Bank Reconciliation
-            // Route::get('reconciliation', [ReconciliationController::class, 'index'])->name('reconciliation.index');
-            // Route::post('reconciliation', [ReconciliationController::class, 'store'])->name('reconciliation.store');
 
             // Fiscal Years & Year-End Close
             Route::get('fiscal-years', [FiscalYearController::class, 'index'])->name('fiscal-years.index');

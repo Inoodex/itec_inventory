@@ -210,6 +210,52 @@ if (!function_exists('paymentMethods')) {
     }
 }
 
+if (!function_exists('getPaymentMethodList')) {
+    /**
+     * Standard human-readable payment methods list.
+     */
+    function getPaymentMethodList()
+    {
+        return [
+            'cash'           => 'Cash',
+            'bank_transfer'  => 'Bank Transfer / MFS',
+            'other'          => 'Other',
+        ];
+    }
+}
+
+if (!function_exists('getPaymentAccounts')) {
+    /**
+     * Get all active liquid asset accounts available for payment / deposit (Cash & Bank).
+     * If specific bank/MFS sub-accounts exist under 1120, exclude the generic 1120 parent header
+     * so users only see actual, usable bank accounts.
+     */
+    function getPaymentAccounts()
+    {
+        $hasBankChildren = \App\Models\ChartOfAccount::whereHas('parent', function ($q) {
+            $q->where('account_code', '1120');
+        })->where('is_active', true)->exists();
+
+        $excludedCodes = ['1000', '1130', '1140', '1210'];
+        if ($hasBankChildren) {
+            $excludedCodes[] = '1120'; // Hide generic group header
+        }
+
+        return \App\Models\ChartOfAccount::where('is_active', true)
+            ->where('account_type', 'asset')
+            ->where(function ($query) {
+                $query->whereIn('account_code', ['1110', '1120'])
+                    ->orWhere('parent_id', function ($sub) {
+                        $sub->select('id')->from('chart_of_accounts')->where('account_code', '1120')->limit(1);
+                    })
+                    ->orWhereNotNull('bank_detail_id');
+            })
+            ->whereNotIn('account_code', $excludedCodes)
+            ->orderBy('account_code')
+            ->get();
+    }
+}
+
 if (!function_exists('attendanceStatus')) {
     function attendanceStatus()
     {

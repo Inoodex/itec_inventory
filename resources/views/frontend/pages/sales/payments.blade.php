@@ -110,29 +110,41 @@
                         <input type="hidden" name="sale_id" value="{{ $sale->id }}">
 
                         <div class="row g-3">
-                            <div class="col-lg-4 col-md-6 col-12">
+                            <div class="col-lg-3 col-md-6 col-12">
                                 <label class="form-label small text-secondary fw-semibold mb-1">Payment Amount <span class="text-danger">*</span></label>
                                 <input type="number" step="0.01" class="form-control border-light-subtle" name="payment_amount" id="payment_amount" max="{{ $sale->due_payment }}" min="0.01" value="{{ $sale->due_payment }}" required oninput="updateRemaining(this.value)">
                             </div>
 
-                            <div class="col-lg-4 col-md-6 col-12">
+                            <div class="col-lg-3 col-md-6 col-12">
                                 <label class="form-label small text-secondary fw-semibold mb-1">Payment Method <span class="text-danger">*</span></label>
-                                <select class="form-select border-light-subtle" name="payment_method" required>
-                                    <option value="">Select Payment Method</option>
-                                    <option value="cash" selected>Cash</option>
-                                    <option value="card">Card</option>
-                                    <option value="bank_transfer">Bank Transfer</option>
-                                    <option value="bkash">bKash / Mobile Banking</option>
+                                <select class="form-select border-light-subtle" name="payment_method" id="payment_method" required>
+                                    @foreach($paymentMethods ?? getPaymentMethodList() as $key => $label)
+                                        <option value="{{ $key }}" {{ $key == 'cash' ? 'selected' : '' }}>{{ $label }}</option>
+                                    @endforeach
                                 </select>
                             </div>
 
-                            <div class="col-lg-4 col-md-12 col-12">
+                            <div class="col-lg-3 col-md-6 col-12">
+                                <label class="form-label small text-secondary fw-semibold mb-1">Deposit To Account <span class="text-danger">*</span></label>
+                                <select name="account_id" id="account_id" class="form-select border-light-subtle" required>
+                                    @foreach($paymentAccounts ?? getPaymentAccounts() as $acc)
+                                        @php
+                                            $accType = (str_starts_with($acc->account_code, '1110') || stripos($acc->account_name, 'Cash') !== false) ? 'cash' : 'bank';
+                                        @endphp
+                                        <option value="{{ $acc->id }}" data-type="{{ $accType }}" {{ $acc->account_code == '1110' ? 'selected' : '' }}>
+                                            [{{ $acc->account_code }}] {{ $acc->account_name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="col-lg-3 col-md-6 col-12">
                                 <label class="form-label small text-secondary fw-semibold mb-1">Payment Date <span class="text-danger">*</span></label>
                                 <input type="date" class="form-control border-light-subtle" name="payment_date" value="{{ now()->format('Y-m-d') }}" required>
                             </div>
 
                             <div class="col-lg-8 col-md-7 col-12">
-                                <label class="form-label small text-secondary fw-semibold mb-1">Payment Notes (Optional)</label>
+                                <label class="form-label small text-secondary fw-semibold mb-1">Payment Notes / Ref (Optional)</label>
                                 <input type="text" class="form-control border-light-subtle" name="notes" placeholder="Add transaction reference or notes..." autocomplete="off">
                             </div>
 
@@ -188,6 +200,49 @@
 
     document.addEventListener('DOMContentLoaded', function() {
         updateRemaining({{ $sale->due_payment }});
+
+        // Dynamic Payment Method to Account Filtering
+        const payMethodSelect = document.getElementById('payment_method');
+        const payAccountSelect = document.getElementById('account_id');
+
+        function filterPaymentAccounts() {
+            if (!payMethodSelect || !payAccountSelect) return;
+            const method = payMethodSelect.value;
+            let firstAvailable = null;
+
+            Array.from(payAccountSelect.options).forEach(opt => {
+                const type = opt.getAttribute('data-type');
+                let visible = true;
+                if (method === 'cash') {
+                    visible = (type === 'cash');
+                } else if (method === 'bank_transfer') {
+                    visible = (type === 'bank');
+                }
+
+                if (visible) {
+                    opt.hidden = false;
+                    opt.disabled = false;
+                    opt.style.display = '';
+                    if (!firstAvailable) firstAvailable = opt;
+                } else {
+                    opt.hidden = true;
+                    opt.disabled = true;
+                    opt.style.display = 'none';
+                }
+            });
+
+            const currentOpt = payAccountSelect.options[payAccountSelect.selectedIndex];
+            if (!currentOpt || currentOpt.disabled || currentOpt.hidden) {
+                if (firstAvailable) {
+                    payAccountSelect.value = firstAvailable.value;
+                }
+            }
+        }
+
+        if (payMethodSelect && payAccountSelect) {
+            payMethodSelect.addEventListener('change', filterPaymentAccounts);
+            filterPaymentAccounts();
+        }
     });
 </script>
 @endif

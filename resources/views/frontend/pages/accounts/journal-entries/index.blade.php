@@ -33,6 +33,23 @@
         .dropdown-menu {
             z-index: 9999 !important;
         }
+
+        .pagination {
+            margin-bottom: 0 !important;
+            gap: 4px;
+        }
+        .page-item .page-link {
+            border-radius: 8px !important;
+            border: 1px solid #e2e8f0;
+            color: #475569;
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+        .page-item.active .page-link {
+            background-color: #7638ff !important;
+            border-color: #7638ff !important;
+            color: #ffffff !important;
+        }
     </style>
 @endpush
 
@@ -171,7 +188,7 @@
                                                     <li>
                                                         <a class="dropdown-item py-2 d-flex align-items-center gap-2 text-danger"
                                                             href="javascript:void(0)"
-                                                            onclick="if(confirm('Are you sure you want to reverse this journal entry? A counter-balancing voucher will be posted.')) { document.getElementById('reverseVoucher{{ $entry->id }}').submit(); }">
+                                                            onclick="let reason = prompt('Enter reason for reversing journal voucher {{ $entry->journal_no }}:', 'Manual error correction / reversal'); if(reason !== null && reason.trim() !== '') { document.getElementById('reverseReason{{ $entry->id }}').value = reason; document.getElementById('reverseVoucher{{ $entry->id }}').submit(); }">
                                                             <i class="fe fe-rotate-ccw text-danger"></i>
                                                             <span>Reverse Entry</span>
                                                         </a>
@@ -179,6 +196,7 @@
                                                             action="{{ route('journal-entries.reverse', $entry->id) }}"
                                                             class="d-none">
                                                             @csrf
+                                                            <input type="hidden" name="reason" id="reverseReason{{ $entry->id }}" value="Manual reversal / error correction">
                                                         </form>
                                                     </li>
                                                 @endif
@@ -196,8 +214,13 @@
                 </div>
 
                 @if($entries->hasPages())
-                    <div class="card-footer bg-white border-top py-3">
-                        {{ $entries->links() }}
+                    <div class="card-footer bg-white border-top py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <div class="text-muted small">
+                            Showing {{ $entries->firstItem() ?? 0 }} to {{ $entries->lastItem() ?? 0 }} of {{ $entries->total() }} entries
+                        </div>
+                        <div class="pagination-wrapper mb-0">
+                            {{ $entries->links('pagination::bootstrap-5') }}
+                        </div>
                     </div>
                 @endif
             </div>

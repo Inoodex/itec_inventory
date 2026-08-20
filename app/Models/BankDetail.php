@@ -31,6 +31,12 @@ class BankDetail extends Model
         return $this->hasMany(Bill::class);
     }
 
+    // Relationship with Chart of Accounts
+    public function chartOfAccount()
+    {
+        return $this->hasOne(ChartOfAccount::class, 'bank_detail_id');
+    }
+
     // Scope for active bank details
     public function scopeActive($query)
     {

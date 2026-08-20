@@ -25,7 +25,7 @@
                         <label class="form-label fw-bold mb-0">As of Date:</label>
                         <input type="date" name="as_of_date" class="form-control" value="{{ $asOfDate }}">
                     </div>
-                    <div class="col-md-4 mt-auto">
+                    <div class="col-md-3 mt-auto">
                         <button type="submit" class="btn btn-primary w-100"><i class="fas fa-balance-scale me-1"></i>
                             Run Balance Sheet</button>
                     </div>

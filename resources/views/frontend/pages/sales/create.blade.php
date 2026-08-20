@@ -231,12 +231,50 @@
 
                     <div class="col-lg-3 col-md-6 col-6">
                         <label class="form-label small text-secondary fw-semibold mb-1">Current Payment</label>
-                        <input type="number" name="advanced_payment" id="advancedPayment" class="form-control border-light-subtle" value="0" min="0" step="0.01">
+                        <input oninput="calculateTotal()" type="number" name="advanced_payment" id="advancedPayment" class="form-control border-light-subtle" value="0" min="0" step="0.01">
                     </div>
 
                     <div class="col-lg-3 col-md-6 col-6">
                         <label class="form-label small text-secondary fw-semibold mb-1">Due Payment</label>
                         <input type="number" id="duePayment" name="duePayment" class="form-control border-light-subtle bg-light fw-bold text-danger" readonly>
+                    </div>
+                </div>
+
+                <!-- Payment Method & Deposit Account (Double-Entry Accounting) -->
+                <div class="row g-3 mt-3 p-3 bg-light rounded-3 border" id="paymentDetailsBox">
+                    <div class="col-12 d-flex align-items-center justify-content-between">
+                        <span class="badge bg-primary-subtle text-primary fw-semibold px-2 py-1">
+                            <i class="fe fe-credit-card me-1"></i> Payment &amp; Deposit Account (Chart of Accounts)
+                        </span>
+                        <small class="text-muted"><i class="fas fa-info-circle me-1"></i> Auto-posts to Double-Entry General Ledger</small>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 col-12">
+                        <label class="form-label small text-secondary fw-semibold mb-1">Payment Method</label>
+                        <select name="payment_method" id="payment_method" class="form-select border-light-subtle">
+                            @foreach($paymentMethods ?? getPaymentMethodList() as $key => $label)
+                                <option value="{{ $key }}">{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="col-lg-5 col-md-6 col-12">
+                        <label class="form-label small text-secondary fw-semibold mb-1">Deposit To Account <span class="text-danger">*</span></label>
+                        <select name="account_id" id="account_id" class="form-select border-light-subtle">
+                            @foreach($paymentAccounts ?? getPaymentAccounts() as $acc)
+                                @php
+                                    $accType = (str_starts_with($acc->account_code, '1110') || stripos($acc->account_name, 'Cash') !== false) ? 'cash' : 'bank';
+                                @endphp
+                                <option value="{{ $acc->id }}" data-type="{{ $accType }}" {{ $acc->account_code == '1110' ? 'selected' : '' }}>
+                                    [{{ $acc->account_code }}] {{ $acc->account_name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="col-lg-3 col-md-12 col-12">
+                        <label class="form-label small text-secondary fw-semibold mb-1">Cheque / Trx ID / Note</label>
+                        <input type="text" name="payment_ref" id="payment_ref" class="form-control border-light-subtle" placeholder="e.g. TrxID #12345 / Cheque #">
                     </div>
                 </div>
 
@@ -607,6 +645,49 @@ document.addEventListener('DOMContentLoaded', function() {
     $('#unit_price1, #qty1').on('input change', function() {
         updatePreviewTotal();
     });
+
+    // Dynamic Payment Method to Account Filtering
+    const payMethodSelect = document.getElementById('payment_method');
+    const payAccountSelect = document.getElementById('account_id');
+
+    function filterPaymentAccounts() {
+        if (!payMethodSelect || !payAccountSelect) return;
+        const method = payMethodSelect.value; // 'cash', 'bank_transfer', 'other'
+        let firstAvailable = null;
+
+        Array.from(payAccountSelect.options).forEach(opt => {
+            const type = opt.getAttribute('data-type'); // 'cash' or 'bank'
+            let visible = true;
+            if (method === 'cash') {
+                visible = (type === 'cash');
+            } else if (method === 'bank_transfer') {
+                visible = (type === 'bank');
+            }
+
+            if (visible) {
+                opt.hidden = false;
+                opt.disabled = false;
+                opt.style.display = '';
+                if (!firstAvailable) firstAvailable = opt;
+            } else {
+                opt.hidden = true;
+                opt.disabled = true;
+                opt.style.display = 'none';
+            }
+        });
+
+        const currentOpt = payAccountSelect.options[payAccountSelect.selectedIndex];
+        if (!currentOpt || currentOpt.disabled || currentOpt.hidden) {
+            if (firstAvailable) {
+                payAccountSelect.value = firstAvailable.value;
+            }
+        }
+    }
+
+    if (payMethodSelect && payAccountSelect) {
+        payMethodSelect.addEventListener('change', filterPaymentAccounts);
+        filterPaymentAccounts();
+    }
 });
 </script>
 @endpush

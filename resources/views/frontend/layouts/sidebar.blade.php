@@ -184,18 +184,21 @@
                     </li>
                 @endif
 
-                <!-- 11. Billing & Documents -->
+                <!-- 11. Dues, Billing & Documents -->
                 @if($canView('Payment Management'))
-                    <li class="menu-title"><span>Billing & Payments</span></li>
+                    <li class="menu-title"><span>Dues & Payments</span></li>
                     <li>
                         <a href="{{ route('due-payments.index') }}" class="{{ request()->routeIs('due-payments.*') ? 'active' : '' }}">
-                            <i class="fe fe-dollar-sign"></i> <span>Due Payments</span>
+                            <i class="fe fe-user-check"></i> <span>Customer Due</span>
+                        </a>
+                        <a href="{{ route('vendor-due.index') }}" class="{{ request()->routeIs('vendor-due.*') ? 'active' : '' }}">
+                            <i class="fe fe-truck"></i> <span>Vendor Due</span>
                         </a>
                         <a href="{{ route('bills.index') }}" class="{{ request()->routeIs('bills.*') ? 'active' : '' }}">
                             <i class="fe fe-file-text"></i> <span>Bill Generator</span>
                         </a>
                         <a href="{{ route('challans.index') }}" class="{{ request()->routeIs('challans.*') ? 'active' : '' }}">
-                            <i class="fe fe-truck"></i> <span>Challan Generator</span>
+                            <i class="fe fe-send"></i> <span>Challan Generator</span>
                         </a>
                         <a href="{{ route('quotations.index') }}" class="{{ request()->routeIs('quotations.*') ? 'active' : '' }}">
                             <i class="fe fe-clipboard"></i> <span>Quotation Generator</span>

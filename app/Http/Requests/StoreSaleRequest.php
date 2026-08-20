@@ -33,6 +33,9 @@ class StoreSaleRequest extends FormRequest
             'vat'                  => 'nullable|numeric|min:0',
             'tax'                  => 'nullable|numeric|min:0',
             'delivery_charge'      => 'nullable|numeric|min:0',
+            'payment_method'       => 'nullable|string|max:50',
+            'account_id'           => 'nullable|exists:chart_of_accounts,id',
+            'payment_ref'          => 'nullable|string|max:100',
         ];
     }
 

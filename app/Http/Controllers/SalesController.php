@@ -119,7 +119,9 @@ class SalesController extends Controller
         $users  = User::get();
         $products = Product::with('latestPurchase')->where('status', '1')->get();
         $existingClients = Customer::select('id', 'name', 'phone', 'address')->get();
-        return view('frontend.pages.sales.create', compact('products', 'users', 'existingClients'));
+        $paymentAccounts = getPaymentAccounts();
+        $paymentMethods = getPaymentMethodList();
+        return view('frontend.pages.sales.create', compact('products', 'users', 'existingClients', 'paymentAccounts', 'paymentMethods'));
     }
 
     /**
@@ -418,7 +420,10 @@ public function store(StoreSaleRequest $request)
         //     return $pdf->download('service_payments.pdf');
         // }
 
-        return view('frontend.pages.sales.payments', compact('payments', 'request', 'saleId', 'sale'));
+        $paymentAccounts = getPaymentAccounts();
+        $paymentMethods = getPaymentMethodList();
+
+        return view('frontend.pages.sales.payments', compact('payments', 'request', 'saleId', 'sale', 'paymentAccounts', 'paymentMethods'));
     }
 
     public function report(Request $request)
@@ -560,6 +565,7 @@ public function store(StoreSaleRequest $request)
             'sale_id' => 'required|exists:sales,id',
             'payment_amount' => 'required|numeric|min:0.01',
             'payment_method' => 'required|string',
+            'account_id' => 'nullable|exists:chart_of_accounts,id',
             'payment_date' => 'nullable|date',
             'notes' => 'nullable|string',
         ]);
@@ -568,7 +574,7 @@ public function store(StoreSaleRequest $request)
 
         try {
             $sale = Sale::findOrFail($request->sale_id);
-            $paymentAmount = $request->payment_amount;
+            $paymentAmount = (float)$request->payment_amount;
 
             // Check if payment amount exceeds due amount
             if ($paymentAmount > $sale->due_payment) {
@@ -605,6 +611,45 @@ public function store(StoreSaleRequest $request)
                 'payment_for' => 2, // Sales
             ]);
 
+            // Auto-post double entry voucher for Due Collection
+            try {
+                $depositAccount = null;
+                if (!empty($request->account_id)) {
+                    $depositAccount = \App\Models\ChartOfAccount::find($request->account_id);
+                }
+                if (!$depositAccount) {
+                    $depositAccount = \App\Models\ChartOfAccount::where('account_code', '1110')->first();
+                }
+
+                $arAcc = \App\Models\ChartOfAccount::where('account_code', '1130')->first();
+
+                if ($depositAccount && $arAcc && $paymentAmount > 0) {
+                    $accLabel = $depositAccount->account_name . ' (' . $depositAccount->account_code . ')';
+                    postJournalEntry([
+                        'entry_date' => $request->payment_date ? date('Y-m-d', strtotime($request->payment_date)) : date('Y-m-d'),
+                        'reference_type' => 'sale',
+                        'reference_id' => $sale->id,
+                        'description' => 'Due payment collected for Invoice ' . $sale->order_no . ' — Customer #' . $sale->customer_id . ($request->notes ? ' [' . $request->notes . ']' : ''),
+                        'items' => [
+                            [
+                                'account_id' => $depositAccount->id,
+                                'debit' => $paymentAmount,
+                                'credit' => 0.00,
+                                'description' => "Due collected via {$accLabel} for Invoice {$sale->order_no}",
+                            ],
+                            [
+                                'account_id' => $arAcc->id,
+                                'debit' => 0.00,
+                                'credit' => $paymentAmount,
+                                'description' => "Receivable due reduced for Invoice {$sale->order_no}",
+                            ]
+                        ]
+                    ]);
+                }
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('Due payment auto-journal notice: ' . $e->getMessage());
+            }
+
             DB::commit();
 
             return redirect()->back()->with('success', 'Payment of ৳' . number_format($paymentAmount, 2) . ' processed successfully!');
@@ -613,15 +658,6 @@ public function store(StoreSaleRequest $request)
             return redirect()->back()->with('error', 'Error processing payment: ' . $e->getMessage());
         }
     }
-
-//     public function duePayments()
-// {
-//     $sales = Sale::where('due_payment', '>', 0)
-//                 ->latest()
-//                 ->get();
-
-//     return view('frontend.pages.sales.due-payments', compact('sales'));
-// }
 
 public function duePayments()
 {
@@ -651,8 +687,14 @@ public function duePayments()
 
     // Merge retail sales and projects
     $allItems = $sales->merge($projects)->sortByDesc('created_at');
+    $paymentAccounts = getPaymentAccounts();
+    $paymentMethods = getPaymentMethodList();
 
-    return view('frontend.pages.sales.due-payments', ['sales' => $allItems]);
+    return view('frontend.pages.sales.due-payments', [
+        'sales' => $allItems,
+        'paymentAccounts' => $paymentAccounts,
+        'paymentMethods' => $paymentMethods,
+    ]);
 }
 
 public function duePaymentsPdf()

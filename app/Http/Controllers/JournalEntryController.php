@@ -95,12 +95,13 @@ class JournalEntryController extends Controller
 
     public function reverse(Request $request, JournalEntry $journalEntry)
     {
-        $request->validate([
-            'reason' => 'required|string|max:500',
+        $validated = $request->validate([
+            'reason' => 'nullable|string|max:500',
         ]);
 
         try {
-            $reversalVoucher = reverseJournalEntry($journalEntry->id, $request->reason);
+            $reason = !empty($validated['reason']) ? $validated['reason'] : 'Manual reversal / error correction';
+            $reversalVoucher = reverseJournalEntry($journalEntry->id, $reason);
 
             return redirect()->route('journal-entries.show', $reversalVoucher->id)
                 ->with('success', "Original voucher reversed. Reversal voucher [{$reversalVoucher->journal_no}] created.");

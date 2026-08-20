@@ -23,7 +23,7 @@
                         <label class="form-label fw-bold mb-0">To Date:</label>
                         <input type="date" name="to_date" class="form-control" value="{{ $toDate }}">
                     </div>
-                    <div class="col-md-3 mt-auto">
+                    <div class="col-md-2 mt-auto">
                         <button type="submit" class="btn btn-primary w-100"><i class="fas fa-filter me-1"></i>
                             Calculate Cash Flow</button>
                     </div>

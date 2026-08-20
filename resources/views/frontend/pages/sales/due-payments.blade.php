@@ -506,7 +506,7 @@
                     <thead class="bg-light text-secondary fs-7 text-uppercase">
                         <tr>
                             <th class="ps-4">#</th>
-                            <th>Date</th>
+                            <!-- <th>Date</th> -->
                             <th>Order No</th>
                             <th>Customer / Client</th>
                             <th>Total Amount</th>
@@ -524,17 +524,17 @@
                             @endphp
                             <tr class="due-row" data-search="{{ strtolower($sale->order_no . ' ' . $customerName . ' ' . $customerPhone . ' ' . $sale->sale_type) }}" data-type="{{ strtolower($sale->sale_type) }}">
                                 <td class="ps-4 text-muted fw-semibold" data-label="">{{ $loop->iteration }}</td>
-                                <td data-label="Date">
+                                <!-- <td data-label="Date">
                                     <span class="text-secondary small fw-semibold">
                                         {{ $sale->created_at ? $sale->created_at->format('d M Y') : 'N/A' }}
                                     </span>
-                                </td>
+                                </td> -->
                                 <td data-label="Order No">
                                     <span class="fw-bold text-primary font-monospace">#{{ $sale->order_no }}</span>
                                 </td>
                                 <td data-label="Customer / Client">
                                     <div>
-                                        <span class="fw-bold text-dark d-block">{{ $customerName }}</span>
+                                        <span class="fw-bold text-dark d-block">{{ Str::limit($customerName, 20) }}</span>
                                         <small class="text-muted fs-7"><i class="fe fe-phone me-1"></i>{{ $customerPhone }}</small>
                                     </div>
                                 </td>

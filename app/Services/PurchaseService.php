@@ -55,32 +55,61 @@ class PurchaseService
             // 4. Auto-post double-entry journal voucher for Purchase
             try {
                 $invAcc = \App\Models\ChartOfAccount::where('account_code', '1140')->first();
-                $cashAcc = \App\Models\ChartOfAccount::where('account_code', '1110')->first();
                 $apAcc = \App\Models\ChartOfAccount::where('account_code', '2110')->first();
+                $paid = (float) $purchase->payment;
+                $due = (float) $purchase->due;
+                $total = (float) $purchase->total_price;
+                $paymentRef = $data['payment_ref'] ?? null;
 
-                if ($invAcc && ($cashAcc || $apAcc)) {
+                // Resolve Source Payment Account (chosen account or default Cash in Hand 1110)
+                $sourceAccount = null;
+                if (!empty($data['account_id'])) {
+                    $sourceAccount = \App\Models\ChartOfAccount::find($data['account_id']);
+                }
+                if (!$sourceAccount) {
+                    $sourceAccount = \App\Models\ChartOfAccount::where('account_code', '1110')->first();
+                }
+
+                if ($invAcc && ($sourceAccount || $apAcc)) {
                     $items = [];
-                    $total = (float) $purchase->total_price;
-                    $paid = (float) $purchase->payment;
-                    $due = (float) $purchase->due;
 
-                    $items[] = ['account_id' => $invAcc->id, 'debit' => $total, 'credit' => 0.00, 'description' => 'Inventory procurement item #' . $purchase->product_id];
-                    if ($paid > 0 && $cashAcc) {
-                        $items[] = ['account_id' => $cashAcc->id, 'debit' => 0.00, 'credit' => $paid, 'description' => 'Cash/Bank payment to vendor #' . $purchase->vendor_id];
+                    $items[] = [
+                        'account_id' => $invAcc->id,
+                        'debit' => $total,
+                        'credit' => 0.00,
+                        'description' => 'Inventory procurement item #' . $purchase->product_id . ' (Qty: ' . $purchase->quantity . ')'
+                    ];
+
+                    if ($paid > 0 && $sourceAccount) {
+                        $accLabel = $sourceAccount->account_name . ' (' . $sourceAccount->account_code . ')';
+                        $items[] = [
+                            'account_id' => $sourceAccount->id,
+                            'debit' => 0.00,
+                            'credit' => $paid,
+                            'description' => "Payment disbursed via {$accLabel} to vendor #" . $purchase->vendor_id . ($paymentRef ? " [Ref: {$paymentRef}]" : '')
+                        ];
                     }
+
                     if ($due > 0 && $apAcc) {
-                        $items[] = ['account_id' => $apAcc->id, 'debit' => 0.00, 'credit' => $due, 'description' => 'Accounts payable due to vendor #' . $purchase->vendor_id];
+                        $items[] = [
+                            'account_id' => $apAcc->id,
+                            'debit' => 0.00,
+                            'credit' => $due,
+                            'description' => 'Accounts payable due to vendor #' . $purchase->vendor_id
+                        ];
                     }
 
                     postJournalEntry([
                         'entry_date' => date('Y-m-d'),
                         'reference_type' => 'purchase',
                         'reference_id' => $purchase->id,
-                        'description' => 'Procurement #' . $purchase->id . ' — Product #' . $purchase->product_id . ' (Qty: ' . $purchase->quantity . ')',
+                        'description' => 'Procurement #' . $purchase->id . ' — Product #' . $purchase->product_id . ' (Qty: ' . $purchase->quantity . ')' . ($paymentRef ? " (Ref: {$paymentRef})" : ''),
                         'items' => $items
                     ]);
                 }
-            } catch (\Throwable $e) {}
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('Purchase auto-journal posting notice: ' . $e->getMessage());
+            }
 
             return $purchase;
         });

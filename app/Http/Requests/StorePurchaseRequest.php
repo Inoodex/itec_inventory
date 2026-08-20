@@ -25,6 +25,9 @@ class StorePurchaseRequest extends FormRequest
             'serial_numbers' => 'nullable|array',
             'serial_numbers.*' => 'string|max:100',
             'serial_bulk'    => 'nullable|string',
+            'payment_method' => 'nullable|string|max:50',
+            'account_id'     => 'nullable|exists:chart_of_accounts,id',
+            'payment_ref'    => 'nullable|string|max:100',
         ];
     }
 
