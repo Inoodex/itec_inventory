@@ -61,10 +61,20 @@
 
     .table-custom th, .table-custom td {
         white-space: nowrap;
-    }</style>
+    }
+    .card, .card-body {
+        overflow: visible !important;
+    }
+    .dropdown-menu {
+        z-index: 1060 !important;
+    }
+</style>
 @endpush
 
 @section('content')
+@php
+    $isAdmin = auth()->check() && auth()->user()->hasRole(['Super Admin', 'Admin', 'admin']);
+@endphp
 <div class="content container-fluid">
 
     <!-- Page Header -->
@@ -218,6 +228,9 @@
                             <th>Opening Stock</th>
                             <th>Current Stock</th>
                             <th>Serial Tracking</th>
+                            @if($isAdmin)
+                                <th>Action</th>
+                            @endif
                         </tr>
                     </thead>
                     <tbody class="border-top-0">
@@ -271,10 +284,39 @@
                                         </span>
                                     @endif
                                 </td>
+                                @if($isAdmin)
+                                <td>
+                                    <div class="dropdown">
+                                        <a href="javascript:void(0)" class="btn-action-icon shadow-none" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="fas fa-ellipsis-v"></i>
+                                        </a>
+                                        <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3">
+                                            <li>
+                                                <a class="dropdown-item py-2 d-flex align-items-center gap-2" href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#edit-inventory-modal-{{ $inventory->id }}">
+                                                    <i class="fe fe-edit text-primary"></i>
+                                                    <span>Edit Stock</span>
+                                                </a>
+                                            </li>
+                                            <li><hr class="dropdown-divider opacity-50"></li>
+                                            <li>
+                                                <a class="dropdown-item py-2 d-flex align-items-center gap-2 text-danger" href="javascript:void(0)"
+                                                    onclick="if (confirm('Are you sure you want to delete this inventory record?')) { document.getElementById('delete-inventory-{{ $inventory->id }}').submit(); }">
+                                                    <i class="fe fe-trash-2 text-danger"></i>
+                                                    <span>Delete Record</span>
+                                                </a>
+                                                <form id="delete-inventory-{{ $inventory->id }}" action="{{ route('inventory.destroy', $inventory->id) }}" method="POST" class="d-none">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                </form>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </td>
+                                @endif
                             </tr>
                         @empty
                             <tr id="emptyStateRow">
-                                <td colspan="5" class="text-center py-5">
+                                <td colspan="{{ $isAdmin ? 6 : 5 }}" class="text-center py-5">
                                     <div class="d-flex flex-column align-items-center justify-content-center">
                                         <div class="avatar avatar-xl bg-primary-light text-primary rounded-circle mb-3 d-flex align-items-center justify-content-center">
                                             <i class="fe fe-database fs-1"></i>
@@ -332,6 +374,54 @@
         </div>
     </div>
 </div>
+
+<!-- Edit Stock Modals -->
+@if($isAdmin)
+@foreach ($inventories as $inventory)
+<div id="edit-inventory-modal-{{ $inventory->id }}" class="modal fade" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-3">
+            <div class="modal-header bg-light py-3 border-bottom">
+                <h5 class="modal-title fw-bold text-dark">
+                    <i class="fe fe-edit text-primary me-2"></i>Edit Stock — {{ Str::limit($inventory->product?->name ?? 'Product', 25) }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ route('inventory.update', $inventory->id) }}">
+                @csrf
+                @method('PUT')
+                <div class="modal-body p-4">
+                    <div class="p-3 bg-light rounded-3 border mb-3">
+                        <span class="text-muted small d-block">Product:</span>
+                        <h6 class="fw-bold text-dark mb-1">{{ $inventory->product?->name ?? 'N/A' }}</h6>
+                        <small class="text-muted">Model: {{ $inventory->product?->model ?? 'N/A' }}</small>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-12 col-md-6">
+                            <label for="opening_stock_{{ $inventory->id }}" class="form-label fw-semibold small text-secondary">Opening Stock <span class="text-danger">*</span></label>
+                            <input type="number" name="opening_stock" id="opening_stock_{{ $inventory->id }}" class="form-control" min="0" value="{{ $inventory->opening_stock ?? 0 }}" required>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label for="current_stock_{{ $inventory->id }}" class="form-label fw-semibold small text-secondary">Current Available Stock <span class="text-danger">*</span></label>
+                            <input type="number" name="current_stock" id="current_stock_{{ $inventory->id }}" class="form-control" min="0" value="{{ $inventory->current_stock ?? 0 }}" required>
+                        </div>
+                        <div class="col-12">
+                            <label for="notes_{{ $inventory->id }}" class="form-label fw-semibold small text-secondary">Notes (Optional)</label>
+                            <input type="text" name="notes" id="notes_{{ $inventory->id }}" class="form-control" value="{{ $inventory->notes }}" placeholder="e.g. Stock adjustment / manual count correction">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light py-2 border-top">
+                    <button type="button" class="btn btn-light px-4 rounded-3 text-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary px-4 rounded-3 shadow-sm">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endforeach
+@endif
 
 @push('scripts')
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
