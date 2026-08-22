@@ -101,7 +101,7 @@
     <div class="card border-0 shadow-sm rounded-3 mb-4">
         <div class="card-body p-4">
             <h6 class="fw-bold text-dark mb-3"><i class="fe fe-filter me-2 text-primary"></i>Filter Report Data</h6>
-            <form action="{{ route('purchase.report.get') }}" method="GET">
+            <form action="{{ route('purchase.report') }}" method="GET">
                 <div class="row g-3 align-items-end">
                     <div class="col-lg-3 col-md-6 col-12">
                         <label class="form-label small text-secondary fw-semibold mb-1">Product Name</label>

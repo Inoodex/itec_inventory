@@ -102,12 +102,16 @@ Route::middleware(['auth', 'permission:Warranty Management'])->group(function ()
 // 8. PURCHASE & PROCUREMENT
 // =========================================================================
 Route::middleware(['auth', 'permission:Purchase Management'])->group(function () {
+    // Purchase Reports
+    Route::get('purchase-report', [PurchaseController::class, 'report'])->name('purchase.report');
+    Route::get('purchase-report/pdf', [PurchaseController::class, 'reportPdf'])->name('purchase.report.pdf');
+    Route::get('purchase/report', [PurchaseController::class, 'report'])->name('purchase.report.get');
+    Route::get('purchase/report/pdf', [PurchaseController::class, 'reportPdf'])->name('purchase.report.pdf.alias');
+
+    // Purchase Resource & Batches
     Route::post('purchase/store-batch', [PurchaseController::class, 'storeBatch'])->name('purchase.store.batch');
     Route::get('purchase/latest-price/{id}', [PurchaseController::class, 'getLatestPrice'])->name('purchase.latest_price');
     Route::resource('purchase', PurchaseController::class);
-    Route::get('purchase-report', [PurchaseController::class, 'reportIndex'])->name('purchase.report');
-    Route::get('purchase/report', [PurchaseController::class, 'report'])->name('purchase.report.get');
-    Route::get('purchase/report/pdf', [PurchaseController::class, 'reportPdf'])->name('purchase.report.pdf');
 });
 
 // =========================================================================

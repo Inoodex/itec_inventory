@@ -45,9 +45,23 @@
         color: #ffffff !important;
         border-color: #7638ff !important;
     }
+    .btn-action-icon::after, .btn-action-icon::before {
+        display: none !important;
+        content: none !important;
+    }
     .table-custom th, .table-custom td {
         white-space: nowrap;
-    }</style>
+    }
+    .card, .card-body {
+        overflow: visible !important;
+    }
+    .table-responsive {
+        overflow: visible !important;
+    }
+    .dropdown-menu {
+        z-index: 1060 !important;
+    }
+</style>
 @endpush
 
 @section('content')
@@ -141,7 +155,7 @@
                                     </td>
                                     <td class="pe-4 text-end" style="width: 100px;">
                                         <div class="dropdown d-inline-block">
-                                            <a href="javascript:void(0)" class="btn-action-icon shadow-none" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <a href="javascript:void(0)" class="btn-action-icon shadow-none" data-bs-toggle="dropdown" data-bs-display="static" data-bs-popper-config='{"strategy":"fixed"}' aria-expanded="false">
                                                 <i class="fas fa-ellipsis-v"></i>
                                             </a>
                                             <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3">

@@ -76,7 +76,7 @@
 
     <!-- Summary Stats Bar -->
     <div class="row g-3 mb-4">
-        <div class="col-xl-3 col-md-6 col-12">
+        <!-- <div class="col-xl-3 col-md-6 col-12">
             <div class="card stat-card bg-white shadow-sm rounded-3 h-100 mb-0">
                 <div class="card-body d-flex align-items-center">
                     <div class="avatar avatar-lg bg-primary-light text-primary rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0">
@@ -88,9 +88,9 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </div> -->
 
-        <div class="col-xl-3 col-md-6 col-12">
+        <div class="col-xl-4 col-md-6 col-12">
             <div class="card stat-card bg-white shadow-sm rounded-3 h-100 mb-0">
                 <div class="card-body d-flex align-items-center">
                     <div class="avatar avatar-lg bg-info-light text-info rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0">
@@ -104,7 +104,7 @@
             </div>
         </div>
 
-        <div class="col-xl-3 col-md-6 col-12">
+        <div class="col-xl-4 col-md-6 col-12">
             <div class="card stat-card bg-white shadow-sm rounded-3 h-100 mb-0">
                 <div class="card-body d-flex align-items-center">
                     <div class="avatar avatar-lg bg-warning-light text-warning rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0">
@@ -118,7 +118,7 @@
             </div>
         </div>
 
-        <div class="col-xl-3 col-md-6 col-12">
+        <div class="col-xl-4 col-md-6 col-12">
             <div class="card stat-card bg-white shadow-sm rounded-3 h-100 mb-0">
                 <div class="card-body d-flex align-items-center">
                     <div class="avatar avatar-lg bg-success-light text-success rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0">

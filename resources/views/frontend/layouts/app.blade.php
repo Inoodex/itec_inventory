@@ -79,7 +79,7 @@
             // Dropdowns inside scrollable tables: use fixed positioning so the
             // action menus are never clipped by the .table-responsive wrapper.
             if (window.bootstrap && window.bootstrap.Dropdown) {
-                $('.table-responsive .dropdown-toggle').each(function () {
+                $('.table-responsive .dropdown-toggle, .table-responsive [data-bs-toggle="dropdown"]').each(function () {
                     var el = this;
                     var instance = window.bootstrap.Dropdown.getInstance(el);
                     if (instance) instance.dispose();

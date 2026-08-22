@@ -229,7 +229,8 @@
                                                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                                 </div>
                                                 <div class="modal-body py-4">
-                                                    <p class="mb-0 text-muted">Are you sure you want to delete user <strong class="text-dark">{{ $item->name }}</strong>? This action cannot be undone.</p>
+                                                    <p class="mb-1 text-muted">Are you sure you want to delete user <strong class="text-dark">{{ $item->name }}</strong>?</p>
+                                                    <p class="mb-0 text-danger small"><i class="fe fe-alert-triangle me-1"></i>This action cannot be undone.</p>
                                                 </div>
                                                 <div class="modal-footer border-top-0 pt-0">
                                                     <button type="button" class="btn btn-outline-secondary px-4 rounded-3" data-bs-dismiss="modal">Cancel</button>

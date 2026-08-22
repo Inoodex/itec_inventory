@@ -273,28 +273,7 @@ class PurchaseController extends Controller
 
     public function reportIndex(Request $request)
     {
-        $query = Purchase::query();
-        $hasFilters = $request->filled('vendor_id') || $request->filled('item_name') || $request->filled('from') || $request->filled('to');
-
-        if (!$hasFilters) {
-            $query->whereBetween('created_at', [
-                Carbon::now()->startOfMonth(),
-                Carbon::now()->endOfMonth(),
-            ]);
-        } else {
-            $query = $this->applyPurchaseReportFilters($query, $request);
-        }
-
-        $purchases = $query
-            ->selectRaw('product_id, SUM(quantity) as total_qty, SUM(total_price) as total_amount')
-            ->groupBy('product_id')
-            ->with('product')
-            ->get();
-
-        $products = Product::with('brand')->latest()->get();
-        $vendors = Vendor::latest()->get();
-
-        return view('frontend.pages.report.purchase.index', compact('purchases', 'products', 'vendors'));
+        return $this->report($request);
     }
 
     public function report(Request $request)

@@ -68,6 +68,36 @@
     .dropdown-menu {
         z-index: 1060 !important;
     }
+
+    /* Select2 Inside Modal Enhancements */
+    .select2-container {
+        z-index: 1065 !important;
+    }
+    .select2-dropdown {
+        z-index: 1065 !important;
+        border: 1px solid #dbe2ea !important;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
+        border-radius: 8px !important;
+    }
+    .select2-search--dropdown {
+        padding: 8px 10px !important;
+    }
+    .select2-search--dropdown .select2-search__field {
+        border: 1px solid #dbe2ea !important;
+        border-radius: 6px !important;
+        padding: 8px 12px !important;
+        outline: none !important;
+        width: 100% !important;
+        font-size: 14px !important;
+    }
+    .select2-search--dropdown .select2-search__field:focus {
+        border-color: #7638ff !important;
+        box-shadow: 0 0 0 0.2rem rgba(118, 56, 255, 0.15) !important;
+    }
+    .select2-results__option--highlighted[aria-selected] {
+        background-color: #7638ff !important;
+        color: #ffffff !important;
+    }
 </style>
 @endpush
 
@@ -424,9 +454,6 @@
 @endif
 
 @push('scripts')
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const searchInput = document.getElementById('inventorySearchInput');
@@ -454,9 +481,11 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    $('.modal').on('shown.bs.modal', function () {
-        $(this).find('.select2').select2({
-            dropdownParent: $(this),
+    // Initialize Select2 specifically for Add Opening Stock Modal
+    $('#add-product-modal').on('shown.bs.modal', function () {
+        $('#product_id').select2({
+            dropdownParent: $('#add-product-modal'),
+            placeholder: '-- Select Product --',
             width: '100%'
         });
     });
