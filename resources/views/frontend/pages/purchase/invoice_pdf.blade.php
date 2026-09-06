@@ -15,9 +15,10 @@
             background-image-resize: 6;
             @endif
             margin-top: 42mm;
-            margin-bottom: 15mm;
+            margin-bottom: 32mm;
             margin-left: 15mm;
             margin-right: 15mm;
+            footer: invoiceFooter;
         }
 
         * {
@@ -46,15 +47,15 @@
                 <div style="font-size: 12px; color: #64748b; margin-top: 3px;">
                     Purchase Date: {{ $purchase->created_at ? $purchase->created_at->format('d M Y') : date('d M Y') }}
                 </div>
-                <div style="margin-top: 10px; font-size: 11px; color: #64748b;">
-                                Payment Status: 
-                                @if($purchase->due <= 0)
-                                    <strong style="color: #16a34a;">PAID</strong>
-                                @elseif($purchase->payment > 0)
-                                    <strong style="color: #d97706;">PARTIALLY PAID</strong>
-                                @else
-                                    <strong style="color: #dc2626;">DUE / UNPAID</strong>
-                                @endif
+                <div style="margin-top: 6px; font-size: 11px; color: #64748b;">
+                    Payment Status: 
+                    @if($purchase->due <= 0)
+                        <strong style="color: #16a34a;">PAID</strong>
+                    @elseif($purchase->payment > 0)
+                        <strong style="color: #d97706;">PARTIALLY PAID</strong>
+                    @else
+                        <strong style="color: #dc2626;">DUE / UNPAID</strong>
+                    @endif
                 </div>
             </td>
         </tr>
@@ -80,9 +81,6 @@
             <td style="padding: 14px 18px; width: 33.33%; vertical-align: top; border-left: 1px solid #cbd5e1;">
                 <div style="font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #64748b; margin-bottom: 4px;">LOCATION / ADDRESS</div>
                 <div style="font-size: 12px; color: #0f172a;">{{ $vendor->address ?? 'N/A' }}</div>
-                @if(!empty($purchase->creator))
-                    <div style="font-size: 10px; color: #64748b; margin-top: 4px;">Purchased By: {{ $purchase->creator->name }}</div>
-                @endif
             </td>
         </tr>
     </table>
@@ -180,7 +178,7 @@
     <!-- Signatures -->
     <table style="width: 100%; border-collapse: collapse; margin-top: 60px;">
         <tr>
-            <td width="50%" align="center" style="vertical-align: bottom;">
+            <td width="50%" align="center" style="vertical-align: top;">
                 <table align="center" style="width: 180px; margin: 0 auto 8px auto; border-collapse: collapse;">
                     <tr>
                         <td style="border-top: 1.5px solid #475569; height: 1px; font-size: 1px; line-height: 1px;">&nbsp;</td>
@@ -188,7 +186,7 @@
                 </table>
                 <div style="font-size: 11px; font-weight: 600; color: #475569;">Vendor / Supplier Signature</div>
             </td>
-            <td width="50%" align="center" style="vertical-align: bottom;">
+            <td width="50%" align="center" style="vertical-align: top;">
                 <table align="center" style="width: 180px; margin: 0 auto 8px auto; border-collapse: collapse;">
                     <tr>
                         <td style="border-top: 1.5px solid #475569; height: 1px; font-size: 1px; line-height: 1px;">&nbsp;</td>
@@ -198,6 +196,15 @@
             </td>
         </tr>
     </table>
+
+    <!-- Footer fixed at bottom right above pad graphic -->
+    <htmlpagefooter name="invoiceFooter">
+        @if(!empty($purchase->creator))
+        <div style="text-align: right; font-size: 10.5px; color: #64748b;">
+            Purchased By: <strong style="color: #0f172a;">{{ $purchase->creator->name }}</strong>
+        </div>
+        @endif
+    </htmlpagefooter>
 
 </body>
 </html>

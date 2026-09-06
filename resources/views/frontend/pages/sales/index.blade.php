@@ -202,7 +202,7 @@
                                 </td>
                                 <td>
                                     <div>
-                                        <span class="fw-bold text-dark d-block">{{ $customerName }}</span>
+                                        <span class="fw-bold text-dark d-block">{{ Str::limit($customerName, 20) }}</span>
                                         <small class="text-muted fs-7"><i class="fe fe-phone me-1"></i>{{ $customerPhone }}</small>
                                     </div>
                                 </td>

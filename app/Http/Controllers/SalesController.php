@@ -327,7 +327,7 @@ public function store(StoreSaleRequest $request)
 
     public function downloadInvoicePdf($id)
     {
-        $sales = Sale::with(['customer', 'client', 'returns.items.product', 'returns.processedBy'])->find($id);
+        $sales = Sale::with(['customer', 'client', 'returns.items.product', 'returns.processedBy', 'salesPerson'])->find($id);
         if (!$sales) {
             abort(404);
         }
@@ -355,18 +355,22 @@ public function store(StoreSaleRequest $request)
                 'mode' => 'utf-8',
                 'format' => 'A4',
                 'margin_top' => 42,
-                'margin_bottom' => 15,
+                'margin_bottom' => 32,
                 'margin_left' => 15,
                 'margin_right' => 15,
+                'margin_footer' => 24,
                 'default_font' => 'Helvetica',
             ]);
 
             $html = view('frontend.pages.sales.invoice_pdf', compact('sales', 'items', 'customer', 'returns'))->render();
             $mpdf->WriteHTML($html);
 
-            return response($mpdf->Output(($sales->order_no ?? $sales->id) . '.pdf', \Mpdf\Output\Destination::INLINE), 200, [
+            $filename = ($sales->order_no ?? $sales->id) . '.pdf';
+            $pdfContent = $mpdf->Output('', \Mpdf\Output\Destination::STRING_RETURN);
+
+            return response($pdfContent, 200, [
                 'Content-Type' => 'application/pdf',
-                'Content-Disposition' => 'inline; filename="' . ($sales->order_no ?? $sales->id) . '.pdf"',
+                'Content-Disposition' => 'inline; filename="' . $filename . '"',
             ]);
         } catch (\Exception $e) {
             Log::error('Sales invoice PDF generation failed: ' . $e->getMessage(), [

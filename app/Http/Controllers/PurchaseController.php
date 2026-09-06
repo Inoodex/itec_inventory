@@ -368,9 +368,10 @@ class PurchaseController extends Controller
                 'mode' => 'utf-8',
                 'format' => 'A4',
                 'margin_top' => 42,
-                'margin_bottom' => 15,
+                'margin_bottom' => 32,
                 'margin_left' => 15,
                 'margin_right' => 15,
+                'margin_footer' => 24,
                 'default_font' => 'Helvetica',
             ]);
 
