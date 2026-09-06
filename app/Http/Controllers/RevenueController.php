@@ -28,8 +28,11 @@ class RevenueController extends Controller
             'default_font' => 'Helvetica',
         ]);
         $mpdf->WriteHTML($html);
-        return response($mpdf->Output('Monthly_Revenue_Report_' . now()->format('Y_m_d_His') . '.pdf', 'I'), 200, [
+        $fileName = 'Monthly_Revenue_Report_' . now()->format('Y_m_d_His') . '.pdf';
+        $pdfContent = $mpdf->Output('', \Mpdf\Output\Destination::STRING_RETURN);
+        return response($pdfContent, 200, [
             'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="' . $fileName . '"',
         ]);
     }
 
@@ -60,6 +63,7 @@ class RevenueController extends Controller
      public function export($id)
     {
         $revenue = Revenue::findOrFail($id);
+        ini_set('memory_limit', '512M');
         $html = view('frontend.pages.revenue.pdf', compact('revenue'))->render();
         $mpdf = new \Mpdf\Mpdf([
             'mode' => 'utf-8',
@@ -68,9 +72,11 @@ class RevenueController extends Controller
         ]);
         $mpdf->WriteHTML($html);
         $filename = "Revenue_Report_{$revenue->month_name}_{$revenue->year}.pdf";
+        $pdfContent = $mpdf->Output('', \Mpdf\Output\Destination::STRING_RETURN);
 
-        return response($mpdf->Output($filename, 'I'), 200, [
+        return response($pdfContent, 200, [
             'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="' . $filename . '"',
         ]);
     }
 }

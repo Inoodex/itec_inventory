@@ -32,8 +32,11 @@ class CustomerController extends Controller
             'default_font' => 'Helvetica',
         ]);
         $mpdf->WriteHTML($html);
-        return response($mpdf->Output('Customer_List_' . now()->format('Y_m_d_His') . '.pdf', 'I'), 200, [
+        $fileName = 'Customer_List_' . now()->format('Y_m_d_His') . '.pdf';
+        $pdfContent = $mpdf->Output('', \Mpdf\Output\Destination::STRING_RETURN);
+        return response($pdfContent, 200, [
             'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="' . $fileName . '"',
         ]);
     }
 

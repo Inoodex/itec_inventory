@@ -114,6 +114,7 @@ class FinancialStatementController extends Controller
             'padBase64'
         ))->render();
 
+        ini_set('memory_limit', '512M');
         $mpdf = new Mpdf([
             'mode' => 'utf-8',
             'format' => 'A4',
@@ -126,8 +127,11 @@ class FinancialStatementController extends Controller
 
         $mpdf->WriteHTML($html);
 
-        return response($mpdf->Output("Profit-Loss-{$toDate}.pdf", 'I'), 200, [
+        $fileName = "Profit-Loss-{$toDate}.pdf";
+        $pdfContent = $mpdf->Output('', \Mpdf\Output\Destination::STRING_RETURN);
+        return response($pdfContent, 200, [
             'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="' . $fileName . '"',
         ]);
     }
 
@@ -269,6 +273,7 @@ class FinancialStatementController extends Controller
             'padBase64'
         ))->render();
 
+        ini_set('memory_limit', '512M');
         $mpdf = new Mpdf([
             'mode' => 'utf-8',
             'format' => 'A4',
@@ -281,8 +286,11 @@ class FinancialStatementController extends Controller
 
         $mpdf->WriteHTML($html);
 
-        return response($mpdf->Output("Balance-Sheet-{$asOfDate}.pdf", 'I'), 200, [
+        $fileName = "Balance-Sheet-{$asOfDate}.pdf";
+        $pdfContent = $mpdf->Output('', \Mpdf\Output\Destination::STRING_RETURN);
+        return response($pdfContent, 200, [
             'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="' . $fileName . '"',
         ]);
     }
 

@@ -314,6 +314,7 @@ class PurchaseController extends Controller
             'vendor' => $request->filled('vendor_id') ? Vendor::find($request->vendor_id)?->name : 'All Vendors',
         ];
 
+        ini_set('memory_limit', '512M');
         $html = view('frontend.pages.report.purchase.pdf', compact('purchases', 'filters'))->render();
         $mpdf = new \Mpdf\Mpdf([
             'mode' => 'utf-8',
@@ -321,8 +322,11 @@ class PurchaseController extends Controller
             'default_font' => 'Helvetica',
         ]);
         $mpdf->WriteHTML($html);
-        return response($mpdf->Output('purchase-report-' . now()->format('Y-m-d') . '.pdf', 'I'), 200, [
+        $fileName = 'purchase-report-' . now()->format('Y-m-d') . '.pdf';
+        $pdfContent = $mpdf->Output('', \Mpdf\Output\Destination::STRING_RETURN);
+        return response($pdfContent, 200, [
             'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="' . $fileName . '"',
         ]);
     }
 

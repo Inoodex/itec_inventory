@@ -138,6 +138,7 @@ class WarrantyController extends Controller
         $claim = WarrantyClaim::with(['sale.customer', 'salesItem', 'product', 'customer', 'receiver'])
             ->findOrFail($id);
 
+        ini_set('memory_limit', '512M');
         $html = view('pdf.warranty-receipt', compact('claim'))->render();
         $mpdf = new \Mpdf\Mpdf([
             'mode' => 'utf-8',
@@ -145,8 +146,11 @@ class WarrantyController extends Controller
             'default_font' => 'Helvetica',
         ]);
         $mpdf->WriteHTML($html);
-        return response($mpdf->Output("warranty-claim-{$claim->claim_no}.pdf", 'I'), 200, [
+        $fileName = "warranty-claim-{$claim->claim_no}.pdf";
+        $pdfContent = $mpdf->Output('', \Mpdf\Output\Destination::STRING_RETURN);
+        return response($pdfContent, 200, [
             'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="' . $fileName . '"',
         ]);
     }
 }

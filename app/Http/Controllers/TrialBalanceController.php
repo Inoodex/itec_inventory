@@ -98,6 +98,7 @@ class TrialBalanceController extends Controller
             'padBase64'
         ))->render();
 
+        ini_set('memory_limit', '512M');
         $mpdf = new Mpdf([
             'mode' => 'utf-8',
             'format' => 'A4',
@@ -110,8 +111,11 @@ class TrialBalanceController extends Controller
 
         $mpdf->WriteHTML($html);
 
-        return response($mpdf->Output("Trial-Balance-{$asOfDate}.pdf", 'I'), 200, [
+        $fileName = "Trial-Balance-{$asOfDate}.pdf";
+        $pdfContent = $mpdf->Output('', \Mpdf\Output\Destination::STRING_RETURN);
+        return response($pdfContent, 200, [
             'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="' . $fileName . '"',
         ]);
     }
 }

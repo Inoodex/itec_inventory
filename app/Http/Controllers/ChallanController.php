@@ -135,6 +135,7 @@ public function index(Request $request)
                 'seal_image' => $companyDetail->seal_image ?? null,
             ];
 
+    ini_set('memory_limit', '512M');
     $html = view('pdf.challan', $pdfData)->render();
     $mpdf = new \Mpdf\Mpdf([
         'mode' => 'utf-8',
@@ -152,8 +153,10 @@ public function index(Request $request)
         : now()->format('d-m-Y');
     $fileName = $recipientSlug . '-' . $challanDate . '.pdf';
 
-    return response($mpdf->Output($fileName, 'I'), 200, [
+    $pdfContent = $mpdf->Output('', \Mpdf\Output\Destination::STRING_RETURN);
+    return response($pdfContent, 200, [
         'Content-Type' => 'application/pdf',
+        'Content-Disposition' => 'inline; filename="' . $fileName . '"',
     ]);
 
         } catch (\Exception $e) {
@@ -217,6 +220,7 @@ public function preview($id)
         'seal_image' => $companyDetail->seal_image ?? null,
     ];
 
+    ini_set('memory_limit', '512M');
     $html = view('pdf.challan', $pdfData)->render();
     $mpdf = new \Mpdf\Mpdf([
         'mode' => 'utf-8',
@@ -224,8 +228,11 @@ public function preview($id)
         'default_font' => 'Helvetica',
     ]);
     $mpdf->WriteHTML($html);
-    return response($mpdf->Output('challan-' . $challan->id . '.pdf', 'I'), 200, [
+    $filename = 'challan-' . $challan->id . '.pdf';
+    $pdfContent = $mpdf->Output('', \Mpdf\Output\Destination::STRING_RETURN);
+    return response($pdfContent, 200, [
         'Content-Type' => 'application/pdf',
+        'Content-Disposition' => 'inline; filename="' . $filename . '"',
     ]);
 }
 
@@ -276,6 +283,7 @@ public function download($id)
         'seal_image' => $companyDetail->seal_image ?? null,
     ];
 
+    ini_set('memory_limit', '512M');
     $html = view('pdf.challan', $pdfData)->render();
     $mpdf = new \Mpdf\Mpdf([
         'mode' => 'utf-8',
@@ -289,9 +297,11 @@ public function download($id)
         ? Carbon::parse($challan->challan_date)->format('d-m-Y')
         : now()->format('d-m-Y');
     $fileName = $recipientSlug . '-' . $challanDate . '.pdf';
+    $pdfContent = $mpdf->Output('', \Mpdf\Output\Destination::STRING_RETURN);
 
-    return response($mpdf->Output($fileName, 'I'), 200, [
+    return response($pdfContent, 200, [
         'Content-Type' => 'application/pdf',
+        'Content-Disposition' => 'inline; filename="' . $fileName . '"',
     ]);
 }
     public function getSales()
@@ -410,6 +420,7 @@ public function reportPdf(Request $request)
 
     $challans = $query->latest()->get();
 
+    ini_set('memory_limit', '512M');
     $html = view('pdf.challans-report', compact('challans', 'request'))->render();
     $mpdf = new \Mpdf\Mpdf([
         'mode' => 'utf-8',
@@ -417,8 +428,10 @@ public function reportPdf(Request $request)
         'default_font' => 'Helvetica',
     ]);
     $mpdf->WriteHTML($html);
-    return response($mpdf->Output('challans-report.pdf', 'I'), 200, [
+    $pdfContent = $mpdf->Output('', \Mpdf\Output\Destination::STRING_RETURN);
+    return response($pdfContent, 200, [
         'Content-Type' => 'application/pdf',
+        'Content-Disposition' => 'inline; filename="challans-report.pdf"',
     ]);
 }
 

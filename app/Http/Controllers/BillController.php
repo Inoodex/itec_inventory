@@ -573,6 +573,7 @@ public function preview($id)
         'show_seal' => $bill->show_seal ?? true,
     ];
 
+    ini_set('memory_limit', '512M');
     $html = view('pdf.bill', $pdfData)->render();
     $mpdf = new \Mpdf\Mpdf([
         'mode' => 'utf-8',
@@ -580,8 +581,11 @@ public function preview($id)
         'default_font' => 'Helvetica',
     ]);
     $mpdf->WriteHTML($html);
-    return response($mpdf->Output('bill-' . $bill->bill_number . '.pdf', 'I'), 200, [
+    $filename = 'bill-' . $bill->bill_number . '.pdf';
+    $pdfContent = $mpdf->Output('', \Mpdf\Output\Destination::STRING_RETURN);
+    return response($pdfContent, 200, [
         'Content-Type' => 'application/pdf',
+        'Content-Disposition' => 'inline; filename="' . $filename . '"',
     ]);
 }
 
@@ -648,6 +652,7 @@ public function download($id)
         'show_seal' => $bill->show_seal ?? true,
     ];
 
+    ini_set('memory_limit', '512M');
     $html = view('pdf.bill', $pdfData)->render();
     $mpdf = new \Mpdf\Mpdf([
         'mode' => 'utf-8',
@@ -665,9 +670,11 @@ public function download($id)
         ? Carbon::parse($bill->bill_date)->format('d-m-Y')
         : now()->format('d-m-Y');
     $fileName = $clientSlug . '-' . $billDate . '.pdf';
+    $pdfContent = $mpdf->Output('', \Mpdf\Output\Destination::STRING_RETURN);
 
-    return response($mpdf->Output($fileName, 'I'), 200, [
+    return response($pdfContent, 200, [
         'Content-Type' => 'application/pdf',
+        'Content-Disposition' => 'inline; filename="' . $fileName . '"',
     ]);
 }
     public function updateStatus(Bill $bill, Request $request)
@@ -779,6 +786,7 @@ public function reportPdf(Request $request)
 
     $bills = $query->latest()->get();
 
+    ini_set('memory_limit', '512M');
     $html = view('pdf.bills-report', compact('bills', 'request'))->render();
     $mpdf = new \Mpdf\Mpdf([
         'mode' => 'utf-8',
@@ -786,8 +794,10 @@ public function reportPdf(Request $request)
         'default_font' => 'Helvetica',
     ]);
     $mpdf->WriteHTML($html);
-    return response($mpdf->Output('bills-report.pdf', 'I'), 200, [
+    $pdfContent = $mpdf->Output('', \Mpdf\Output\Destination::STRING_RETURN);
+    return response($pdfContent, 200, [
         'Content-Type' => 'application/pdf',
+        'Content-Disposition' => 'inline; filename="bills-report.pdf"',
     ]);
 }
 

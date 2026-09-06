@@ -116,6 +116,7 @@ class VendorController extends Controller
     public function downloadPdf()
     {
         $vendors = Vendor::all();
+        ini_set('memory_limit', '512M');
         $html = view('pdf.vendors', compact('vendors'))->render();
         $mpdf = new \Mpdf\Mpdf([
             'mode' => 'utf-8',
@@ -123,8 +124,10 @@ class VendorController extends Controller
             'default_font' => 'Helvetica',
         ]);
         $mpdf->WriteHTML($html);
-        return response($mpdf->Output('vendor-list.pdf', 'I'), 200, [
+        $pdfContent = $mpdf->Output('', \Mpdf\Output\Destination::STRING_RETURN);
+        return response($pdfContent, 200, [
             'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="vendor-list.pdf"',
         ]);
     }
 }

@@ -48,6 +48,7 @@ class ServiceController extends Controller
         $services->load('product');
         $users = lib_serviceMan();
 
+        ini_set('memory_limit', '512M');
         $html = view('pdf.services', compact('services', 'users', 'request'))->render();
         $mpdf = new \Mpdf\Mpdf([
             'mode' => 'utf-8',
@@ -56,8 +57,10 @@ class ServiceController extends Controller
         ]);
         $mpdf->WriteHTML($html);
 
-        return response($mpdf->Output('Services.pdf', 'I'), 200, [
+        $pdfContent = $mpdf->Output('', \Mpdf\Output\Destination::STRING_RETURN);
+        return response($pdfContent, 200, [
             'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="Services.pdf"',
         ]);
     }
 
@@ -95,6 +98,7 @@ class ServiceController extends Controller
 
         $users = lib_serviceMan();
         if($request->search_for == 'pdf'){
+            ini_set('memory_limit', '512M');
             $html = view('pdf.services', compact('services','users','request'))->render();
             $mpdf = new \Mpdf\Mpdf([
                 'mode' => 'utf-8',
@@ -102,8 +106,10 @@ class ServiceController extends Controller
                 'default_font' => 'Helvetica',
             ]);
             $mpdf->WriteHTML($html);
-            return response($mpdf->Output('Services.pdf', 'I'), 200, [
+            $pdfContent = $mpdf->Output('', \Mpdf\Output\Destination::STRING_RETURN);
+            return response($pdfContent, 200, [
                 'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="Services.pdf"',
             ]);
         }
 
@@ -448,6 +454,7 @@ class ServiceController extends Controller
         $users = lib_serviceMan();
 
         if($request->search_for == 'pdf'){
+            ini_set('memory_limit', '512M');
             $html = view('pdf.services', compact('services','users','request'))->render();
             $mpdf = new \Mpdf\Mpdf([
                 'mode' => 'utf-8',
@@ -455,8 +462,10 @@ class ServiceController extends Controller
                 'default_font' => 'Helvetica',
             ]);
             $mpdf->WriteHTML($html);
-            return response($mpdf->Output('Services.pdf', 'I'), 200, [
+            $pdfContent = $mpdf->Output('', \Mpdf\Output\Destination::STRING_RETURN);
+            return response($pdfContent, 200, [
                 'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="Completed_Services.pdf"',
             ]);
         }
         //Report
@@ -589,6 +598,7 @@ class ServiceController extends Controller
         $payments = $payments->get();
 
         if($request->search_for == 'pdf'){
+            ini_set('memory_limit', '512M');
             $html = view('pdf.service_payments', compact('payments', 'request', 'service'))->render();
             $mpdf = new \Mpdf\Mpdf([
                 'mode' => 'utf-8',
@@ -596,8 +606,10 @@ class ServiceController extends Controller
                 'default_font' => 'Helvetica',
             ]);
             $mpdf->WriteHTML($html);
-            return response($mpdf->Output('service_Payments.pdf', 'I'), 200, [
+            $pdfContent = $mpdf->Output('', \Mpdf\Output\Destination::STRING_RETURN);
+            return response($pdfContent, 200, [
                 'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="service_Payments.pdf"',
             ]);
         }
 

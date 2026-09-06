@@ -32,8 +32,11 @@ class InventoryController extends Controller
             'default_font' => 'Helvetica',
         ]);
         $mpdf->WriteHTML($html);
-        return response($mpdf->Output('Inventory_Stock_Report_' . now()->format('Y_m_d_His') . '.pdf', 'I'), 200, [
+        $fileName = 'Inventory_Stock_Report_' . now()->format('Y_m_d_His') . '.pdf';
+        $pdfContent = $mpdf->Output('', \Mpdf\Output\Destination::STRING_RETURN);
+        return response($pdfContent, 200, [
             'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="' . $fileName . '"',
         ]);
     }
 

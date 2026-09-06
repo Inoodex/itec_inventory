@@ -312,6 +312,7 @@ public function preview(Quotation $quotation)
         'seal_image' => $companyDetail->seal_image ?? null,
     ];
     
+    ini_set('memory_limit', '512M');
     $html = view('pdf.quotations', $data)->render();
     $mpdf = new \Mpdf\Mpdf([
         'mode' => 'utf-8',
@@ -320,8 +321,12 @@ public function preview(Quotation $quotation)
     ]);
     $mpdf->WriteHTML($html);
 
-    return response($mpdf->Output('Quotation_' . ($quotation->quotation_number ?? $quotation->id) . '.pdf', 'I'), 200, [
+    $filename = 'Quotation_' . ($quotation->quotation_number ?? $quotation->id) . '.pdf';
+    $pdfContent = $mpdf->Output('', \Mpdf\Output\Destination::STRING_RETURN);
+
+    return response($pdfContent, 200, [
         'Content-Type' => 'application/pdf',
+        'Content-Disposition' => 'inline; filename="' . $filename . '"',
     ]);
 }
 
@@ -370,6 +375,7 @@ public function download(Quotation $quotation)
         'seal_image' => $companyDetail->seal_image ?? null,
     ];
     
+    ini_set('memory_limit', '512M');
     $html = view('pdf.quotations', $data)->render();
     $mpdf = new \Mpdf\Mpdf([
         'mode' => 'utf-8',
@@ -384,9 +390,11 @@ public function download(Quotation $quotation)
         ? Carbon::parse($quotation->quotation_date)->format('d-m-Y')
         : now()->format('d-m-Y');
     $fileName = $clientSlug . '-' . $quotationDate . '.pdf';
+    $pdfContent = $mpdf->Output('', \Mpdf\Output\Destination::STRING_RETURN);
 
-    return response($mpdf->Output($fileName, 'I'), 200, [
+    return response($pdfContent, 200, [
         'Content-Type' => 'application/pdf',
+        'Content-Disposition' => 'inline; filename="' . $fileName . '"',
     ]);
 
 }
@@ -419,6 +427,7 @@ public function generatePDF(Quotation $quotation)
         'additional_enclosed' => $quotation->additional_enclosed ?? '',
     ];
 
+    ini_set('memory_limit', '512M');
     $html = view('pdf.quotations', $data)->render();
     $mpdf = new \Mpdf\Mpdf([
         'mode' => 'utf-8',
@@ -432,9 +441,11 @@ public function generatePDF(Quotation $quotation)
         ? Carbon::parse($quotation->quotation_date)->format('d-m-Y')
         : now()->format('d-m-Y');
     $fileName = $clientSlug . '-' . $quotationDate . '.pdf';
+    $pdfContent = $mpdf->Output('', \Mpdf\Output\Destination::STRING_RETURN);
 
-    return response($mpdf->Output($fileName, 'I'), 200, [
+    return response($pdfContent, 200, [
         'Content-Type' => 'application/pdf',
+        'Content-Disposition' => 'inline; filename="' . $fileName . '"',
     ]);
 }
     public function sendQuotation(Quotation $quotation)
@@ -561,6 +572,7 @@ public function reportPdf(Request $request)
 
     $quotations = $query->latest()->get();
 
+    ini_set('memory_limit', '512M');
     $html = view('pdf.quotations-report', compact('quotations', 'request'))->render();
     $mpdf = new \Mpdf\Mpdf([
         'mode' => 'utf-8',
@@ -568,8 +580,11 @@ public function reportPdf(Request $request)
         'default_font' => 'Helvetica',
     ]);
     $mpdf->WriteHTML($html);
-    return response($mpdf->Output('quotations-report.pdf', 'I'), 200, [
+
+    $pdfContent = $mpdf->Output('', \Mpdf\Output\Destination::STRING_RETURN);
+    return response($pdfContent, 200, [
         'Content-Type' => 'application/pdf',
+        'Content-Disposition' => 'inline; filename="quotations-report.pdf"',
     ]);
 }
 }

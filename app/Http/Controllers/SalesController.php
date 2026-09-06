@@ -57,6 +57,7 @@ class SalesController extends Controller
 
         // Export PDF of all matching sales records
         if ($request->search_for == 'pdf' || $request->export == 'pdf') {
+            ini_set('memory_limit', '512M');
             $html = view('pdf.sales', compact('services', 'request'))->render();
             $mpdf = new \Mpdf\Mpdf([
                 'mode' => 'utf-8',
@@ -64,8 +65,11 @@ class SalesController extends Controller
                 'default_font' => 'Helvetica',
             ]);
             $mpdf->WriteHTML($html);
-            return response($mpdf->Output('Sales_List_Report_' . now()->format('Y_m_d_His') . '.pdf', 'I'), 200, [
+            $fileName = 'Sales_List_Report_' . now()->format('Y_m_d_His') . '.pdf';
+            $pdfContent = $mpdf->Output('', \Mpdf\Output\Destination::STRING_RETURN);
+            return response($pdfContent, 200, [
                 'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="' . $fileName . '"',
             ]);
         }
 
@@ -509,6 +513,7 @@ public function store(StoreSaleRequest $request)
 
         $salesReport = $salesQuery->orderBy('sales.created_at', 'desc')->get();
 
+        ini_set('memory_limit', '512M');
         $html = view('frontend.pages.report.sales.pdf', compact('salesReport', 'request'))->render();
         $mpdf = new \Mpdf\Mpdf([
             'mode' => 'utf-8',
@@ -516,8 +521,10 @@ public function store(StoreSaleRequest $request)
             'default_font' => 'Helvetica',
         ]);
         $mpdf->WriteHTML($html);
-        return response($mpdf->Output('sales-report.pdf', 'I'), 200, [
+        $pdfContent = $mpdf->Output('', \Mpdf\Output\Destination::STRING_RETURN);
+        return response($pdfContent, 200, [
             'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="sales-report.pdf"',
         ]);
     }
 
@@ -727,6 +734,7 @@ public function duePaymentsPdf()
 
     $allItems = $sales->merge($projects)->sortByDesc('created_at');
 
+    ini_set('memory_limit', '512M');
     $html = view('pdf.due_payments', ['sales' => $allItems])->render();
     $mpdf = new \Mpdf\Mpdf([
         'mode' => 'utf-8',
@@ -735,8 +743,11 @@ public function duePaymentsPdf()
     ]);
     $mpdf->WriteHTML($html);
 
-    return response($mpdf->Output('Due_Payments_Report_' . now()->format('Y_m_d_His') . '.pdf', 'I'), 200, [
+    $fileName = 'Due_Payments_Report_' . now()->format('Y_m_d_His') . '.pdf';
+    $pdfContent = $mpdf->Output('', \Mpdf\Output\Destination::STRING_RETURN);
+    return response($pdfContent, 200, [
         'Content-Type' => 'application/pdf',
+        'Content-Disposition' => 'inline; filename="' . $fileName . '"',
     ]);
 }
 

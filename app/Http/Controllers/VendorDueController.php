@@ -195,6 +195,7 @@ class VendorDueController extends Controller
             'request'
         ))->render();
 
+        ini_set('memory_limit', '512M');
         $mpdf = new Mpdf([
             'mode'         => 'utf-8',
             'format'       => 'A4',
@@ -207,8 +208,11 @@ class VendorDueController extends Controller
 
         $mpdf->WriteHTML($html);
 
-        return response($mpdf->Output('vendor-due-report-' . date('Y-m-d') . '.pdf', 'I'), 200, [
+        $fileName = 'vendor-due-report-' . date('Y-m-d') . '.pdf';
+        $pdfContent = $mpdf->Output('', \Mpdf\Output\Destination::STRING_RETURN);
+        return response($pdfContent, 200, [
             'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="' . $fileName . '"',
         ]);
     }
 }
