@@ -49,13 +49,13 @@
                 <div style="margin-top: 10px; font-size: 11px; color: #64748b;">
                                 Payment Status: 
                                 @if($purchase->due <= 0)
-                                    <strong style="color: #16a34a;">PAID IN FULL</strong>
+                                    <strong style="color: #16a34a;">PAID</strong>
                                 @elseif($purchase->payment > 0)
                                     <strong style="color: #d97706;">PARTIALLY PAID</strong>
                                 @else
                                     <strong style="color: #dc2626;">DUE / UNPAID</strong>
                                 @endif
-                            </div>
+                </div>
             </td>
         </tr>
     </table>
