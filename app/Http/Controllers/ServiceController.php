@@ -361,8 +361,8 @@ class ServiceController extends Controller
     }
 
     public function makeInvoice(Request $request, $serviceId){
-        $service = Service::with('product')->where('id',$serviceId)->first();
-        if(!$service)abort(404);
+        $service = Service::with(['product', 'repairedBy'])->where('id',$serviceId)->first();
+        if(!$service) abort(404, 'Service record not found.');
         $serviceMans = lib_serviceMan();
 
         $items = collect([
@@ -374,17 +374,37 @@ class ServiceController extends Controller
             ],
         ]);
 
-        $html = view('pdf.service_invoice', compact('service', 'serviceMans', 'items'))->render();
-        $mpdf = new \Mpdf\Mpdf([
-            'mode' => 'utf-8',
-            'format' => 'A4',
-            'default_font' => 'Helvetica',
-        ]);
-        $mpdf->WriteHTML($html);
+        try {
+            ini_set('memory_limit', '512M');
 
-        return response($mpdf->Output('Service_Invoice_' . ($service->service_no ?? $service->id) . '.pdf', 'I'), 200, [
-            'Content-Type' => 'application/pdf',
-        ]);
+            $mpdf = new \Mpdf\Mpdf([
+                'mode' => 'utf-8',
+                'format' => 'A4',
+                'margin_top' => 42,
+                'margin_bottom' => 32,
+                'margin_left' => 15,
+                'margin_right' => 15,
+                'margin_footer' => 24,
+                'default_font' => 'Helvetica',
+            ]);
+
+            $html = view('pdf.service_invoice', compact('service', 'serviceMans', 'items'))->render();
+            $mpdf->WriteHTML($html);
+
+            $filename = 'Service_Invoice_' . ($service->service_no ?? $service->id) . '.pdf';
+            $pdfContent = $mpdf->Output('', \Mpdf\Output\Destination::STRING_RETURN);
+
+            return response($pdfContent, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="' . $filename . '"',
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Service invoice PDF generation failed: ' . $e->getMessage(), [
+                'service_id' => $serviceId,
+            ]);
+
+            return redirect()->back()->with('error', 'Unable to generate service invoice PDF: ' . $e->getMessage());
+        }
     }
 
     public function complatedService(Request $request){

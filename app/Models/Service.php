@@ -38,6 +38,11 @@ class Service extends Model
         return $this->belongsTo(Product::class);
     }
 
+    public function repairedBy()
+    {
+        return $this->belongsTo(User::class, 'repaired_by');
+    }
+
     public function getStatusTextAttribute()
     {
         // status 0 = pending, 1 = completed
