@@ -346,4 +346,46 @@ class PurchaseController extends Controller
 
         return $query;
     }
+
+    /**
+     * Download or view individual purchase invoice PDF.
+     */
+    public function downloadInvoicePdf($id)
+    {
+        $purchase = Purchase::with(['product.brand', 'vendor', 'creator', 'serials'])->find($id);
+        if (!$purchase) {
+            abort(404, 'Purchase record not found.');
+        }
+
+        $product = $purchase->product;
+        $vendor = $purchase->vendor;
+        $serials = $purchase->serials;
+
+        try {
+            ini_set('memory_limit', '512M');
+
+            $mpdf = new \Mpdf\Mpdf([
+                'mode' => 'utf-8',
+                'format' => 'A4',
+                'margin_top' => 42,
+                'margin_bottom' => 15,
+                'margin_left' => 15,
+                'margin_right' => 15,
+                'default_font' => 'Helvetica',
+            ]);
+
+            $html = view('frontend.pages.purchase.invoice_pdf', compact('purchase', 'product', 'vendor', 'serials'))->render();
+            $mpdf->WriteHTML($html);
+
+            $filename = 'PUR-' . str_pad($purchase->id, 5, '0', STR_PAD_LEFT) . '.pdf';
+            $pdfContent = $mpdf->Output('', \Mpdf\Output\Destination::STRING_RETURN);
+
+            return response($pdfContent, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="' . $filename . '"',
+            ]);
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Unable to generate PDF invoice: ' . $e->getMessage());
+        }
+    }
 }

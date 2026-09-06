@@ -49,4 +49,9 @@ class Purchase extends Model
     {
         return $this->belongsTo(Vendor::class);
     }
+
+    public function serials()
+    {
+        return $this->hasMany(ProductSerial::class, 'purchase_id');
+    }
 }

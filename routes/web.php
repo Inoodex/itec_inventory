@@ -108,6 +108,9 @@ Route::middleware(['auth', 'permission:Purchase Management'])->group(function ()
     Route::get('purchase/report', [PurchaseController::class, 'report'])->name('purchase.report.get');
     Route::get('purchase/report/pdf', [PurchaseController::class, 'reportPdf'])->name('purchase.report.pdf.alias');
 
+    // Purchase Invoices & PDF
+    Route::get('purchase/invoice/{id}/pdf', [PurchaseController::class, 'downloadInvoicePdf'])->name('purchase.invoice.pdf');
+
     // Purchase Resource & Batches
     Route::post('purchase/store-batch', [PurchaseController::class, 'storeBatch'])->name('purchase.store.batch');
     Route::get('purchase/latest-price/{id}', [PurchaseController::class, 'getLatestPrice'])->name('purchase.latest_price');

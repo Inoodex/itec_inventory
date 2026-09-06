@@ -269,6 +269,13 @@
                                         </a>
                                         <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3">
                                             <li>
+                                                <a class="dropdown-item py-2 d-flex align-items-center gap-2" target="_blank"
+                                                    href="{{ route('purchase.invoice.pdf', $purchase->id) }}">
+                                                    <i class="fe fe-download text-info"></i>
+                                                    <span>Download PDF</span>
+                                                </a>
+                                            </li>
+                                            <li>
                                                 <a class="dropdown-item py-2 d-flex align-items-center gap-2" href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#edit-purchase-{{ $purchase->id }}">
                                                     <i class="fe fe-edit text-primary"></i>
                                                     <span>Edit Purchase</span>
