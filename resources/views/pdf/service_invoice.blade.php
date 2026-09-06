@@ -114,7 +114,7 @@
                     @endif
                 </td>
                 <td style="padding: 12px 14px; font-size: 12px; color: #334155; border-bottom: 1px solid #f1f5f9; text-align: center; vertical-align: top;">
-                    <span style="font-weight: 700;">1</span> Job
+                    <span style="font-weight: 700;">1</span>
                 </td>
                 <td style="padding: 12px 14px; font-size: 12px; color: #334155; border-bottom: 1px solid #f1f5f9; text-align: right; vertical-align: top;">
                     {{ number_format($service->bill ?? 0, 2) }}
