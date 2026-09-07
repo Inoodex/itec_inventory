@@ -225,7 +225,16 @@
         <!-- PDF Print Options -->
         <div class="card border-0 shadow-sm rounded-3 mb-4">
             <div class="card-body p-4">
-                <h6 class="fw-bold text-dark mb-3"><i class="fe fe-printer me-2 text-primary"></i>PDF Print &amp; Display Options</h6>
+                <h6 class="fw-bold text-dark mb-3"><i class="fe fe-printer me-2 text-primary"></i>PDF Print &amp; Document Options</h6>
+                <div class="d-flex flex-wrap gap-4 mb-3 pb-3 border-bottom">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="auto_generate_challan" id="auto_generate_challan" value="1" {{ old('auto_generate_challan', true) ? 'checked' : '' }}>
+                        <label class="form-check-label fw-semibold text-dark" for="auto_generate_challan">
+                            <i class="fe fe-truck me-1 text-primary"></i>Also generate Delivery Challan automatically
+                        </label>
+                        <small class="d-block text-muted">Automatically creates a matching delivery challan with the same items and recipient</small>
+                    </div>
+                </div>
                 <div class="d-flex flex-wrap gap-4">
                     <div class="form-check form-switch">
                         <input class="form-check-input" type="checkbox" name="show_signature" id="show_signature" value="1" {{ old('show_signature', true) ? 'checked' : '' }}>

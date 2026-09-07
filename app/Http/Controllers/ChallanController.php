@@ -100,8 +100,8 @@ public function index(Request $request)
                 'company_phone' => $request->company_phone ?? '+880 XXXX-XXXXXX',
                 'company_email' => $request->company_email ?? 'info@intelligenttech.com',
                 'company_website' => $request->company_website ?? 'www.itechbd.net',
-                'show_signature' => $request->has('show_signature') ? (bool)$request->show_signature : true,
-                'show_seal' => $request->has('show_seal') ? (bool)$request->show_seal : true,
+                'show_signature' => $request->boolean('show_signature'),
+                'show_seal' => $request->boolean('show_seal'),
             ]);
 
             // Add challan items

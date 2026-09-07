@@ -236,6 +236,12 @@
                                                     <span>Download PDF</span>
                                                 </a>
                                             </li>
+                                            <li>
+                                                <a class="dropdown-item py-2 d-flex align-items-center gap-2" href="{{ route('challans.index') }}">
+                                                    <i class="fe fe-truck text-warning"></i>
+                                                    <span>Delivery Challans</span>
+                                                </a>
+                                            </li>
                                             <li><hr class="dropdown-divider opacity-50"></li>
                                             <li>
                                                 <a class="dropdown-item py-2 d-flex align-items-center gap-2 text-danger" href="javascript:void(0)"
