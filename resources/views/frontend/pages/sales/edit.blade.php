@@ -1,5 +1,14 @@
 @extends('frontend.layouts.app')
 
+@push('styles')
+    <style>
+        html[data-layout-mode="dark"] .form-section-box {
+            background-color: #1b1e23 !important;
+            border-color: #2e3840 !important;
+        }
+    </style>
+@endpush
+
 @section('content')
 <div class="content container-fluid">
 
@@ -7,8 +16,8 @@
     <div class="page-header mb-4">
         <div class="content-page-header d-flex flex-wrap justify-content-between align-items-center gap-3">
             <div>
-                <h4 class="card-title fw-bold text-dark mb-1">Edit Sale Order</h4>
-                <p class="text-muted small mb-0">Update customer information, cart items, and payment breakdown</p>
+                <h4 class="card-title fw-bold text-dark mb-1">Edit Sale Order #{{ $sales->order_no ?? $sales->id }}</h4>
+                <p class="text-muted small mb-0">Update customer details, cart products, serials, and payment breakdown</p>
             </div>
             <div>
                 <a href="{{ route('sales.index') }}" class="btn btn-outline-secondary px-4 py-2 rounded-3 shadow-sm">
@@ -27,33 +36,154 @@
         <div class="card border-0 shadow-sm rounded-3 mb-4">
             <div class="card-body p-4">
                 <h6 class="fw-bold text-dark mb-3"><i class="fe fe-user me-2 text-primary"></i>Customer Information</h6>
-                <div class="row g-3">
-                    <div class="col-lg-4 col-md-6 col-12">
-                        <label class="form-label small text-secondary fw-semibold mb-1">Customer Name <span class="text-danger">*</span></label>
-                        <input type="text" name="name" class="form-control border-light-subtle" value="{{ old('name', $customer->name) }}" required autocomplete="off">
+
+                <div class="row g-3 mb-3">
+                    <div class="col-12">
+                        <label class="form-label small text-secondary fw-semibold mb-2">Customer Type <span class="text-danger">*</span></label>
+                        <div class="d-flex gap-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="client_type" id="newClient" value="new" checked>
+                                <label class="form-check-label fw-semibold text-dark" for="newClient">Customer Details</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="client_type" id="existingClient" value="existing">
+                                <label class="form-check-label fw-semibold text-dark" for="existingClient">Select from Saved Customers</label>
+                            </div>
+                        </div>
                     </div>
-                    <div class="col-lg-4 col-md-6 col-12">
-                        <label class="form-label small text-secondary fw-semibold mb-1">Phone Number <span class="text-danger">*</span></label>
-                        <input type="text" name="phone" class="form-control border-light-subtle" value="{{ old('phone', $customer->phone) }}" required autocomplete="off">
+                </div>
+
+                <!-- Customer Form Inputs -->
+                <div id="newClientForm">
+                    <div class="row g-3">
+                        <div class="col-lg-4 col-md-6 col-12">
+                            <label class="form-label small text-secondary fw-semibold mb-1">Customer Name <span class="text-danger">*</span></label>
+                            <input type="text" name="name" class="form-control border-light-subtle" id="newClientName" value="{{ old('name', $customer->name) }}" placeholder="Enter Customer Name" required autocomplete="off">
+                        </div>
+                        <div class="col-lg-4 col-md-6 col-12">
+                            <label class="form-label small text-secondary fw-semibold mb-1">Phone Number <span class="text-danger">*</span></label>
+                            <input type="text" name="phone" class="form-control border-light-subtle" id="newClientPhone" value="{{ old('phone', $customer->phone) }}" placeholder="Enter Phone Number" required autocomplete="off">
+                        </div>
+                        <div class="col-lg-4 col-md-12 col-12">
+                            <label class="form-label small text-secondary fw-semibold mb-1">Address <span class="text-danger">*</span></label>
+                            <input type="text" name="address" class="form-control border-light-subtle" id="newClientAddress" value="{{ old('address', $customer->address) }}" placeholder="Enter Customer Address" required autocomplete="off">
+                        </div>
                     </div>
-                    <div class="col-lg-4 col-md-12 col-12">
-                        <label class="form-label small text-secondary fw-semibold mb-1">Address <span class="text-danger">*</span></label>
-                        <input type="text" name="address" class="form-control border-light-subtle" value="{{ old('address', $customer->address) }}" required autocomplete="off">
+                </div>
+
+                <!-- Existing Customer Dropdown Form -->
+                <div id="existingClientForm" style="display: none;">
+                    <div class="row g-3">
+                        <div class="col-lg-6 col-md-8 col-12">
+                            <label class="form-label small text-secondary fw-semibold mb-1">Select Saved Customer <span class="text-danger">*</span></label>
+                            <select name="existing_client_id" class="form-select select2 border-light-subtle" id="clientSelect">
+                                <option value="">Select Customer</option>
+                                @foreach ($existingClients as $client)
+                                    <option value="{{ $client->id }}"
+                                        data-name="{{ $client->name }}"
+                                        data-phone="{{ $client->phone }}"
+                                        data-address="{{ $client->address }}"
+                                        {{ $client->id == $sales->customer_id ? 'selected' : '' }}>
+                                        {{ $client->name }} - {{ $client->phone }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Section 2: Cart Items -->
+        <!-- Section 2: Cart Items & Product Builder -->
         <div class="card border-0 shadow-sm rounded-3 mb-4">
             <div class="card-body p-4">
-                <h6 class="fw-bold text-dark mb-3"><i class="fe fe-shopping-cart me-2 text-primary"></i>Cart Items</h6>
+                <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+                    <h6 class="fw-bold text-dark mb-0"><i class="fe fe-shopping-cart me-2 text-primary"></i>Cart Items &amp; Product Selector</h6>
+                    <span class="badge bg-light text-secondary border px-3 py-2"><i class="fas fa-barcode text-primary me-1"></i> Barcode &amp; Serial Scanner Ready</span>
+                </div>
 
+                <!-- Instant Barcode / Serial Scanner Input -->
+                <div class="form-section-box p-3 bg-white rounded-3 mb-4 border shadow-sm" style="border-left: 4px solid #7638ff !important;">
+                    <div class="row align-items-center g-2">
+                        <div class="col-auto text-primary">
+                            <i class="fas fa-barcode fs-3"></i>
+                        </div>
+                        <div class="col">
+                            <label class="form-label small fw-bold text-secondary mb-1">Scan Product Barcode or Unit Serial Number:</label>
+                            <input type="text" id="sales_barcode_scanner" class="form-control form-control-lg border-light-subtle font-monospace" placeholder="Scan Barcode / Serial Number with scanner gun and press Enter..." autocomplete="off">
+                        </div>
+                        <div class="col-auto align-self-end">
+                            <button type="button" onclick="triggerManualScan()" class="btn btn-primary btn-lg px-4 rounded-3"><i class="fas fa-search me-1"></i>Scan / Verify</button>
+                        </div>
+                    </div>
+                    <div id="scan-feedback-alert" class="mt-2 small d-none"></div>
+                </div>
+
+                <!-- Manual Product Add Builder Card -->
+                <div class="form-section-box p-3 bg-light rounded-3 mb-4 border" id="form-group-item1">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-lg-4 col-md-6 col-12">
+                            <label class="form-label small text-secondary fw-semibold mb-1">Select Product (Manual) <span class="text-danger">*</span></label>
+                            <select onchange="selectProduct(1)" id="product1" class="form-select select2 border-light-subtle">
+                                <option value="">Select Product</option>
+                                @foreach ($products as $product)
+                                    <option value="{{ $product->id }}"
+                                        data-name="{{ $product->name }}{{ $product->model ? '('.$product->model.')' : '' }}"
+                                        data-stock="{{ $product->inventory->current_stock ?? 0 }}"
+                                        data-price="{{ $product->latestPurchase->unit_price ?? 0 }}"
+                                        data-warranty="{{ $product->warranty ?? 0 }}"
+                                        data-is-serialized="{{ $product->is_serialized }}"
+                                        data-barcode="{{ $product->barcode }}">
+                                        {{ $product->name }} {{ $product->model ? '('.$product->model.')' : '' }} {{ $product->barcode ? '['.$product->barcode.']' : '' }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="col-lg-2 col-md-3 col-6">
+                            <label class="form-label small text-secondary fw-semibold mb-1">Stock</label>
+                            <input type="number" id="stock1" class="form-control border-light-subtle bg-white" readonly>
+                        </div>
+
+                        <div class="col-lg-2 col-md-3 col-6">
+                            <label class="form-label small text-secondary fw-semibold mb-1">Warranty (Days)</label>
+                            <input type="number" id="warranty1" class="form-control border-light-subtle bg-white" readonly>
+                        </div>
+
+                        <div class="col-lg-2 col-md-3 col-6">
+                            <label class="form-label small text-secondary fw-semibold mb-1">Purchase Price</label>
+                            <input type="number" id="purchase_price1" class="form-control border-light-subtle bg-white" readonly>
+                        </div>
+
+                        <div class="col-lg-2 col-md-3 col-6">
+                            <label class="form-label small text-secondary fw-semibold mb-1">Selling Price <span class="text-danger">*</span></label>
+                            <input oninput="calculateTotal()" onchange="calculateTotal()" type="number" id="unit_price1" class="form-control border-light-subtle" step="0.01" min="0" placeholder="0.00">
+                        </div>
+
+                        <div class="col-lg-2 col-md-3 col-6">
+                            <label class="form-label small text-secondary fw-semibold mb-1">Quantity <span class="text-danger">*</span></label>
+                            <input oninput="calculateTotal()" onchange="calculateTotal()" type="number" id="qty1" class="form-control border-light-subtle" min="1" value="1">
+                        </div>
+
+                        <div class="col-lg-2 col-md-3 col-6">
+                            <label class="form-label small text-secondary fw-semibold mb-1">Line Total</label>
+                            <input type="text" id="total1" class="form-control border-light-subtle bg-white fw-bold text-success" readonly value="0.00">
+                        </div>
+
+                        <div class="col-lg-2 col-md-6 col-12 ms-auto">
+                            <button type="button" onclick="addItem()" class="btn btn-success w-100 rounded-3">
+                                <i class="fe fe-plus me-1"></i>Add Product
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Added Items List Table -->
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0" id="salesItemsTable">
+                    <table class="table table-hover align-middle mb-0" id="cartItemsTable">
                         <thead class="bg-light text-secondary fs-7 text-uppercase">
                             <tr>
-                                <th style="width: 40%;">Product Name</th>
+                                <th style="width: 40%;">Product &amp; Serial Number(s)</th>
                                 <th style="width: 20%;">Unit Price</th>
                                 <th style="width: 15%;">Quantity</th>
                                 <th style="width: 20%;">Total Price</th>
@@ -62,37 +192,35 @@
                         </thead>
                         <tbody id="item_container">
                             @foreach ($items as $index => $item)
-                                <tr class="group-item item{{ $item->product_id }}" data-itemnumber="{{ $index + 1 }}" id="form-group-item{{ $index + 1 }}">
+                                @php
+                                    $itemNumber = $index + 2;
+                                    $pName = $item->product ? ($item->product->name . ($item->product->model ? ' ('.$item->product->model.')' : '')) : 'Product #' . $item->product_id;
+                                    $serials = \App\Models\ProductSerial::where('sales_item_id', $item->id)->pluck('serial_number')->toArray();
+                                @endphp
+                                <tr class="item{{ $item->product_id }} group-item" data-itemnumber="{{ $itemNumber }}" id="form-group-item{{ $itemNumber }}">
                                     <td>
                                         <input type="hidden" name="product[]" value="{{ $item->product_id }}">
-                                        <select class="form-select d-none" id="product{{ $index + 1 }}" disabled>
-                                            @foreach ($products as $product)
-                                                <option value="{{ $product->id }}"
-                                                    data-price="{{ $product->latestPurchase->unit_price ?? 0 }}"
-                                                    {{ $item->product_id == $product->id ? 'selected' : '' }}>
-                                                    {{ $product->name }} {{ $product->model ? '('.$product->model.')' : '' }}
-                                                </option>
+                                        <span class="fw-bold text-dark d-block">{{ $pName }}</span>
+                                        <div id="serial_tags_{{ $itemNumber }}" class="mt-1 d-flex flex-wrap">
+                                            @foreach ($serials as $sn)
+                                                <span class="badge bg-light text-dark border px-2 py-1 font-monospace fs-7 me-1 mb-1 d-inline-flex align-items-center gap-1">
+                                                    <i class="fas fa-barcode text-info"></i> {{ $sn }}
+                                                    <input type="hidden" name="item_serials[{{ $item->product_id }}][]" value="{{ $sn }}">
+                                                </span>
                                             @endforeach
-                                        </select>
-                                        <span class="fw-bold text-dark d-block">
-                                            @foreach ($products as $product)
-                                                @if ($product->id == $item->product_id)
-                                                    {{ $product->name }} {{ $product->model ? '('.$product->model.')' : '' }}
-                                                @endif
-                                            @endforeach
-                                        </span>
+                                        </div>
                                     </td>
                                     <td>
-                                        <input type="number" step="0.01" name="unit_price[]" class="form-control border-light-subtle unit-price" id="unit_price{{ $index + 1 }}" value="{{ $item->unit_price }}" onchange="calculateTotal()">
+                                        <input onchange="calculateTotal()" oninput="calculateTotal()" type="number" step="0.01" name="unit_price[]" id="unit_price{{ $itemNumber }}" class="form-control border-light-subtle unit-price" value="{{ number_format($item->unit_price, 2, '.', '') }}">
                                     </td>
                                     <td>
-                                        <input type="number" name="qty[]" class="form-control border-light-subtle qty qty{{ $item->product_id }}" id="qty{{ $index + 1 }}" value="{{ $item->qty }}" min="1" onchange="calculateTotal()">
+                                        <input onchange="calculateTotal()" oninput="calculateTotal()" type="number" name="qty[]" id="qty{{ $itemNumber }}" class="qty{{ $item->product_id }} form-control border-light-subtle qty" min="1" value="{{ $item->qty }}">
                                     </td>
                                     <td>
-                                        <input type="number" step="0.01" name="total[]" class="form-control border-light-subtle bg-light total" id="total{{ $index + 1 }}" value="{{ $item->total_price }}" readonly>
+                                        <input type="number" step="0.01" name="total" id="total{{ $itemNumber }}" class="form-control border-light-subtle bg-light total" readonly value="{{ number_format($item->total_price, 2, '.', '') }}">
                                     </td>
                                     <td class="text-end">
-                                        <button type="button" class="btn btn-outline-danger btn-sm px-3 rounded-2" onclick="removeItem({{ $index + 1 }})" title="Remove Item">
+                                        <button onclick="removeItem({{ $itemNumber }}, {{ $item->product_id }})" type="button" class="btn btn-outline-danger btn-sm px-3 rounded-2" title="Remove Item">
                                             <i class="fa fa-times"></i>
                                         </button>
                                     </td>
@@ -105,40 +233,55 @@
         </div>
 
         <!-- Section 3: Summary Breakdown -->
-        <div class="card border-0 shadow-sm rounded-3 mb-4">
+        <div id="summerySection" class="card border-0 shadow-sm rounded-3 mb-4">
             <div class="card-body p-4">
                 <h6 class="fw-bold text-dark mb-3"><i class="fe fe-dollar-sign me-2 text-primary"></i>Payment Breakdown</h6>
 
-                <div id="summerySection" class="row g-3 align-items-end">
+                <div class="row g-3 align-items-end">
                     <div class="col-lg-2 col-md-4 col-6">
                         <label class="form-label small text-secondary fw-semibold mb-1">Sub Total</label>
-                        <input type="number" step="0.01" id="subTotal" class="form-control border-light-subtle bg-light" name="subTotal" value="{{ $sales->bill }}" readonly>
+                        <input onchange="calculateTotal()" type="number" id="subTotal" name="subTotal" class="form-control border-light-subtle bg-light" value="{{ number_format($sales->bill, 2, '.', '') }}" readonly>
                     </div>
 
                     <div class="col-lg-2 col-md-4 col-6">
                         <label class="form-label small text-secondary fw-semibold mb-1">Discount Amount</label>
-                        <input type="number" step="any" id="discount" class="form-control border-light-subtle" name="discount" value="{{ $sales->discount }}" onchange="calculateTotal()">
-                    </div>
-
-                    <div class="col-lg-3 col-md-4 col-6">
-                        <label class="form-label small text-secondary fw-semibold mb-1">Grand Total</label>
-                        <input type="number" step="0.01" id="grandTotal" class="form-control border-light-subtle bg-light fw-bold text-primary" name="grandTotal" value="{{ $sales->payble }}" readonly>
+                        <input onchange="calculateTotal()" oninput="calculateTotal()" type="number" id="discount" name="discount" class="form-control border-light-subtle" value="{{ number_format($sales->discount ?? 0, 2, '.', '') }}" min="0" step="0.01">
                     </div>
 
                     <div class="col-lg-2 col-md-4 col-6">
-                        <label class="form-label small text-secondary fw-semibold mb-1">Advance Payment</label>
-                        <input type="number" step="0.01" id="advancedPayment" class="form-control border-light-subtle" name="advanced_payment" value="{{ $sales->advanced_payment }}" min="0">
+                        <label class="form-label small text-secondary fw-semibold mb-1">VAT (%)</label>
+                        <input onchange="calculateTotal()" oninput="calculateTotal()" type="number" id="vat" name="vat" class="form-control border-light-subtle" value="{{ number_format($sales->vat ?? 0, 2, '.', '') }}" min="0" step="0.01">
                     </div>
 
-                    <div class="col-lg-3 col-md-4 col-12">
+                    <div class="col-lg-2 col-md-4 col-6">
+                        <label class="form-label small text-secondary fw-semibold mb-1">Tax (%)</label>
+                        <input onchange="calculateTotal()" oninput="calculateTotal()" type="number" id="tax" name="tax" class="form-control border-light-subtle" value="{{ number_format($sales->tax ?? 0, 2, '.', '') }}" min="0" step="0.01">
+                    </div>
+
+                    <div class="col-lg-2 col-md-4 col-6">
+                        <label class="form-label small text-secondary fw-semibold mb-1">Delivery Charge</label>
+                        <input onchange="calculateTotal()" oninput="calculateTotal()" type="number" id="delivery_charge" name="delivery_charge" class="form-control border-light-subtle" value="{{ number_format($sales->delivery_charge ?? 0, 2, '.', '') }}" min="0" step="0.01">
+                    </div>
+
+                    <div class="col-lg-2 col-md-4 col-6">
+                        <label class="form-label small text-secondary fw-semibold mb-1">Grand Total</label>
+                        <input type="number" id="grandTotal" name="grandTotal" class="form-control border-light-subtle bg-light fw-bold text-primary" value="{{ number_format($sales->payble, 2, '.', '') }}" readonly>
+                    </div>
+
+                    <div class="col-lg-3 col-md-6 col-6">
+                        <label class="form-label small text-secondary fw-semibold mb-1">Current / Advance Payment</label>
+                        <input oninput="calculateTotal()" onchange="calculateTotal()" type="number" name="advanced_payment" id="advancedPayment" class="form-control border-light-subtle" value="{{ number_format($sales->advanced_payment ?? 0, 2, '.', '') }}" min="0" step="0.01">
+                    </div>
+
+                    <div class="col-lg-3 col-md-6 col-6">
                         <label class="form-label small text-secondary fw-semibold mb-1">Outstanding Due</label>
-                        <input type="number" step="0.01" id="duePayment" class="form-control border-light-subtle bg-light fw-bold text-danger" name="due_payment" value="{{ $sales->due_payment }}" readonly>
+                        <input type="number" id="duePayment" name="duePayment" class="form-control border-light-subtle bg-light fw-bold text-danger" value="{{ number_format($sales->due_payment ?? 0, 2, '.', '') }}" readonly>
                     </div>
                 </div>
 
                 <div class="d-flex justify-content-end gap-2 pt-4 mt-3 border-top">
                     <a href="{{ route('sales.index') }}" class="btn btn-outline-secondary px-4 py-2 rounded-3">Cancel</a>
-                    <button type="submit" class="btn btn-primary px-4 py-2 rounded-3">Update Sale</button>
+                    <button type="submit" class="btn btn-primary px-4 py-2 rounded-3">Update Sale Order</button>
                 </div>
             </div>
         </div>
@@ -148,52 +291,398 @@
 
 @push('scripts')
 <script>
-    var itemNumber = {{ count($items) + 1 }};
+var itemNumber = {{ count($items) + 10 }};
+window.activeCartSerials = @json(
+    \App\Models\ProductSerial::whereIn('sales_item_id', $items->pluck('id'))->pluck('serial_number')->toArray()
+);
 
-    function removeItem(num) {
-        $('#form-group-item' + num).remove();
-        calculateTotal();
-    }
-
-    function formatNumber(num) {
-        if (num % 1 === 0) {
-            return num;
+function playBeep(success = true) {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        if (success) {
+            osc.frequency.setValueAtTime(800, ctx.currentTime);
+            osc.frequency.setValueAtTime(1200, ctx.currentTime + 0.08);
+            gain.gain.setValueAtTime(0.2, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+            osc.start(ctx.currentTime);
+            osc.stop(ctx.currentTime + 0.2);
         } else {
-            return num.toFixed(2);
+            osc.frequency.setValueAtTime(300, ctx.currentTime);
+            osc.frequency.setValueAtTime(200, ctx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.3, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+            osc.start(ctx.currentTime);
+            osc.stop(ctx.currentTime + 0.3);
+        }
+    } catch(e) {}
+}
+
+function showScanAlert(message, isSuccess = true) {
+    const alertBox = document.getElementById('scan-feedback-alert');
+    if (!alertBox) return;
+    alertBox.className = `mt-2 small alert ${isSuccess ? 'alert-success' : 'alert-danger'} py-2 px-3 mb-0 rounded-3 d-flex align-items-center gap-2`;
+    alertBox.innerHTML = `<i class="fas ${isSuccess ? 'fa-check-circle' : 'fa-exclamation-triangle'}"></i> <span>${message}</span>`;
+    alertBox.classList.remove('d-none');
+    setTimeout(() => {
+        alertBox.classList.add('d-none');
+    }, 4000);
+}
+
+function triggerManualScan() {
+    const input = document.getElementById('sales_barcode_scanner');
+    if (input && input.value.trim()) {
+        handleBarcodeScan(input.value.trim());
+    }
+}
+
+function handleBarcodeScan(code) {
+    const scannerInput = document.getElementById('sales_barcode_scanner');
+    
+    fetch(`{{ route('products.barcode_lookup') }}?code=${encodeURIComponent(code)}`)
+        .then(res => res.json())
+        .then(data => {
+            if (!data.success) {
+                playBeep(false);
+                showScanAlert(data.message || `No item found for [${code}]`, false);
+                if (scannerInput) scannerInput.select();
+                return;
+            }
+
+            const p = data.product;
+
+            // Scenario 1: Scanned a Specific Serial Number
+            if (data.type === 'serial') {
+                if (data.status !== 'available') {
+                    playBeep(false);
+                    showScanAlert(`Cannot sell Serial [${data.serial_number}] — Status is already ${data.status.toUpperCase()}!`, false);
+                    if (scannerInput) scannerInput.select();
+                    return;
+                }
+
+                if (window.activeCartSerials.includes(data.serial_number)) {
+                    playBeep(false);
+                    showScanAlert(`Serial [${data.serial_number}] is already added in the cart!`, false);
+                    if (scannerInput) scannerInput.select();
+                    return;
+                }
+
+                // Add to active serials
+                window.activeCartSerials.push(data.serial_number);
+                addProductToCart(p, 1, p.selling_price, data.serial_number);
+                playBeep(true);
+                showScanAlert(`Verified & Added: ${p.name} (SN: ${data.serial_number})`, true);
+                if (scannerInput) {
+                    scannerInput.value = '';
+                    scannerInput.focus();
+                }
+            } 
+            // Scenario 2: Scanned a Product Barcode
+            else {
+                if (p.is_serialized) {
+                    playBeep(false);
+                    showScanAlert(`Product [${p.name}] is Serialized. Please scan the unit serial barcode on the box!`, false);
+                    if (scannerInput) scannerInput.select();
+                } else {
+                    if (p.stock <= 0) {
+                        playBeep(false);
+                        showScanAlert(`Product [${p.name}] is OUT OF STOCK!`, false);
+                        if (scannerInput) scannerInput.select();
+                        return;
+                    }
+                    addProductToCart(p, 1, p.selling_price, null);
+                    playBeep(true);
+                    showScanAlert(`Added: ${p.name}`, true);
+                    if (scannerInput) {
+                        scannerInput.value = '';
+                        scannerInput.focus();
+                    }
+                }
+            }
+        })
+        .catch(err => {
+            playBeep(false);
+            showScanAlert('Network error while looking up barcode.', false);
+        });
+}
+
+function addProductToCart(product, qty = 1, price = 0, serialNumber = null) {
+    const existingRow = document.querySelector(`.group-item.item${product.id}`);
+    
+    if (existingRow) {
+        const itemNum = existingRow.dataset.itemnumber;
+        const qtyInput = document.getElementById('qty' + itemNum);
+        
+        if (serialNumber) {
+            const serialContainer = document.getElementById('serial_tags_' + itemNum);
+            if (serialContainer) {
+                const tag = document.createElement('span');
+                tag.className = 'badge bg-light text-dark border px-2 py-1 font-monospace fs-7 me-1 mb-1 d-inline-flex align-items-center gap-1';
+                tag.innerHTML = `<i class="fas fa-barcode text-info"></i> ${serialNumber} <input type="hidden" name="item_serials[${product.id}][]" value="${serialNumber}">`;
+                serialContainer.appendChild(tag);
+            }
+        }
+
+        if (qtyInput) {
+            qtyInput.value = parseInt(qtyInput.value || 0) + parseInt(qty);
+        }
+    } else {
+        const unitPrice = (parseFloat(price) || 0).toFixed(2);
+        const rowTotal = (parseFloat(unitPrice) * parseFloat(qty)).toFixed(2);
+        const serialTagHtml = serialNumber ? `
+            <div id="serial_tags_${itemNumber}" class="mt-1 d-flex flex-wrap">
+                <span class="badge bg-light text-dark border px-2 py-1 font-monospace fs-7 me-1 mb-1 d-inline-flex align-items-center gap-1">
+                    <i class="fas fa-barcode text-info"></i> ${serialNumber}
+                    <input type="hidden" name="item_serials[${product.id}][]" value="${serialNumber}">
+                </span>
+            </div>
+        ` : `<div id="serial_tags_${itemNumber}" class="mt-1 d-flex flex-wrap"></div>`;
+
+        const html = `
+            <tr class="item${product.id} group-item" data-itemnumber="${itemNumber}" id="form-group-item${itemNumber}">
+                <td>
+                    <input type="hidden" name="product[]" value="${product.id}">
+                    <span class="fw-bold text-dark d-block">${product.name} ${product.model ? '('+product.model+')' : ''}</span>
+                    ${serialTagHtml}
+                </td>
+                <td>
+                    <input onchange="calculateTotal()" oninput="calculateTotal()" type="number" step="0.01" name="unit_price[]" id="unit_price${itemNumber}" class="form-control border-light-subtle unit-price" value="${unitPrice}">
+                </td>
+                <td>
+                    <input onchange="calculateTotal()" oninput="calculateTotal()" type="number" name="qty[]" id="qty${itemNumber}" class="qty${product.id} form-control border-light-subtle qty" min="1" value="${qty}">
+                </td>
+                <td>
+                    <input type="number" step="0.01" name="total" id="total${itemNumber}" class="form-control border-light-subtle bg-light total" readonly value="${rowTotal}">
+                </td>
+                <td class="text-end">
+                    <button onclick="removeItem(${itemNumber}, ${product.id})" type="button" class="btn btn-outline-danger btn-sm px-3 rounded-2" title="Remove Item">
+                        <i class="fa fa-times"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+        $('#item_container').append(html);
+        itemNumber++;
+    }
+
+    toggleSummarySection();
+    calculateTotal();
+}
+
+function removeItem(item, productId) {
+    if (productId) {
+        const serialInputs = document.querySelectorAll(`#form-group-item${item} input[name="item_serials[${productId}][]"]`);
+        serialInputs.forEach(input => {
+            const idx = window.activeCartSerials.indexOf(input.value);
+            if (idx !== -1) window.activeCartSerials.splice(idx, 1);
+        });
+    }
+
+    document.getElementById('form-group-item' + item)?.remove();
+    toggleSummarySection();
+    calculateTotal();
+}
+
+function resetManualAddFields() {
+    $('#product1').val('').trigger('change');
+    if (document.getElementById('purchase_price1')) document.getElementById('purchase_price1').value = '';
+    if (document.getElementById('warranty1')) document.getElementById('warranty1').value = '';
+    if (document.getElementById('stock1')) document.getElementById('stock1').value = '';
+    if (document.getElementById('unit_price1')) document.getElementById('unit_price1').value = '';
+    if (document.getElementById('qty1')) document.getElementById('qty1').value = '1';
+    if (document.getElementById('total1')) document.getElementById('total1').value = '0.00';
+}
+
+function selectProduct(item) {
+    var selected = $('#product' + item + ' option:selected');
+    var val = selected.val();
+
+    if (!val) {
+        if (document.getElementById('purchase_price' + item)) document.getElementById('purchase_price' + item).value = '';
+        if (document.getElementById('warranty' + item)) document.getElementById('warranty' + item).value = '';
+        if (document.getElementById('stock' + item)) document.getElementById('stock' + item).value = '';
+        if (document.getElementById('unit_price' + item)) document.getElementById('unit_price' + item).value = '';
+        if (document.getElementById('qty' + item)) document.getElementById('qty' + item).value = '1';
+        if (document.getElementById('total' + item)) document.getElementById('total' + item).value = '0.00';
+        updatePreviewTotal();
+        return;
+    }
+
+    var selectedPrice = selected.data('price') || 0;
+    var selectedWarranty = selected.data('warranty') || 0;
+    var selectedStock = selected.data('stock') || 0;
+
+    if (document.getElementById('purchase_price' + item))
+        document.getElementById('purchase_price' + item).value = selectedPrice;
+    if (document.getElementById('warranty' + item))
+        document.getElementById('warranty' + item).value = selectedWarranty;
+    if (document.getElementById('stock' + item))
+        document.getElementById('stock' + item).value = selectedStock;
+    if (document.getElementById('unit_price' + item))
+        document.getElementById('unit_price' + item).value = selectedPrice;
+
+    updatePreviewTotal();
+}
+
+function updatePreviewTotal() {
+    const previewUnitPrice = Number(document.getElementById('unit_price1')?.value || 0);
+    const previewQty = Number(document.getElementById('qty1')?.value || 0);
+    const previewTotal = previewUnitPrice * previewQty;
+    const previewTotalInput = document.getElementById('total1');
+
+    if (previewTotalInput) {
+        previewTotalInput.value = previewTotal.toFixed(2);
+    }
+    return previewTotal;
+}
+
+function addItem() {
+    var product = document.getElementById('product1').value;
+    var qty = document.getElementById('qty1').value;
+
+    if (product == "") {
+        alert("Please select a product first.");
+        return;
+    }
+
+    let selectedOption = document.getElementById('product1').options[document.getElementById('product1').selectedIndex];
+    let selectedName = selectedOption.text;
+    const price = document.getElementById('unit_price1').value;
+
+    if (price.trim() === "") {
+        alert("Please enter selling unit price.");
+        return;
+    }
+
+    if (qty.trim() === "" || parseFloat(qty) <= 0) {
+        alert("Please enter a valid quantity.");
+        return;
+    }
+
+    const stock = parseFloat(document.getElementById('stock1').value) || 0;
+    if (parseFloat(qty) > stock) {
+        alert("Quantity exceeds available stock (" + stock + ")!");
+        return;
+    }
+
+    addProductToCart({
+        id: product,
+        name: selectedName,
+        model: ''
+    }, qty, price, null);
+
+    // Reset manual product input fields after adding
+    resetManualAddFields();
+}
+
+function toggleSummarySection() {
+    const hasItems = document.querySelectorAll('.group-item[data-itemnumber]').length > 0;
+    document.getElementById('summerySection').classList.toggle('d-none', !hasItems);
+}
+
+function calculateTotal() {
+    updatePreviewTotal();
+    let subTotal = 0;
+
+    const eles = document.getElementsByClassName('group-item');
+    for (let i = 0; i < eles.length; i++) {
+        const itemNum = eles[i].dataset.itemnumber;
+        if (itemNum == 1) continue;
+
+        const unit_price = parseFloat(document.getElementById('unit_price' + itemNum)?.value) || 0;
+        const qty = parseFloat(document.getElementById('qty' + itemNum)?.value) || 0;
+        const totalEle = document.getElementById('total' + itemNum);
+
+        const total = qty * unit_price;
+        if (totalEle) totalEle.value = total.toFixed(2);
+
+        subTotal += total;
+    }
+
+    const discountVal = parseFloat(document.getElementById('discount')?.value) || 0;
+    let discount = Math.max(0, discountVal);
+    if (discount > subTotal && subTotal > 0) {
+        discount = subTotal;
+    }
+
+    const vatPercent = Math.max(0, parseFloat(document.getElementById('vat')?.value) || 0);
+    const taxPercent = Math.max(0, parseFloat(document.getElementById('tax')?.value) || 0);
+    const deliveryCharge = Math.max(0, parseFloat(document.getElementById('delivery_charge')?.value) || 0);
+
+    const vatAmount = (subTotal * vatPercent) / 100;
+    const taxAmount = (subTotal * taxPercent) / 100;
+
+    const grandTotal = Math.max(0, (subTotal - discount) + vatAmount + taxAmount + deliveryCharge);
+    if (document.getElementById('subTotal')) document.getElementById('subTotal').value = subTotal.toFixed(2);
+    if (document.getElementById('grandTotal')) document.getElementById('grandTotal').value = grandTotal.toFixed(2);
+
+    const advancedVal = parseFloat(document.getElementById('advancedPayment')?.value) || 0;
+    let advanced = Math.max(0, advancedVal);
+    const due = Math.max(0, grandTotal - advanced);
+    if (document.getElementById('duePayment')) document.getElementById('duePayment').value = due.toFixed(2);
+
+    toggleSummarySection();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const scannerInput = document.getElementById('sales_barcode_scanner');
+    if (scannerInput) {
+        scannerInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const code = this.value.trim();
+                if (code) {
+                    handleBarcodeScan(code);
+                }
+            }
+        });
+    }
+
+    const newClientRadio = document.getElementById('newClient');
+    const existingClientRadio = document.getElementById('existingClient');
+    const newClientForm = document.getElementById('newClientForm');
+    const existingClientForm = document.getElementById('existingClientForm');
+    const newClientInputs = document.querySelectorAll('#newClientForm input');
+
+    function toggleClientForms() {
+        if (newClientRadio.checked) {
+            newClientForm.style.display = 'block';
+            existingClientForm.style.display = 'none';
+            newClientInputs.forEach(input => input.required = true);
+            document.getElementById('clientSelect').required = false;
+        } else {
+            newClientForm.style.display = 'none';
+            existingClientForm.style.display = 'block';
+            newClientInputs.forEach(input => input.required = false);
+            document.getElementById('clientSelect').required = true;
         }
     }
 
-    function calculateTotal() {
-        var eles = document.getElementsByClassName('group-item');
-        var subTotal = 0;
-
-        for (var i = 0; i < eles.length; i++) {
-            var itemNum = eles[i].dataset.itemnumber;
-            var unit_price = parseFloat(document.getElementById('unit_price' + itemNum).value) || 0;
-            var qty = parseFloat(document.getElementById('qty' + itemNum).value) || 0;
-            var totalEle = document.getElementById('total' + itemNum);
-
-            var total = qty * unit_price;
-            totalEle.value = formatNumber(total);
-
-            subTotal += total;
-        }
-
-        var discount = parseFloat(document.getElementById('discount').value) || 0;
-        if (discount > subTotal) discount = subTotal;
-        document.getElementById('discount').value = formatNumber(discount);
-
-        var grandTotal = subTotal - discount;
-        document.getElementById('subTotal').value = formatNumber(subTotal);
-        document.getElementById('grandTotal').value = formatNumber(grandTotal);
-
-        var advanced = parseFloat(document.getElementById('advancedPayment').value) || 0;
-        var due = grandTotal - advanced;
-        document.getElementById('duePayment').value = formatNumber(due);
+    if (newClientRadio && existingClientRadio) {
+        newClientRadio.addEventListener('change', toggleClientForms);
+        existingClientRadio.addEventListener('change', toggleClientForms);
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
-        $('#advancedPayment, #discount, .unit-price, .qty').on('input change', calculateTotal);
+    // Auto-fill customer details when selecting existing customer
+    $('#clientSelect').on('change', function() {
+        const opt = $(this).find('option:selected');
+        if (opt.val()) {
+            $('#newClientName').val(opt.data('name'));
+            $('#newClientPhone').val(opt.data('phone'));
+            $('#newClientAddress').val(opt.data('address'));
+        }
     });
+
+    $('#discount, #vat, #tax, #delivery_charge, #advancedPayment').on('input change', calculateTotal);
+    $('#unit_price1, #qty1').on('input change', function() {
+        updatePreviewTotal();
+    });
+
+    // Initial total calculation
+    calculateTotal();
+});
 </script>
 @endpush

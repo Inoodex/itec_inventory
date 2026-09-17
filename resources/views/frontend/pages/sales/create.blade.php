@@ -201,42 +201,42 @@
                 <div class="row g-3 align-items-end">
                     <div class="col-lg-2 col-md-4 col-6">
                         <label class="form-label small text-secondary fw-semibold mb-1">Sub Total</label>
-                        <input onchange="calculateTotal()" type="number" id="subTotal" name="subTotal" class="form-control border-light-subtle bg-light" readonly>
+                        <input type="number" id="subTotal" name="subTotal" class="form-control border-light-subtle bg-light" readonly placeholder="0.00">
                     </div>
 
                     <div class="col-lg-2 col-md-4 col-6">
                         <label class="form-label small text-secondary fw-semibold mb-1">Discount Amount</label>
-                        <input onchange="calculateTotal()" type="number" id="discount" name="discount" class="form-control border-light-subtle" value="0" min="0" step="0.01">
+                        <input type="number" id="discount" name="discount" class="form-control border-light-subtle" placeholder="0.00" min="0" step="any">
                     </div>
 
                     <div class="col-lg-2 col-md-4 col-6">
                         <label class="form-label small text-secondary fw-semibold mb-1">VAT (%)</label>
-                        <input onchange="calculateTotal()" type="number" id="vat" name="vat" class="form-control border-light-subtle" value="0" min="0" step="0.01">
+                        <input type="number" id="vat" name="vat" class="form-control border-light-subtle" placeholder="0" min="0" step="any">
                     </div>
 
                     <div class="col-lg-2 col-md-4 col-6">
                         <label class="form-label small text-secondary fw-semibold mb-1">Tax (%)</label>
-                        <input onchange="calculateTotal()" type="number" id="tax" name="tax" class="form-control border-light-subtle" value="0" min="0" step="0.01">
+                        <input type="number" id="tax" name="tax" class="form-control border-light-subtle" placeholder="0" min="0" step="any">
                     </div>
 
                     <div class="col-lg-2 col-md-4 col-6">
                         <label class="form-label small text-secondary fw-semibold mb-1">Delivery Charge</label>
-                        <input onchange="calculateTotal()" type="number" id="delivery_charge" name="delivery_charge" class="form-control border-light-subtle" value="0" min="0" step="0.01">
+                        <input type="number" id="delivery_charge" name="delivery_charge" class="form-control border-light-subtle" placeholder="0.00" min="0" step="any">
                     </div>
 
                     <div class="col-lg-2 col-md-4 col-6">
                         <label class="form-label small text-secondary fw-semibold mb-1">Grand Total</label>
-                        <input type="number" id="grandTotal" name="grandTotal" class="form-control border-light-subtle bg-light fw-bold text-primary" readonly>
+                        <input type="number" id="grandTotal" name="grandTotal" class="form-control border-light-subtle bg-light fw-bold text-primary" readonly placeholder="0.00">
                     </div>
 
                     <div class="col-lg-3 col-md-6 col-6">
                         <label class="form-label small text-secondary fw-semibold mb-1">Current Payment</label>
-                        <input oninput="calculateTotal()" type="number" name="advanced_payment" id="advancedPayment" class="form-control border-light-subtle" value="0" min="0" step="0.01">
+                        <input type="number" name="advanced_payment" id="advancedPayment" class="form-control border-light-subtle" placeholder="0.00" min="0" step="any">
                     </div>
 
                     <div class="col-lg-3 col-md-6 col-6">
                         <label class="form-label small text-secondary fw-semibold mb-1">Due Payment</label>
-                        <input type="number" id="duePayment" name="duePayment" class="form-control border-light-subtle bg-light fw-bold text-danger" readonly>
+                        <input type="number" id="duePayment" name="duePayment" class="form-control border-light-subtle bg-light fw-bold text-danger" readonly placeholder="0.00">
                     </div>
                 </div>
 
@@ -489,8 +489,31 @@ function reloadAfterSubmit() {
     }, 500);
 }
 
+function resetManualAddFields() {
+    $('#product1').val('').trigger('change');
+    if (document.getElementById('purchase_price1')) document.getElementById('purchase_price1').value = '';
+    if (document.getElementById('warranty1')) document.getElementById('warranty1').value = '';
+    if (document.getElementById('stock1')) document.getElementById('stock1').value = '';
+    if (document.getElementById('unit_price1')) document.getElementById('unit_price1').value = '';
+    if (document.getElementById('qty1')) document.getElementById('qty1').value = '1';
+    if (document.getElementById('total1')) document.getElementById('total1').value = '0.00';
+}
+
 function selectProduct(item) {
     var selected = $('#product' + item + ' option:selected');
+    var val = selected.val();
+
+    if (!val) {
+        if (document.getElementById('purchase_price' + item)) document.getElementById('purchase_price' + item).value = '';
+        if (document.getElementById('warranty' + item)) document.getElementById('warranty' + item).value = '';
+        if (document.getElementById('stock' + item)) document.getElementById('stock' + item).value = '';
+        if (document.getElementById('unit_price' + item)) document.getElementById('unit_price' + item).value = '';
+        if (document.getElementById('qty' + item)) document.getElementById('qty' + item).value = '1';
+        if (document.getElementById('total' + item)) document.getElementById('total' + item).value = '0.00';
+        updatePreviewTotal();
+        return;
+    }
+
     var selectedPrice = selected.data('price') || 0;
     var selectedWarranty = selected.data('warranty') || 0;
     var selectedStock = selected.data('stock') || 0;
@@ -501,10 +524,10 @@ function selectProduct(item) {
         document.getElementById('warranty' + item).value = selectedWarranty;
     if (document.getElementById('stock' + item))
         document.getElementById('stock' + item).value = selectedStock;
-    if (document.getElementById('unit_price' + item) && !document.getElementById('unit_price' + item).value)
+    if (document.getElementById('unit_price' + item))
         document.getElementById('unit_price' + item).value = selectedPrice;
 
-    calculateTotal();
+    updatePreviewTotal();
 }
 
 function updatePreviewTotal() {
@@ -553,6 +576,9 @@ function addItem() {
         name: selectedName,
         model: ''
     }, qty, price, null);
+
+    // Clear all manual product input fields after adding
+    resetManualAddFields();
 }
 
 function toggleSummarySection() {
@@ -579,24 +605,27 @@ function calculateTotal() {
         subTotal += total;
     }
 
-    let discount = parseFloat(document.getElementById('discount').value) || 0;
-    if (discount > subTotal) discount = subTotal;
-    document.getElementById('discount').value = discount.toFixed(2);
+    const discountVal = parseFloat(document.getElementById('discount')?.value) || 0;
+    let discount = Math.max(0, discountVal);
+    if (discount > subTotal && subTotal > 0) {
+        discount = subTotal;
+    }
 
-    const vatPercent = parseFloat(document.getElementById('vat').value) || 0;
-    const taxPercent = parseFloat(document.getElementById('tax').value) || 0;
-    const deliveryCharge = parseFloat(document.getElementById('delivery_charge').value) || 0;
+    const vatPercent = Math.max(0, parseFloat(document.getElementById('vat')?.value) || 0);
+    const taxPercent = Math.max(0, parseFloat(document.getElementById('tax')?.value) || 0);
+    const deliveryCharge = Math.max(0, parseFloat(document.getElementById('delivery_charge')?.value) || 0);
 
     const vatAmount = (subTotal * vatPercent) / 100;
     const taxAmount = (subTotal * taxPercent) / 100;
 
-    const grandTotal = subTotal - discount + vatAmount + taxAmount + deliveryCharge;
-    document.getElementById('subTotal').value = subTotal.toFixed(2);
-    document.getElementById('grandTotal').value = grandTotal.toFixed(2);
+    const grandTotal = Math.max(0, (subTotal - discount) + vatAmount + taxAmount + deliveryCharge);
+    if (document.getElementById('subTotal')) document.getElementById('subTotal').value = subTotal.toFixed(2);
+    if (document.getElementById('grandTotal')) document.getElementById('grandTotal').value = grandTotal.toFixed(2);
 
-    const advanced = parseFloat(document.getElementById('advancedPayment').value) || 0;
-    const due = grandTotal - advanced;
-    document.getElementById('duePayment').value = due.toFixed(2);
+    const advancedVal = parseFloat(document.getElementById('advancedPayment')?.value) || 0;
+    let advanced = Math.max(0, advancedVal);
+    const due = Math.max(0, grandTotal - advanced);
+    if (document.getElementById('duePayment')) document.getElementById('duePayment').value = due.toFixed(2);
 
     toggleSummarySection();
 }
@@ -641,7 +670,7 @@ document.addEventListener('DOMContentLoaded', function() {
         toggleClientForms();
     }
 
-    document.getElementById('advancedPayment')?.addEventListener('input', calculateTotal);
+    $('#discount, #vat, #tax, #delivery_charge, #advancedPayment').on('input change', calculateTotal);
     $('#unit_price1, #qty1').on('input change', function() {
         updatePreviewTotal();
     });

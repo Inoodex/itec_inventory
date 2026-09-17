@@ -174,52 +174,63 @@ public function store(StoreSaleRequest $request)
      */
     public function edit(string $id)
     {
-        $sales = Sale::join('customers', 'customers.id', '=', 'sales.customer_id')
-            ->where('sales.id', $id)
-            ->select('sales.*')
-            ->first();
+        $sales = Sale::with(['customer', 'client', 'items.product'])->find($id);
         if (!$sales) abort(404);
-        $users  = User::get();
-        $products = Product::where('status', '1')->get();
 
-        $customer = Customer::where('id', $sales->customer_id)->first();
-        if (!$customer) abort(404);
+        $users = User::get();
+        $products = Product::with(['latestPurchase', 'inventory'])->where('status', '1')->get();
+        $customer = $sales->sale_type == 'project' ? $sales->client : $sales->customer;
+        if (!$customer) {
+            $customer = (object)[
+                'id' => null,
+                'name' => '',
+                'phone' => '',
+                'address' => '',
+            ];
+        }
 
-        $items = SalesItem::where('order_id',  $sales->id)->get();
+        $existingClients = Customer::select('id', 'name', 'phone', 'address')->get();
+        $items = SalesItem::with('product')->where('order_id', $sales->id)->get();
 
-        return view('frontend.pages.sales.edit', compact('sales', 'products', 'items', 'customer'));
+        return view('frontend.pages.sales.edit', compact('sales', 'products', 'items', 'customer', 'existingClients', 'users'));
     }
 
-    
     public function update(Request $request, string $id)
     {
         $validated = $request->validate([
-            'name' => 'required|string',
-            'phone' => 'required|string',
-            'address' => 'nullable|string',
-            'product' => 'required|array',
-            'product.*' => 'required|integer|exists:products,id',
-            'qty' => 'required|array',
-            'qty.*' => 'required|numeric|min:1',
-            'unit_price' => 'required|array',
-            'unit_price.*' => 'required|numeric|min:1',
-            'discount' => 'nullable|numeric|min:0',
+            'name'             => 'required|string',
+            'phone'            => 'required|string',
+            'address'          => 'nullable|string',
+            'product'          => 'required|array',
+            'product.*'        => 'required|integer|exists:products,id',
+            'qty'              => 'required|array',
+            'qty.*'            => 'required|numeric|min:1',
+            'unit_price'       => 'required|array',
+            'unit_price.*'     => 'required|numeric|min:0',
+            'subTotal'         => 'nullable|numeric|min:0',
+            'discount'         => 'nullable|numeric|min:0',
+            'vat'              => 'nullable|numeric|min:0',
+            'tax'              => 'nullable|numeric|min:0',
+            'delivery_charge'  => 'nullable|numeric|min:0',
+            'grandTotal'       => 'nullable|numeric|min:0',
             'advanced_payment' => 'nullable|numeric|min:0',
+            'duePayment'       => 'nullable|numeric|min:0',
         ]);
 
         DB::beginTransaction();
 
         try {
+            $sale = Sale::findOrFail($id);
 
-            // FirstOrCreate customer
+            // FirstOrCreate or update customer
             $customer = Customer::firstOrCreate(
-                ['name' => $validated['name'], 'phone' => $validated['phone']],
-                ['address' => $validated['address'] ?? null]
+                ['phone' => $validated['phone']],
+                ['name' => $validated['name'], 'address' => $validated['address'] ?? null]
             );
-
-            // Fetch sale
-            $sale = Sale::where('id', $id)->first();
-            if (!$sale) return redirect()->back()->with(['error' => 'Sale not found.']);
+            $customer->update([
+                'name' => $validated['name'],
+                'address' => $validated['address'] ?? $customer->address,
+            ]);
 
             // Restore old inventory
             $oldItems = SalesItem::where('order_id', $sale->id)->get();
@@ -231,6 +242,10 @@ public function store(StoreSaleRequest $request)
                 }
             }
 
+            // Restore old serials if any
+            \App\Models\ProductSerial::whereIn('sales_item_id', $oldItems->pluck('id'))
+                ->update(['status' => 'available', 'sales_item_id' => null]);
+
             // Delete old sale items
             SalesItem::where('order_id', $sale->id)->delete();
 
@@ -241,18 +256,34 @@ public function store(StoreSaleRequest $request)
             foreach ($validated['product'] as $index => $productId) {
                 $qty = $validated['qty'][$index];
                 $unitPrice = $validated['unit_price'][$index];
-
                 $total = $unitPrice * $qty;
                 $totalBill += $total;
 
-                SalesItem::create([
-                    'order_id' => $sale->id,
-                    'product_id' => $productId,
-                    'unit_price' => $unitPrice,
-                    'qty' => $qty,
-                    'total_price' => $total,
-                    'warranty' => $warranties[$productId] ?? 0,
+                $product = Product::with('latestPurchase')->find($productId);
+                $purchasePrice = $product?->latestPurchase?->unit_price ?? 0;
+                $itemProfit = ($unitPrice - $purchasePrice) * $qty;
+
+                $salesItem = SalesItem::create([
+                    'order_id'       => $sale->id,
+                    'product_id'     => $productId,
+                    'unit_price'     => $unitPrice,
+                    'qty'            => $qty,
+                    'total_price'    => $total,
+                    'warranty'       => $warranties[$productId] ?? 0,
+                    'purchase_price' => $purchasePrice,
+                    'profit'         => $itemProfit,
                 ]);
+
+                // Link serials if present
+                if (!empty($request->item_serials[$productId])) {
+                    $serialsToMark = (array)$request->item_serials[$productId];
+                    \App\Models\ProductSerial::where('product_id', $productId)
+                        ->whereIn('serial_number', $serialsToMark)
+                        ->update([
+                            'status' => 'sold',
+                            'sales_item_id' => $salesItem->id,
+                        ]);
+                }
 
                 // Deduct new inventory
                 $inventory = Inventory::where('product_id', $productId)->first();
@@ -262,29 +293,47 @@ public function store(StoreSaleRequest $request)
                 }
             }
 
-            // Calculate totals
-            $discount = $validated['discount'] ?? 0;
+            // Calculate totals with discount, VAT, TAX, and Delivery Charge
+            $discount = (float)($validated['discount'] ?? 0);
             if ($discount > $totalBill) $discount = $totalBill;
 
-            $advancedPayment = $request->advanced_payment ?? 0;
-            if ($advancedPayment > ($totalBill - $discount)) $advancedPayment = $totalBill - $discount;
+            $vatPercent = (float)($validated['vat'] ?? 0);
+            $taxPercent = (float)($validated['tax'] ?? 0);
+            $deliveryCharge = (float)($validated['delivery_charge'] ?? 0);
 
-            $payble = $totalBill - $discount;
+            $vatAmount = ($totalBill * $vatPercent) / 100;
+            $taxAmount = ($totalBill * $taxPercent) / 100;
+
+            $payble = ($totalBill - $discount) + $vatAmount + $taxAmount + $deliveryCharge;
+
+            $advancedPayment = (float)($validated['advanced_payment'] ?? 0);
+            if ($advancedPayment > $payble) $advancedPayment = $payble;
+
             $duePayment = $payble - $advancedPayment;
+
+            $status = match(true) {
+                $duePayment <= 0     => 'paid',
+                $advancedPayment > 0 => 'partial',
+                default              => 'credit',
+            };
 
             // Update sale
             $sale->update([
-                'bill' => $totalBill,
-                'discount' => $discount,
-                'payble' => $payble,
+                'bill'             => $totalBill,
+                'discount'         => $discount,
+                'vat'              => $vatPercent,
+                'tax'              => $taxPercent,
+                'delivery_charge'  => $deliveryCharge,
+                'payble'           => $payble,
                 'advanced_payment' => $advancedPayment,
-                'due_payment' => $duePayment,
-                'customer_id' => $customer->id,
+                'due_payment'      => $duePayment,
+                'customer_id'      => $customer->id,
+                'status'           => $status,
             ]);
 
             DB::commit();
 
-            return redirect()->route('sales.index', $sale->id)->with('success', 'Sale updated successfully.');
+            return redirect()->route('sales.index')->with('success', 'Sale updated successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()->with(['error' => $e->getMessage()]);
