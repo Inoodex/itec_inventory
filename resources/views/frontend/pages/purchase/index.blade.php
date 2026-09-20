@@ -205,7 +205,6 @@
                     <thead class="bg-light text-secondary fs-7 text-uppercase">
                         <tr>
                             <th class="ps-4">#</th>
-                            <th>Date</th>
                             <th>Invoice No</th>
                             <th>Vendor</th>
                             <th>Purchased Items</th>
@@ -213,7 +212,7 @@
                             <th>Total Amount</th>
                             <th>Payment</th>
                             <th>Due</th>
-                            <th class="text-end pe-4">Action</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody class="border-top-0">
@@ -234,11 +233,6 @@
                             <tr>
                                 <td class="ps-4 text-muted fw-semibold">{{ $loop->iteration }}</td>
                                 <td>
-                                    <span class="text-secondary small">
-                                        {{ $date }}
-                                    </span>
-                                </td>
-                                <td>
                                     <a href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#{{ $modalId }}"
                                        class="badge badge-soft-primary px-3 py-1 rounded-pill fs-7 text-decoration-none d-inline-flex align-items-center gap-1"
                                        style="cursor: pointer;"
@@ -246,6 +240,9 @@
                                         <i class="fe fe-file-text"></i>
                                         <span>#{{ $invNo }}</span>
                                     </a>
+                                    <p class="mb-0 fs-7 text-muted" style="padding-left: 20px;">
+                                        {{ $date }}
+                                    </p>
                                 </td>
                                 <td>
                                     <div>
