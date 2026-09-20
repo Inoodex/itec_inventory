@@ -3,10 +3,18 @@
 
 <head>
     <meta charset="UTF-8" />
-    <title>Purchase Invoice #PUR-{{ str_pad($purchase->id, 5, '0', STR_PAD_LEFT) }}</title>
+    <title>Purchase Invoice #{{ $purchaseNo ?? ('PUR-' . str_pad($purchase->id, 5, '0', STR_PAD_LEFT)) }}</title>
     @php
         $padPath = public_path('assets/invoice/final_pad.png');
         $padBase64 = file_exists($padPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($padPath)) : '';
+        $itemsList = isset($items) && count($items) > 0 ? $items : collect([$purchase]);
+        $invNo = $purchaseNo ?? ('PUR-' . str_pad($purchase->id, 5, '0', STR_PAD_LEFT));
+        $dateVal = $createdAt ?? ($purchase->created_at ?? now());
+        $dueVal = $totalDue ?? ($purchase->due ?? 0);
+        $paidVal = $totalPayment ?? ($purchase->payment ?? 0);
+        $subVal = $subTotal ?? ($purchase->sub_price ?? ($purchase->quantity * $purchase->unit_price));
+        $totalVal = $totalAmount ?? ($purchase->total_price ?? 0);
+        $discountVal = $totalDiscount ?? max(0, $subVal - $totalVal);
     @endphp
     <style>
         @page {
@@ -43,15 +51,15 @@
         <tr>
             <td align="right">
                 <h1 style="font-size: 24px; color: #0f172a; margin-bottom: 4px; letter-spacing: -0.5px;">PURCHASE INVOICE</h1>
-                <div style="font-size: 14px; font-weight: 700; color: #4f46e5;">Invoice No: #PUR-{{ str_pad($purchase->id, 5, '0', STR_PAD_LEFT) }}</div>
+                <div style="font-size: 14px; font-weight: 700; color: #4f46e5;">Invoice No: #{{ $invNo }}</div>
                 <div style="font-size: 12px; color: #64748b; margin-top: 3px;">
-                    Purchase Date: {{ $purchase->created_at ? $purchase->created_at->format('d M Y') : date('d M Y') }}
+                    Purchase Date: {{ \Carbon\Carbon::parse($dateVal)->format('d M Y') }}
                 </div>
                 <div style="margin-top: 6px; font-size: 11px; color: #64748b;">
                     Payment Status: 
-                    @if($purchase->due <= 0)
+                    @if($dueVal <= 0)
                         <strong style="color: #16a34a;">PAID</strong>
-                    @elseif($purchase->payment > 0)
+                    @elseif($paidVal > 0)
                         <strong style="color: #d97706;">PARTIALLY PAID</strong>
                     @else
                         <strong style="color: #dc2626;">DUE / UNPAID</strong>
@@ -97,36 +105,44 @@
             </tr>
         </thead>
         <tbody>
-            <tr style="background-color: #ffffff;">
-                <td style="padding: 12px 14px; font-size: 12px; color: #334155; border-bottom: 1px solid #f1f5f9; text-align: center; vertical-align: top;">1</td>
-                <td style="padding: 12px 14px; font-size: 12px; color: #334155; border-bottom: 1px solid #f1f5f9; vertical-align: top;">
-                    <div style="font-weight: 700; color: #0f172a; font-size: 13px;">{{ $product->name ?? 'Product Not Found' }}</div>
-                    @if(!empty($product->model))
-                        <div style="font-size: 11px; color: #64748b; margin-top: 2px;">Model: {{ $product->model }}</div>
-                    @endif
-                    @if(!empty($product->brand?->name))
-                        <div style="font-size: 11px; color: #64748b;">Brand: {{ $product->brand->name }}</div>
-                    @endif
+            @foreach ($itemsList as $index => $item)
+                @php
+                    $prod = $item->product;
+                    $itemSerials = $item->serials;
+                @endphp
+                <tr style="background-color: {{ $loop->even ? '#f8fafc' : '#ffffff' }};">
+                    <td style="padding: 12px 14px; font-size: 12px; color: #334155; border-bottom: 1px solid #f1f5f9; text-align: center; vertical-align: top;">
+                        {{ $index + 1 }}
+                    </td>
+                    <td style="padding: 12px 14px; font-size: 12px; color: #334155; border-bottom: 1px solid #f1f5f9; vertical-align: top;">
+                        <div style="font-weight: 700; color: #0f172a; font-size: 13px;">{{ $prod->name ?? 'Product Not Found' }}</div>
+                        @if(!empty($prod->model))
+                            <div style="font-size: 11px; color: #64748b; margin-top: 2px;">Model: {{ $prod->model }}</div>
+                        @endif
+                        @if(!empty($prod->brand?->name))
+                            <div style="font-size: 11px; color: #64748b;">Brand: {{ $prod->brand->name }}</div>
+                        @endif
 
-                    @if(isset($serials) && $serials->count() > 0)
-                        <div style="margin-top: 6px; padding: 6px 8px; background: #f1f5f9; border-radius: 6px; font-size: 10px; color: #334155;">
-                            <strong style="color: #4f46e5;">Registered Serials ({{ $serials->count() }}):</strong>
-                            <div style="margin-top: 2px; font-family: monospace; word-break: break-all;">
-                                {{ $serials->pluck('serial_number')->implode(', ') }}
+                        @if(isset($itemSerials) && $itemSerials->count() > 0)
+                            <div style="margin-top: 6px; padding: 6px 8px; background: #f1f5f9; border-radius: 6px; font-size: 10px; color: #334155;">
+                                <strong style="color: #4f46e5;">Registered Serials ({{ $itemSerials->count() }}):</strong>
+                                <div style="margin-top: 2px; font-family: monospace; word-break: break-all;">
+                                    {{ $itemSerials->pluck('serial_number')->implode(', ') }}
+                                </div>
                             </div>
-                        </div>
-                    @endif
-                </td>
-                <td style="padding: 12px 14px; font-size: 12px; color: #334155; border-bottom: 1px solid #f1f5f9; text-align: center; vertical-align: top;">
-                    <span style="font-weight: 700;">{{ $purchase->quantity }}</span> Pcs
-                </td>
-                <td style="padding: 12px 14px; font-size: 12px; color: #334155; border-bottom: 1px solid #f1f5f9; text-align: right; vertical-align: top;">
-                    {{ number_format($purchase->unit_price, 2) }}
-                </td>
-                <td style="padding: 12px 14px; font-size: 12px; color: #0f172a; border-bottom: 1px solid #f1f5f9; text-align: right; font-weight: 700; vertical-align: top;">
-                    {{ number_format($purchase->total_price, 2) }}
-                </td>
-            </tr>
+                        @endif
+                    </td>
+                    <td style="padding: 12px 14px; font-size: 12px; color: #334155; border-bottom: 1px solid #f1f5f9; text-align: center; vertical-align: top;">
+                        <span style="font-weight: 700;">{{ $item->quantity }}</span> Pcs
+                    </td>
+                    <td style="padding: 12px 14px; font-size: 12px; color: #334155; border-bottom: 1px solid #f1f5f9; text-align: right; vertical-align: top;">
+                        {{ number_format($item->unit_price, 2) }}
+                    </td>
+                    <td style="padding: 12px 14px; font-size: 12px; color: #0f172a; border-bottom: 1px solid #f1f5f9; text-align: right; font-weight: 700; vertical-align: top;">
+                        {{ number_format($item->total_price, 2) }}
+                    </td>
+                </tr>
+            @endforeach
         </tbody>
     </table>
 
@@ -143,19 +159,25 @@
                             <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
                                 <tr>
                                     <td style="padding: 5px 0; color: #475569;">Sub Total:</td>
-                                    <td style="padding: 5px 0; text-align: right; font-weight: 600; color: #0f172a;">{{ number_format($purchase->sub_price ?? ($purchase->quantity * $purchase->unit_price), 2) }}</td>
+                                    <td style="padding: 5px 0; text-align: right; font-weight: 600; color: #0f172a;">{{ number_format($subVal, 2) }}</td>
                                 </tr>
+                                @if($discountVal > 0)
+                                <tr>
+                                    <td style="padding: 5px 0; color: #e11d48;">Discount:</td>
+                                    <td style="padding: 5px 0; text-align: right; font-weight: 600; color: #e11d48;">-{{ number_format($discountVal, 2) }}</td>
+                                </tr>
+                                @endif
                                 <tr>
                                     <td style="padding: 7px 0; border-top: 1px solid #cbd5e1; border-bottom: 1px solid #cbd5e1; font-size: 13px; font-weight: 800; color: #4f46e5;">Total Amount:</td>
-                                    <td style="padding: 7px 0; border-top: 1px solid #cbd5e1; border-bottom: 1px solid #cbd5e1; text-align: right; font-size: 13px; font-weight: 800; color: #4f46e5;">{{ number_format($purchase->total_price, 2) }}</td>
+                                    <td style="padding: 7px 0; border-top: 1px solid #cbd5e1; border-bottom: 1px solid #cbd5e1; text-align: right; font-size: 13px; font-weight: 800; color: #4f46e5;">{{ number_format($totalVal, 2) }}</td>
                                 </tr>
                                 <tr>
                                     <td style="padding: 5px 0; color: #475569;">Paid Amount:</td>
-                                    <td style="padding: 5px 0; text-align: right; font-weight: 700; color: #16a34a;">{{ number_format($purchase->payment ?? 0, 2) }}</td>
+                                    <td style="padding: 5px 0; text-align: right; font-weight: 700; color: #16a34a;">{{ number_format($paidVal, 2) }}</td>
                                 </tr>
                                 <tr>
                                     <td style="padding: 5px 0; font-weight: 800; color: #dc2626;">Due Balance:</td>
-                                    <td style="padding: 5px 0; text-align: right; font-weight: 800; color: {{ ($purchase->due ?? 0) > 0 ? '#dc2626' : '#16a34a' }};">{{ number_format($purchase->due ?? 0, 2) }}</td>
+                                    <td style="padding: 5px 0; text-align: right; font-weight: 800; color: {{ $dueVal > 0 ? '#dc2626' : '#16a34a' }};">{{ number_format($dueVal, 2) }}</td>
                                 </tr>
                             </table>
                         </td>
@@ -170,7 +192,7 @@
         <tr>
             <td style="padding: 10px 16px; font-size: 12px; color: #334155;">
                 <strong style="color: #4f46e5; margin-right: 6px;">Amount In Words:</strong>
-                {{ function_exists('numberToWords') ? numberToWords($purchase->total_price) : '' }} Taka Only
+                {{ function_exists('numberToWords') ? numberToWords($totalVal) : '' }} Taka Only
             </td>
         </tr>
     </table>
@@ -199,9 +221,9 @@
 
     <!-- Footer fixed at bottom right above pad graphic -->
     <htmlpagefooter name="invoiceFooter">
-        @if(!empty($purchase->creator))
+        @if(!empty($creator ?? $purchase->creator))
         <div style="text-align: right; font-size: 10.5px; color: #64748b;">
-            Purchased By: <strong style="color: #0f172a;">{{ $purchase->creator->name }}</strong>
+            Purchased By: <strong style="color: #0f172a;">{{ ($creator ?? $purchase->creator)->name }}</strong>
         </div>
         @endif
     </htmlpagefooter>

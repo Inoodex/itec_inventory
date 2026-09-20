@@ -10,12 +10,6 @@
         transform: translateY(-3px);
         box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08) !important;
     }
-    .table-custom tbody tr {
-        transition: background-color 0.15s ease;
-    }
-    .table-custom tbody tr:hover {
-        background-color: #fcfbff !important;
-    }
     .badge-soft-success {
         background-color: rgba(25, 135, 84, 0.12) !important;
         color: #198754 !important;
@@ -82,7 +76,8 @@
     }
     .stat-card .avatar {
         flex-shrink: 0;
-    }</style>
+    }
+</style>
 @endpush
 
 @section('content')
@@ -92,13 +87,13 @@
     <div class="page-header mb-4">
         <div class="content-page-header d-flex flex-wrap justify-content-between align-items-center gap-3">
             <div>
-                <h4 class="card-title fw-bold text-dark mb-1">Purchase List</h4>
-                <p class="text-muted small mb-0">Manage stock purchases, vendor payments, unit costs, and serial numbers</p>
+                <h4 class="card-title fw-bold text-dark mb-1">Purchase Invoices</h4>
+                <p class="text-muted small mb-0">Manage stock purchase orders, vendor invoices, unit costs, and serial numbers</p>
             </div>
             <div>
                 <a href="{{ route('purchase.create') }}" class="btn btn-primary px-4 py-2 rounded-3 shadow-sm d-inline-flex align-items-center gap-2">
                     <i class="fe fe-plus-circle fs-6"></i>
-                    <span>Add Purchase</span>
+                    <span>Create Purchase</span>
                 </a>
             </div>
         </div>
@@ -114,8 +109,8 @@
                         <i class="fe fe-shopping-cart fs-4"></i>
                     </div>
                     <div>
-                        <h6 class="text-muted fw-normal mb-1">Total Orders</h6>
-                        <h4 class="mb-0 fw-bold text-dark">{{ number_format($purchases->total()) }}</h4>
+                        <h6 class="text-muted fw-normal mb-1">Total Purchases</h6>
+                        <h4 class="mb-0 fw-bold text-dark">{{ number_format($totalOrdersCount ?? $paginatedInvoices->total()) }}</h4>
                     </div>
                 </div>
             </div>
@@ -128,8 +123,8 @@
                         <i class="fe fe-dollar-sign fs-4"></i>
                     </div>
                     <div>
-                        <h6 class="text-muted fw-normal mb-1">Total Amount</h6>
-                        <h4 class="mb-0 fw-bold text-dark">৳{{ number_format($purchases->sum('total_price'), 2) }}</h4>
+                        <h6 class="text-muted fw-normal mb-1">Total Spent</h6>
+                        <h4 class="mb-0 fw-bold text-dark">৳{{ number_format($totalAmountSum ?? 0, 2) }}</h4>
                     </div>
                 </div>
             </div>
@@ -143,7 +138,7 @@
                     </div>
                     <div>
                         <h6 class="text-muted fw-normal mb-1">Total Paid</h6>
-                        <h4 class="mb-0 fw-bold text-dark">৳{{ number_format($purchases->sum('payment'), 2) }}</h4>
+                        <h4 class="mb-0 fw-bold text-dark">৳{{ number_format($totalPaidSum ?? 0, 2) }}</h4>
                     </div>
                 </div>
             </div>
@@ -157,7 +152,7 @@
                     </div>
                     <div>
                         <h6 class="text-muted fw-normal mb-1">Outstanding Due</h6>
-                        <h4 class="mb-0 fw-bold text-dark">৳{{ number_format($purchases->sum('due'), 2) }}</h4>
+                        <h4 class="mb-0 fw-bold text-dark">৳{{ number_format($totalDueSum ?? 0, 2) }}</h4>
                     </div>
                 </div>
             </div>
@@ -173,7 +168,7 @@
                 <div class="row align-items-center g-3">
                     <div class="col-12 col-md-4 col-lg-4">
                         <div class="search-box-custom">
-                            <input type="text" name="search" class="form-control border-light-subtle" placeholder="Search product name, vendor..." value="{{ request('search') }}">
+                            <input type="text" name="search" class="form-control border-light-subtle" placeholder="Search invoice no, product, vendor..." value="{{ request('search') }}">
                         </div>
                     </div>
                     <div class="col-12 col-md-3 col-lg-3">
@@ -197,7 +192,7 @@
                         </select>
                     </div>
                     <div class="col-12 col-md-2 col-lg-2 text-md-end text-muted small">
-                        Showing <span class="fw-bold text-dark">{{ $purchases->count() }}</span> entries
+                        Showing <span class="fw-bold text-dark">{{ $paginatedInvoices->count() }}</span> of {{ $paginatedInvoices->total() }} orders
                     </div>
                 </div>
             </form>
@@ -211,50 +206,90 @@
                         <tr>
                             <th class="ps-4">#</th>
                             <th>Date</th>
-                            <th>Product & Model</th>
+                            <th>Invoice No</th>
                             <th>Vendor</th>
-                            <th>Qty</th>
-                            <th>Unit Price</th>
-                            <th>Total Price</th>
+                            <th>Purchased Items</th>
+                            <th>Total Qty</th>
+                            <th>Total Amount</th>
                             <th>Payment</th>
                             <th>Due</th>
-                            <th>Action</th>
+                            <th class="text-end pe-4">Action</th>
                         </tr>
                     </thead>
                     <tbody class="border-top-0">
-                        @forelse ($purchases as $purchase)
+                        @forelse ($paginatedInvoices as $inv)
+                            @php
+                                $invNo = $inv->purchase_no;
+                                $items = $itemsByInvoice->get($invNo) ?? collect();
+                                $firstItem = $items->first();
+                                $vendor = $firstItem ? $firstItem->vendor : null;
+                                $date = $firstItem && $firstItem->created_at ? $firstItem->created_at->format('d M Y') : 'N/A';
+                                $totalQty = $items->sum('quantity');
+                                $totalPrice = $items->sum('total_price');
+                                $totalPayment = $items->sum('payment');
+                                $totalDue = $items->sum('due');
+                                $modalId = 'view-purchase-' . md5($invNo);
+                            @endphp
+                            @if($firstItem)
                             <tr>
                                 <td class="ps-4 text-muted fw-semibold">{{ $loop->iteration }}</td>
                                 <td>
                                     <span class="text-secondary small">
-                                        {{ $purchase->created_at ? $purchase->created_at->format('d M Y') : 'N/A' }}
+                                        {{ $date }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge badge-soft-primary px-3 py-1 rounded-pill fs-7">
+                                        #{{ $invNo }}
                                     </span>
                                 </td>
                                 <td>
                                     <div>
-                                        <span class="fw-bold text-dark d-block" title="{{ $purchase->product->name ?? '' }}">
-                                            {{ Str::limit($purchase->product->name ?? 'N/A', 25) }}
+                                        <span class="fw-semibold text-dark d-block">
+                                            {{ Str::limit($vendor->name ?? 'N/A', 22) }}
                                         </span>
-                                        <small class="text-muted fs-7">Model: {{ $purchase->product->model ?? 'N/A' }}</small>
+                                        @if(!empty($vendor->company_name))
+                                            <small class="text-muted fs-7">{{ Str::limit($vendor->company_name, 22) }}</small>
+                                        @endif
                                     </div>
                                 </td>
                                 <td>
-                                    <span class="fw-semibold text-dark">
-                                        {{ Str::limit($purchase->vendor->name ?? 'N/A', 20) }}
-                                    </span>
+                                    @if($items->count() === 1)
+                                        <div>
+                                            <span class="fw-bold text-dark d-block" title="{{ $firstItem->product->name ?? '' }}">
+                                                {{ Str::limit($firstItem->product->name ?? 'N/A', 28) }}
+                                            </span>
+                                            @if(!empty($firstItem->product->model))
+                                                <small class="text-muted fs-7">Model: {{ $firstItem->product->model }}</small>
+                                            @endif
+                                        </div>
+                                    @else
+                                        <div>
+                                            <span class="badge badge-soft-info px-2.5 py-1 rounded-pill fs-7 mb-1">
+                                                <i class="fe fe-package me-1"></i>{{ $items->count() }} Products
+                                            </span>
+                                            <div class="text-secondary small" style="line-height: 1.35; max-width: 250px;">
+                                                @foreach ($items->take(2) as $item)
+                                                    <span class="d-block text-truncate">• {{ $item->product->name ?? 'Product' }} ({{ $item->quantity }} pcs)</span>
+                                                @endforeach
+                                                @if($items->count() > 2)
+                                                    <span class="text-muted fs-7">+{{ $items->count() - 2 }} more products...</span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    @endif
                                 </td>
                                 <td>
-                                    <span class="badge badge-soft-info px-3 py-1 rounded-pill fs-7">
-                                        {{ $purchase->quantity }} Units
+                                    <span class="badge bg-light text-secondary border px-3 py-1 rounded-pill fs-7 fw-semibold">
+                                        {{ $totalQty }} Units
                                     </span>
                                 </td>
-                                <td>৳{{ number_format($purchase->unit_price, 2) }}</td>
-                                <td class="fw-bold text-dark">৳{{ number_format($purchase->total_price, 2) }}</td>
-                                <td class="text-success fw-semibold">৳{{ number_format($purchase->payment, 2) }}</td>
+                                <td class="fw-bold text-dark">৳{{ number_format($totalPrice, 2) }}</td>
+                                <td class="text-success fw-semibold">৳{{ number_format($totalPayment, 2) }}</td>
                                 <td>
-                                    @if($purchase->due > 0)
+                                    @if($totalDue > 0)
                                         <span class="badge badge-soft-danger px-3 py-1 rounded-pill fs-7">
-                                            ৳{{ number_format($purchase->due, 2) }}
+                                            ৳{{ number_format($totalDue, 2) }}
                                         </span>
                                     @else
                                         <span class="badge badge-soft-success px-3 py-1 rounded-pill fs-7">
@@ -270,25 +305,25 @@
                                         <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3">
                                             <li>
                                                 <a class="dropdown-item py-2 d-flex align-items-center gap-2" target="_blank"
-                                                    href="{{ route('purchase.invoice.pdf', $purchase->id) }}">
+                                                    href="{{ route('purchase.invoice.pdf', $firstItem->id) }}">
                                                     <i class="fe fe-download text-info"></i>
                                                     <span>Download PDF</span>
                                                 </a>
                                             </li>
                                             <li>
-                                                <a class="dropdown-item py-2 d-flex align-items-center gap-2" href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#edit-purchase-{{ $purchase->id }}">
-                                                    <i class="fe fe-edit text-primary"></i>
-                                                    <span>Edit Purchase</span>
+                                                <a class="dropdown-item py-2 d-flex align-items-center gap-2" href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#{{ $modalId }}">
+                                                    <i class="fe fe-eye text-primary"></i>
+                                                    <span>View Details</span>
                                                 </a>
                                             </li>
                                             <li><hr class="dropdown-divider opacity-50"></li>
                                             <li>
                                                 <a class="dropdown-item py-2 d-flex align-items-center gap-2 text-danger" href="javascript:void(0)"
-                                                    onclick="if (confirm('Are you sure you want to delete this purchase record?')) { document.getElementById('deletePurchase{{ $purchase->id }}').submit(); }">
+                                                    onclick="if (confirm('Are you sure you want to delete this purchase order? All associated items will be removed.')) { document.getElementById('deletePurchase{{ $firstItem->id }}').submit(); }">
                                                     <i class="fe fe-trash-2 text-danger"></i>
-                                                    <span>Delete Purchase</span>
+                                                    <span>Delete Order</span>
                                                 </a>
-                                                <form id="deletePurchase{{ $purchase->id }}" action="{{ route('purchase.destroy', $purchase->id) }}" method="POST" class="d-none">
+                                                <form id="deletePurchase{{ $firstItem->id }}" action="{{ route('purchase.destroy', $firstItem->id) }}" method="POST" class="d-none">
                                                     @csrf
                                                     @method('DELETE')
                                                 </form>
@@ -297,6 +332,7 @@
                                     </div>
                                 </td>
                             </tr>
+                            @endif
                         @empty
                             <tr id="emptyStateRow">
                                 <td colspan="10" class="text-center py-5">
@@ -305,9 +341,9 @@
                                             <i class="fe fe-shopping-cart fs-1"></i>
                                         </div>
                                         <h5 class="fw-bold text-dark mb-1">No Purchase Records Found</h5>
-                                        <p class="text-muted small mb-3">Add a new purchase to update product inventory and vendor bills</p>
+                                        <p class="text-muted small mb-3">Create a new purchase to update product inventory and vendor bills</p>
                                         <a href="{{ route('purchase.create') }}" class="btn btn-primary btn-sm px-3 rounded-2">
-                                            Add Purchase
+                                            Create Purchase
                                         </a>
                                     </div>
                                 </td>
@@ -317,125 +353,139 @@
                 </table>
             </div>
 
-            @if($purchases->hasPages())
+            @if($paginatedInvoices->hasPages())
                 <div class="p-3 border-top">
-                    {{ $purchases->links() }}
+                    {{ $paginatedInvoices->links() }}
                 </div>
             @endif
         </div>
     </div>
 </div>
 
-<!-- Edit Purchase Modals -->
-@foreach ($purchases as $purchase)
-<div class="modal fade" id="edit-purchase-{{ $purchase->id }}" aria-hidden="true" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content border-0 shadow-lg rounded-3">
-            <div class="modal-header bg-light py-3 border-bottom">
-                <h5 class="modal-title fw-bold text-dark">Edit Purchase</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form method="POST" action="{{ route('purchase.update', $purchase->id) }}">
-                @csrf
-                @method('PUT')
+<!-- Purchase Order Details Modals -->
+@foreach ($paginatedInvoices as $inv)
+    @php
+        $invNo = $inv->purchase_no;
+        $items = $itemsByInvoice->get($invNo) ?? collect();
+        $firstItem = $items->first();
+        $vendor = $firstItem ? $firstItem->vendor : null;
+        $creator = $firstItem ? $firstItem->creator : null;
+        $modalId = 'view-purchase-' . md5($invNo);
+        $totalSub = $items->sum(fn($i) => $i->sub_price ?? ($i->unit_price * $i->quantity));
+        $totalNet = $items->sum('total_price');
+        $totalPaid = $items->sum('payment');
+        $totalDue = $items->sum('due');
+        $totalDiscount = max(0, $totalSub - $totalNet);
+    @endphp
+    @if($firstItem)
+    <div class="modal fade" id="{{ $modalId }}" aria-hidden="true" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow-lg rounded-3">
+                <div class="modal-header bg-light py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="modal-title fw-bold text-dark mb-0">Purchase Order Details</h5>
+                        <span class="badge badge-soft-primary px-3 py-1 rounded-pill fs-7 mt-1">#{{ $invNo }}</span>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
                 <div class="modal-body p-4">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label for="edit-product_id-{{ $purchase->id }}" class="form-label fw-semibold small text-secondary">Product <span class="text-danger">*</span></label>
-                            <select id="edit-product_id-{{ $purchase->id }}" name="product_id" class="form-select select2" required>
-                                @foreach ($products as $product)
-                                    <option value="{{ $product->id }}" {{ $product->id == $purchase->product_id ? 'selected' : '' }} title="{{ $product->name }}">
-                                        {{ Str::limit($product->name, 45) }} ({{ $product->model ?? 'N/A' }})
-                                    </option>
+                    <!-- Order Meta Info -->
+                    <div class="row g-3 p-3 bg-light rounded-3 mb-4">
+                        <div class="col-md-4">
+                            <span class="text-muted small d-block">Vendor / Supplier:</span>
+                            <strong class="text-dark">{{ $vendor->name ?? 'N/A' }}</strong>
+                            @if(!empty($vendor->phone))
+                                <span class="d-block small text-muted"><i class="fe fe-phone me-1"></i>{{ $vendor->phone }}</span>
+                            @endif
+                        </div>
+                        <div class="col-md-4">
+                            <span class="text-muted small d-block">Purchase Date:</span>
+                            <strong class="text-dark">{{ $firstItem->created_at ? $firstItem->created_at->format('d M Y, h:i A') : 'N/A' }}</strong>
+                        </div>
+                        <div class="col-md-4">
+                            <span class="text-muted small d-block">Purchased By:</span>
+                            <strong class="text-dark">{{ $creator->name ?? 'System' }}</strong>
+                        </div>
+                    </div>
+
+                    <!-- Line Items Table -->
+                    <h6 class="fw-bold text-dark mb-2">Purchased Products ({{ $items->count() }})</h6>
+                    <div class="table-responsive mb-3 border rounded-3 overflow-hidden">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead class="bg-light fs-7 text-uppercase text-secondary">
+                                <tr>
+                                    <th class="ps-3 py-2">#</th>
+                                    <th class="py-2">Product</th>
+                                    <th class="text-center py-2">Qty</th>
+                                    <th class="text-end py-2">Unit Price</th>
+                                    <th class="text-end pe-3 py-2">Total Price</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($items as $idx => $item)
+                                    <tr>
+                                        <td class="ps-3 text-muted">{{ $idx + 1 }}</td>
+                                        <td>
+                                            <strong class="text-dark">{{ $item->product->name ?? 'N/A' }}</strong>
+                                            @if(!empty($item->product->model))
+                                                <small class="text-muted d-block">Model: {{ $item->product->model }}</small>
+                                            @endif
+                                            @if($item->serials && $item->serials->count() > 0)
+                                                <div class="mt-1 p-1 px-2 bg-light rounded fs-8 text-secondary font-monospace">
+                                                    <strong>Serials:</strong> {{ $item->serials->pluck('serial_number')->implode(', ') }}
+                                                </div>
+                                            @endif
+                                        </td>
+                                        <td class="text-center fw-semibold">{{ $item->quantity }} Pcs</td>
+                                        <td class="text-end">৳{{ number_format($item->unit_price, 2) }}</td>
+                                        <td class="text-end pe-3 fw-bold text-dark">৳{{ number_format($item->total_price, 2) }}</td>
+                                    </tr>
                                 @endforeach
-                            </select>
-                        </div>
+                            </tbody>
+                        </table>
+                    </div>
 
+                    <!-- Financial Summary Box -->
+                    <div class="row justify-content-end">
                         <div class="col-md-6">
-                            <label for="edit-vendor-{{ $purchase->id }}" class="form-label fw-semibold small text-secondary">Vendor <span class="text-danger">*</span></label>
-                            <select id="edit-vendor-{{ $purchase->id }}" name="vendor_id" class="form-select select2" required>
-                                <option value="">Select Vendor</option>
-                                @foreach ($vendors as $vendor)
-                                    <option value="{{ $vendor->id }}" {{ $vendor->id == $purchase->vendor_id ? 'selected' : '' }}>
-                                        {{ $vendor->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div class="col-md-4">
-                            <label for="edit-quantity-{{ $purchase->id }}" class="form-label fw-semibold small text-secondary">Quantity</label>
-                            <input id="edit-quantity-{{ $purchase->id }}" name="quantity" value="{{ $purchase->quantity }}" class="form-control" placeholder="Quantity" />
-                        </div>
-
-                        <div class="col-md-4">
-                            <label for="edit-unit_price-{{ $purchase->id }}" class="form-label fw-semibold small text-secondary">Unit Cost Price</label>
-                            <input id="edit-unit_price-{{ $purchase->id }}" name="unit_price" value="{{ $purchase->unit_price }}" class="form-control" placeholder="Unit Price" />
-                        </div>
-
-                        <div class="col-md-4">
-                            <label for="edit-sub_price-{{ $purchase->id }}" class="form-label fw-semibold small text-secondary">Sub Price</label>
-                            <input id="edit-sub_price-{{ $purchase->id }}" name="sub_price" value="{{ $purchase->sub_price }}" class="form-control bg-light" readonly placeholder="Sub Price" />
-                        </div>
-
-                        <div class="col-md-4">
-                            <label for="edit-total_price-{{ $purchase->id }}" class="form-label fw-semibold small text-secondary">Payable Total Price</label>
-                            <input id="edit-total_price-{{ $purchase->id }}" name="total_price" value="{{ $purchase->total_price }}" class="form-control" placeholder="Total Price" />
-                        </div>
-
-                        <div class="col-md-4">
-                            <label for="edit-payment-{{ $purchase->id }}" class="form-label fw-semibold small text-secondary">Payment</label>
-                            <input id="edit-payment-{{ $purchase->id }}" name="payment" value="{{ $purchase->payment }}" class="form-control" placeholder="Payment" />
-                        </div>
-
-                        <div class="col-md-4">
-                            <label for="edit-due-{{ $purchase->id }}" class="form-label fw-semibold small text-secondary">Outstanding Due</label>
-                            <input id="edit-due-{{ $purchase->id }}" name="due" value="{{ $purchase->due }}" class="form-control bg-light" readonly placeholder="Due" />
+                            <div class="p-3 bg-light rounded-3">
+                                <div class="d-flex justify-content-between py-1 small">
+                                    <span class="text-muted">Sub Total:</span>
+                                    <span class="fw-semibold text-dark">৳{{ number_format($totalSub, 2) }}</span>
+                                </div>
+                                @if($totalDiscount > 0)
+                                <div class="d-flex justify-content-between py-1 small text-danger">
+                                    <span>Discount:</span>
+                                    <span class="fw-semibold">-৳{{ number_format($totalDiscount, 2) }}</span>
+                                </div>
+                                @endif
+                                <div class="d-flex justify-content-between py-1 border-top border-bottom my-1">
+                                    <strong class="text-primary">Payable Amount:</strong>
+                                    <strong class="text-primary">৳{{ number_format($totalNet, 2) }}</strong>
+                                </div>
+                                <div class="d-flex justify-content-between py-1 small text-success">
+                                    <span>Paid Amount:</span>
+                                    <span class="fw-bold">৳{{ number_format($totalPaid, 2) }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between py-1 small">
+                                    <span class="fw-bold {{ $totalDue > 0 ? 'text-danger' : 'text-success' }}">Due Balance:</span>
+                                    <span class="fw-bold {{ $totalDue > 0 ? 'text-danger' : 'text-success' }}">৳{{ number_format($totalDue, 2) }}</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="d-flex justify-content-end gap-2 p-3 border-top bg-light">
-                    <button type="button" class="btn btn-light px-4 rounded-3 text-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary px-4 rounded-3 shadow-sm">Update Purchase</button>
+                <div class="d-flex justify-content-between align-items-center p-3 border-top bg-light">
+                    <a href="{{ route('purchase.invoice.pdf', $firstItem->id) }}" target="_blank" class="btn btn-info px-3 rounded-3 text-white d-inline-flex align-items-center gap-2">
+                        <i class="fe fe-download"></i>
+                        <span>Download PDF Invoice</span>
+                    </a>
+                    <button type="button" class="btn btn-secondary px-4 rounded-3" data-bs-dismiss="modal">Close</button>
                 </div>
-            </form>
+            </div>
         </div>
     </div>
-</div>
+    @endif
 @endforeach
 
-@push('scripts')
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        @foreach ($purchases as $purchase)
-            const qInput_{{ $purchase->id }} = document.getElementById('edit-quantity-{{ $purchase->id }}');
-            const uInput_{{ $purchase->id }} = document.getElementById('edit-unit_price-{{ $purchase->id }}');
-            const sInput_{{ $purchase->id }} = document.getElementById('edit-sub_price-{{ $purchase->id }}');
-            const tInput_{{ $purchase->id }} = document.getElementById('edit-total_price-{{ $purchase->id }}');
-            const pInput_{{ $purchase->id }} = document.getElementById('edit-payment-{{ $purchase->id }}');
-            const dInput_{{ $purchase->id }} = document.getElementById('edit-due-{{ $purchase->id }}');
-
-            function calcEditSub_{{ $purchase->id }}() {
-                if (!qInput_{{ $purchase->id }} || !uInput_{{ $purchase->id }}) return;
-                const q = parseFloat(qInput_{{ $purchase->id }}.value) || 0;
-                const u = parseFloat(uInput_{{ $purchase->id }}.value) || 0;
-                if (sInput_{{ $purchase->id }}) sInput_{{ $purchase->id }}.value = (q * u).toFixed(2);
-            }
-
-            function calcEditDue_{{ $purchase->id }}() {
-                if (!tInput_{{ $purchase->id }} || !pInput_{{ $purchase->id }}) return;
-                const t = parseFloat(tInput_{{ $purchase->id }}.value) || 0;
-                const p = parseFloat(pInput_{{ $purchase->id }}.value) || 0;
-                if (dInput_{{ $purchase->id }}) dInput_{{ $purchase->id }}.value = (t - p).toFixed(2);
-            }
-
-            if (qInput_{{ $purchase->id }}) qInput_{{ $purchase->id }}.addEventListener('input', calcEditSub_{{ $purchase->id }});
-            if (uInput_{{ $purchase->id }}) uInput_{{ $purchase->id }}.addEventListener('input', calcEditSub_{{ $purchase->id }});
-            if (tInput_{{ $purchase->id }}) tInput_{{ $purchase->id }}.addEventListener('input', calcEditDue_{{ $purchase->id }});
-            if (pInput_{{ $purchase->id }}) pInput_{{ $purchase->id }}.addEventListener('input', calcEditDue_{{ $purchase->id }});
-        @endforeach
-    });
-</script>
-@endpush
 @endsection
-

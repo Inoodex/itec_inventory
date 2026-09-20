@@ -22,6 +22,7 @@ class PurchaseService
 
             // 1. Create the purchase record
             $purchase = Purchase::create([
+                'purchase_no' => $data['purchase_no'] ?? Purchase::generatePurchaseNo(),
                 'product_id'  => $data['product_id'],
                 'vendor_id'   => $data['vendor_id'],
                 'quantity'    => $data['quantity'],

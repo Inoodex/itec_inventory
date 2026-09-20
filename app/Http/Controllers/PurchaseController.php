@@ -22,17 +22,18 @@ class PurchaseController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Purchase::with(['product', 'vendor']);
+        $query = Purchase::query();
 
-        // Filter by search term
+        // Filter by search term (invoice no, product, vendor)
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->whereHas('product', function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%");
-                })->orWhereHas('vendor', function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%");
-                });
+                $q->where('purchase_no', 'like', "%{$search}%")
+                  ->orWhereHas('product', function ($q) use ($search) {
+                      $q->where('name', 'like', "%{$search}%")->orWhere('model', 'like', "%{$search}%");
+                  })->orWhereHas('vendor', function ($q) use ($search) {
+                      $q->where('name', 'like', "%{$search}%")->orWhere('phone', 'like', "%{$search}%");
+                  });
             });
         }
 
@@ -53,11 +54,43 @@ class PurchaseController extends Controller
             $query->whereBetween('created_at', [$from, $to]);
         }
 
-        $purchases = $query->latest()->paginate(10)->withQueryString();
+        // Grouping purchases by purchase_no
+        $paginatedInvoices = (clone $query)
+            ->select('purchase_no')
+            ->selectRaw('MAX(id) as latest_id')
+            ->groupBy('purchase_no')
+            ->orderByDesc('latest_id')
+            ->paginate(10)
+            ->withQueryString();
+
+        $invoiceNos = $paginatedInvoices->pluck('purchase_no')->filter()->toArray();
+
+        $itemsByInvoice = Purchase::with(['product.brand', 'vendor', 'creator', 'serials'])
+            ->whereIn('purchase_no', $invoiceNos)
+            ->orderBy('id', 'asc')
+            ->get()
+            ->groupBy('purchase_no');
+
+        // Total stats across all purchases
+        $allPurchases = Purchase::all();
+        $totalOrdersCount = $allPurchases->pluck('purchase_no')->unique()->count();
+        $totalAmountSum = (float) $allPurchases->sum('total_price');
+        $totalPaidSum = (float) $allPurchases->sum('payment');
+        $totalDueSum = (float) $allPurchases->sum('due');
+
         $products = Product::latest()->get();
         $vendors = Vendor::latest()->get();
-        
-        return view('frontend.pages.purchase.index', compact('purchases', 'products', 'vendors'));
+
+        return view('frontend.pages.purchase.index', compact(
+            'paginatedInvoices',
+            'itemsByInvoice',
+            'totalOrdersCount',
+            'totalAmountSum',
+            'totalPaidSum',
+            'totalDueSum',
+            'products',
+            'vendors'
+        ));
     }
 
     /**
@@ -127,6 +160,9 @@ class PurchaseController extends Controller
             $accountId = $validated['account_id'] ?? null;
             $paymentRef = $validated['payment_ref'] ?? null;
 
+            // Generate a shared purchase invoice number for this batch
+            $purchaseNo = Purchase::generatePurchaseNo();
+
             // Compute total gross amount
             $grossTotal = 0;
             foreach ($items as $item) {
@@ -152,6 +188,7 @@ class PurchaseController extends Controller
                 $itemDue = max(0, $itemNet - $itemPayment);
 
                 $purchaseData = [
+                    'purchase_no' => $purchaseNo,
                     'product_id' => $item['product_id'],
                     'vendor_id' => $vendorId,
                     'quantity' => $itemQty,
@@ -254,8 +291,12 @@ class PurchaseController extends Controller
      */
     public function destroy(Purchase $purchase)
     {
-        $purchase->delete();
-        return redirect()->back()->with('success', 'Purchase deleted successfully.');
+        if (!empty($purchase->purchase_no)) {
+            Purchase::where('purchase_no', $purchase->purchase_no)->delete();
+        } else {
+            $purchase->delete();
+        }
+        return redirect()->back()->with('success', 'Purchase order deleted successfully.');
     }
 
     public function getLatestPrice($id)
@@ -352,7 +393,7 @@ class PurchaseController extends Controller
     }
 
     /**
-     * Download or view individual purchase invoice PDF.
+     * Download or view consolidated purchase invoice PDF.
      */
     public function downloadInvoicePdf($id)
     {
@@ -361,9 +402,30 @@ class PurchaseController extends Controller
             abort(404, 'Purchase record not found.');
         }
 
+        // Retrieve all items for this purchase invoice (or single item if no batch)
+        if (!empty($purchase->purchase_no)) {
+            $items = Purchase::with(['product.brand', 'vendor', 'creator', 'serials'])
+                ->where('purchase_no', $purchase->purchase_no)
+                ->orderBy('id', 'asc')
+                ->get();
+        } else {
+            $items = collect([$purchase]);
+        }
+
         $product = $purchase->product;
         $vendor = $purchase->vendor;
-        $serials = $purchase->serials;
+        $creator = $purchase->creator;
+        $purchaseNo = $purchase->purchase_no ?? ('PUR-' . str_pad($purchase->id, 5, '0', STR_PAD_LEFT));
+        $createdAt = $purchase->created_at;
+
+        // Calculate combined financial totals
+        $subTotal = (float) $items->sum(function ($item) {
+            return $item->sub_price ?? ($item->quantity * $item->unit_price);
+        });
+        $totalAmount = (float) $items->sum('total_price');
+        $totalDiscount = max(0, $subTotal - $totalAmount);
+        $totalPayment = (float) $items->sum('payment');
+        $totalDue = (float) $items->sum('due');
 
         try {
             ini_set('memory_limit', '512M');
@@ -379,10 +441,23 @@ class PurchaseController extends Controller
                 'default_font' => 'Helvetica',
             ]);
 
-            $html = view('frontend.pages.purchase.invoice_pdf', compact('purchase', 'product', 'vendor', 'serials'))->render();
+            $html = view('frontend.pages.purchase.invoice_pdf', compact(
+                'purchase',
+                'items',
+                'product',
+                'vendor',
+                'creator',
+                'purchaseNo',
+                'createdAt',
+                'subTotal',
+                'totalDiscount',
+                'totalAmount',
+                'totalPayment',
+                'totalDue'
+            ))->render();
             $mpdf->WriteHTML($html);
 
-            $filename = 'PUR-' . str_pad($purchase->id, 5, '0', STR_PAD_LEFT) . '.pdf';
+            $filename = $purchaseNo . '.pdf';
             $pdfContent = $mpdf->Output('', \Mpdf\Output\Destination::STRING_RETURN);
 
             return response($pdfContent, 200, [

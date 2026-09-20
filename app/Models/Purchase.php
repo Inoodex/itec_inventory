@@ -17,6 +17,7 @@ class Purchase extends Model
 
     // Mass assignable fields
     protected $fillable = [
+        'purchase_no',
         'product_id',
         'vendor_id',
         'quantity',
@@ -28,6 +29,26 @@ class Purchase extends Model
         'created_by',
         'updated_by',
     ];
+
+    /**
+     * Generate unique sequential purchase invoice number.
+     */
+    public static function generatePurchaseNo(): string
+    {
+        $prefix = 'PUR-' . date('Ymd') . '-';
+        $latest = self::where('purchase_no', 'LIKE', $prefix . '%')
+            ->orderByDesc('id')
+            ->value('purchase_no');
+
+        if ($latest) {
+            $lastSeq = (int) substr($latest, strrpos($latest, '-') + 1);
+            $seq = $lastSeq + 1;
+        } else {
+            $seq = 1;
+        }
+
+        return $prefix . str_pad($seq, 4, '0', STR_PAD_LEFT);
+    }
 
     // Relationships
     public function product()
