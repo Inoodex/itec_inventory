@@ -320,6 +320,12 @@
                                                     <span>View Details</span>
                                                 </a>
                                             </li>
+                                            <li>
+                                                <a class="dropdown-item py-2 d-flex align-items-center gap-2" href="{{ route('purchase.edit', $firstItem->id) }}">
+                                                    <i class="fe fe-edit text-warning"></i>
+                                                    <span>Edit Purchase</span>
+                                                </a>
+                                            </li>
                                             <li><hr class="dropdown-divider opacity-50"></li>
                                             <li>
                                                 <a class="dropdown-item py-2 d-flex align-items-center gap-2 text-danger" href="javascript:void(0)"
@@ -480,10 +486,16 @@
                     </div>
                 </div>
                 <div class="d-flex justify-content-between align-items-center p-3 border-top bg-light">
-                    <a href="{{ route('purchase.invoice.pdf', $firstItem->id) }}" target="_blank" class="btn btn-info px-3 rounded-3 text-white d-inline-flex align-items-center gap-2">
-                        <i class="fe fe-download"></i>
-                        <span>Download PDF Invoice</span>
-                    </a>
+                    <div class="d-flex gap-2">
+                        <a href="{{ route('purchase.invoice.pdf', $firstItem->id) }}" target="_blank" class="btn btn-info px-3 rounded-3 text-white d-inline-flex align-items-center gap-2">
+                            <i class="fe fe-download"></i>
+                            <span>Download PDF Invoice</span>
+                        </a>
+                        <a href="{{ route('purchase.edit', $firstItem->id) }}" class="btn btn-warning px-3 rounded-3 text-white d-inline-flex align-items-center gap-2">
+                            <i class="fe fe-edit"></i>
+                            <span>Edit Order</span>
+                        </a>
+                    </div>
                     <button type="button" class="btn btn-secondary px-4 rounded-3" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
