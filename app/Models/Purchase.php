@@ -31,23 +31,28 @@ class Purchase extends Model
     ];
 
     /**
-     * Generate unique sequential purchase invoice number.
+     * Generate unique sequential purchase invoice number in format PUR-00054.
      */
     public static function generatePurchaseNo(): string
     {
-        $prefix = 'PUR-' . date('Ymd') . '-';
-        $latest = self::where('purchase_no', 'LIKE', $prefix . '%')
-            ->orderByDesc('id')
-            ->value('purchase_no');
+        $allPurchaseNos = self::withTrashed()
+            ->where('purchase_no', 'LIKE', 'PUR-%')
+            ->pluck('purchase_no');
 
-        if ($latest) {
-            $lastSeq = (int) substr($latest, strrpos($latest, '-') + 1);
-            $seq = $lastSeq + 1;
-        } else {
-            $seq = 1;
+        $maxSeq = 0;
+        foreach ($allPurchaseNos as $no) {
+            if (preg_match('/^PUR-(\d+)$/', (string)$no, $matches)) {
+                $num = (int) $matches[1];
+                if ($num > $maxSeq) {
+                    $maxSeq = $num;
+                }
+            }
         }
 
-        return $prefix . str_pad($seq, 4, '0', STR_PAD_LEFT);
+        $maxId = (int) self::withTrashed()->max('id');
+        $nextSeq = max($maxSeq, $maxId) + 1;
+
+        return 'PUR-' . str_pad($nextSeq, 5, '0', STR_PAD_LEFT);
     }
 
     // Relationships
