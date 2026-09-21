@@ -2,6 +2,9 @@
 
 namespace App\Services;
 
+use App\Models\Challan;
+use App\Models\ChallanItem;
+use App\Models\CompanyDetail;
 use App\Models\Customer;
 use App\Models\Inventory;
 use App\Models\Payment;
@@ -134,11 +137,77 @@ class SaleService
                 \Illuminate\Support\Facades\Log::warning('Sale auto-journal posting notice: ' . $e->getMessage());
             }
 
-            // 7. Broadcast real-time Pusher event
+            // 7. Automatically generate delivery challan
+            try {
+                $this->generateChallanForSale($sale, $customer, $data);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error('Auto-challan generation failed: ' . $e->getMessage());
+            }
+
+            // 8. Broadcast real-time Pusher event
             event(new \App\Events\SaleCreatedEvent($sale));
 
             return $sale;
         });
+    }
+
+    /**
+     * Automatically generate a linked Delivery Challan for a new Sale.
+     */
+    public function generateChallanForSale(Sale $sale, Customer $customer, array $data): Challan
+    {
+        $company = CompanyDetail::default()->active()->first()
+            ?? CompanyDetail::active()->first()
+            ?? CompanyDetail::first();
+
+        $challanNumber = 'CHALLAN-' . date('Ymd') . '-' . str_pad(Challan::count() + 1, 4, '0', STR_PAD_LEFT);
+
+        $challan = Challan::create([
+            'challan_number'         => $challanNumber,
+            'reference_number'       => 'REF-' . ($sale->order_no ?? $sale->id),
+            'challan_date'           => date('Y-m-d'),
+            'type'                   => 'sale',
+            'sale_id'                => $sale->id,
+            'customer_id'            => $customer->id,
+            'recipient_organization' => $customer->name ?? 'N/A',
+            'recipient_designation'  => 'The Managing Director',
+            'recipient_address'      => $customer->address ?? ($customer->phone ? 'Phone: ' . $customer->phone : 'N/A'),
+            'attention_to'           => $customer->name ?? '',
+            'designation'            => 'The Managing Director',
+            'subject'                => 'Delivery Challan',
+            'notes'                  => 'Generated automatically for invoice ' . $sale->order_no,
+            'company_name'           => $company?->name ?? 'Intelligent Technology',
+            'signatory_name'         => $company?->signatory_name ?? 'Engr. Shamsul Alam',
+            'signatory_designation'  => $company?->signatory_designation ?? 'Director (Technical)',
+            'company_phone'          => $company?->phone ?? '+880 XXXX-XXXXXX',
+            'company_email'          => $company?->email ?? 'info@intelligenttech.com',
+            'company_website'        => $company?->website ?? 'www.itechbd.net',
+            'show_signature'         => true,
+            'show_seal'              => true,
+        ]);
+
+        foreach ($data['product'] as $index => $productId) {
+            $product = Product::find($productId);
+            $qty = $data['qty'][$index];
+            $desc = $product?->name ?? 'Product';
+            if ($product?->model) {
+                $desc .= ' (' . $product->model . ')';
+            }
+
+            if (!empty($data['item_serials'][$productId])) {
+                $serials = (array) $data['item_serials'][$productId];
+                $desc .= "\nS/N: " . implode(', ', $serials);
+            }
+
+            ChallanItem::create([
+                'challan_id'  => $challan->id,
+                'description' => $desc,
+                'quantity'    => $qty,
+                'unit'        => 'Pcs',
+            ]);
+        }
+
+        return $challan;
     }
 
     /**

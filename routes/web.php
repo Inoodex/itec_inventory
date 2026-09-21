@@ -124,6 +124,7 @@ Route::middleware(['auth', 'permission:Sales Management'])->group(function () {
     Route::resource('sales', SalesController::class);
     Route::get('sales/invoice/{id}', [SalesController::class, 'makeInvoice'])->name('sales.invoice');
     Route::get('sales/invoice/{id}/pdf', [SalesController::class, 'downloadInvoicePdf'])->name('sales.invoice.pdf');
+    Route::get('sales/challan/{id}/pdf', [SalesController::class, 'downloadChallanPdf'])->name('sales.challan.pdf');
     Route::get('/sales/payments/{saleId?}', [SalesController::class, 'payments'])->name('sales.payments');
     Route::get('sales/{id}/details', [SalesController::class, 'getSaleDetails'])->name('sales.details');
     Route::get('/sales/search-orders', [SalesController::class, 'searchOrders'])->name('sales.search-orders');

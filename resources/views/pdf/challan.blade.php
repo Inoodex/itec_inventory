@@ -66,7 +66,7 @@
             width: 100%;
             border-collapse: separate;
             border-spacing: 0;
-            background: #f8fafc;
+            background: transparent;
             border: 1px solid #cbd5e1;
             border-radius: 12px;
             margin-bottom: 20px;
@@ -136,9 +136,9 @@
                 <div style="font-size: 13px; font-weight: 700; color: #0f172a;">{{ $recipient_organization ?? ($challan->client_name ?? 'N/A') }}</div>
                 <div style="font-size: 12px; color: #475569; margin-top: 2px;">{{ $recipient_designation ?? 'Director (IT)' }}</div>
                 <div style="font-size: 12px; color: #64748b; margin-top: 2px;">{{ $recipient_address ?? ($challan->client_address ?? 'N/A') }}</div>
-                @if(!empty($attention_to))
+                <!-- @if(!empty($attention_to))
                     <div style="font-size: 11px; color: #4f46e5; margin-top: 4px; font-weight: 600;">Attention: {{ $attention_to }}</div>
-                @endif
+                @endif -->
             </td>
         </tr>
     </table>

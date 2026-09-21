@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{DB, Log, Mail};
-use App\Models\{Customer, Inventory, Payment, Product, Project, Sale, SalesItem, Service, User};
+use App\Models\{Challan, ChallanItem, CompanyDetail, Customer, Inventory, Payment, Product, Project, Sale, SalesItem, Service, User};
 use App\Mail\CreateSalesMail;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreSaleRequest;
@@ -431,6 +431,117 @@ public function store(StoreSaleRequest $request)
             ]);
 
             return redirect()->back()->with('error', 'Failed to generate sales invoice PDF.');
+        }
+    }
+
+    public function downloadChallanPdf($id)
+    {
+        $sale = Sale::with(['customer', 'client', 'challan.challanItems'])->findOrFail($id);
+        $challan = $sale->challan;
+
+        if (!$challan) {
+            // Auto-generate challan for legacy/older sales on demand
+            $customer = $sale->sale_type == 'project' ? $sale->client : $sale->customer;
+            $items = SalesItem::with('product')->where('order_id', $sale->id)->get();
+
+            $company = CompanyDetail::default()->active()->first()
+                ?? CompanyDetail::active()->first()
+                ?? CompanyDetail::first();
+
+            $challanNumber = 'CHALLAN-' . date('Ymd') . '-' . str_pad(Challan::count() + 1, 4, '0', STR_PAD_LEFT);
+
+            $challan = Challan::create([
+                'challan_number'         => $challanNumber,
+                'reference_number'       => 'REF-' . ($sale->order_no ?? $sale->id),
+                'challan_date'           => $sale->created_at ? $sale->created_at->format('Y-m-d') : date('Y-m-d'),
+                'type'                   => $sale->sale_type == 'project' ? 'project' : 'sale',
+                'sale_id'                => $sale->id,
+                'project_id'             => $sale->project_id ?? null,
+                'customer_id'            => $sale->customer_id,
+                'client_id'              => $sale->client_id ?? null,
+                'recipient_organization' => $customer?->name ?? 'N/A',
+                'recipient_designation'  => 'The Managing Director',
+                'recipient_address'      => $customer?->address ?? ($customer?->phone ? 'Phone: ' . $customer->phone : 'N/A'),
+                'attention_to'           => $customer?->name ?? '',
+                'designation'            => 'The Managing Director',
+                'subject'                => 'Delivery Challan',
+                'notes'                  => 'Generated for invoice ' . $sale->order_no,
+                'company_name'           => $company?->name ?? 'Intelligent Technology',
+                'signatory_name'         => $company?->signatory_name ?? 'Engr. Shamsul Alam',
+                'signatory_designation'  => $company?->signatory_designation ?? 'Director (Technical)',
+                'company_phone'          => $company?->phone ?? '+880 XXXX-XXXXXX',
+                'company_email'          => $company?->email ?? 'info@intelligenttech.com',
+                'company_website'        => $company?->website ?? 'www.itechbd.net',
+                'show_signature'         => true,
+                'show_seal'              => true,
+            ]);
+
+            foreach ($items as $item) {
+                $desc = $item->product?->name ?? 'Product';
+                if ($item->product?->model) {
+                    $desc .= ' (' . $item->product->model . ')';
+                }
+
+                $serials = \App\Models\ProductSerial::where('sales_item_id', $item->id)->pluck('serial_number')->toArray();
+                if (!empty($serials)) {
+                    $desc .= "\nS/N: " . implode(', ', $serials);
+                }
+
+                ChallanItem::create([
+                    'challan_id'  => $challan->id,
+                    'description' => $desc,
+                    'quantity'    => $item->qty,
+                    'unit'        => 'Pcs',
+                ]);
+            }
+
+            $challan->load('challanItems');
+        }
+
+        $recipientName = $challan->recipient_organization ?? ($sale->customer?->name ?? $sale->client?->name ?? 'N/A');
+        $recipientAddress = $challan->recipient_address ?? ($sale->customer?->address ?? $sale->client?->address ?? 'N/A');
+
+        $signatoryName = $challan->signatory_name ?? 'Engr. Shamsul Alam';
+        $companyDetail = CompanyDetail::where('signatory_name', $signatoryName)->first()
+            ?? CompanyDetail::default()->active()->first()
+            ?? CompanyDetail::first();
+
+        $pdfData = [
+            'challan'                => $challan,
+            'recipient_organization' => $recipientName,
+            'recipient_designation'  => $challan->recipient_designation ?? 'The Managing Director',
+            'recipient_address'      => $recipientAddress,
+            'attention_to'           => $challan->attention_to ?? '',
+            'subject'                => $challan->subject ?? 'Delivery Challan',
+            'show_signature'         => $challan->show_signature ?? true,
+            'show_seal'              => $challan->show_seal ?? true,
+            'signature_image'        => $companyDetail?->signature_image ?? null,
+            'seal_image'             => $companyDetail?->seal_image ?? null,
+        ];
+
+        try {
+            ini_set('memory_limit', '512M');
+            $html = view('pdf.challan', $pdfData)->render();
+            $mpdf = new \Mpdf\Mpdf([
+                'mode' => 'utf-8',
+                'format' => 'A4',
+                'default_font' => 'Helvetica',
+            ]);
+            $mpdf->WriteHTML($html);
+
+            $fileName = 'Challan_' . ($challan->challan_number ?? $sale->order_no) . '.pdf';
+            $pdfContent = $mpdf->Output('', \Mpdf\Output\Destination::STRING_RETURN);
+
+            return response($pdfContent, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="' . $fileName . '"',
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Sales Challan PDF generation failed: ' . $e->getMessage(), [
+                'sale_id' => $id,
+            ]);
+
+            return redirect()->back()->with('error', 'Failed to generate challan PDF.');
         }
     }
 

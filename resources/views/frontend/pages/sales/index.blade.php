@@ -242,6 +242,13 @@
                                                     </a>
                                                 </li>
                                                 <li>
+                                                    <a class="dropdown-item py-2 d-flex align-items-center gap-2" target="_blank"
+                                                        href="{{ route('sales.challan.pdf', $service->id) }}">
+                                                        <i class="fe fe-file-text text-success"></i>
+                                                        <span>Download Challan</span>
+                                                    </a>
+                                                </li>
+                                                <li>
                                                     <a class="dropdown-item py-2 d-flex align-items-center gap-2"
                                                         href="{{ route('sales.edit', $service->id) }}">
                                                         <i class="fe fe-edit text-warning"></i>
