@@ -17,8 +17,8 @@ class InventoryService
         $inventory = Inventory::where('product_id', $productId)->first();
 
         if ($inventory) {
-            $inventory->current_stock += $quantity;
-            $inventory->save();
+            $inventory->increment('current_stock', $quantity);
+            $inventory = $inventory->fresh();
         } else {
             $inventory = Inventory::create([
                 'product_id'    => $productId,

@@ -8,11 +8,13 @@ return new class extends Migration
 {
     public function up()
     {
-        Schema::table('sales', function (Blueprint $table) {
-            $table->dropForeign(['customer_id']);
-            $table->unsignedBigInteger('customer_id')->nullable()->change();
-           $table->foreign('customer_id')->references('id')->on('customers')->onDelete('cascade');
-        });
+        if (\Illuminate\Support\Facades\DB::getDriverName() !== 'sqlite') {
+            Schema::table('sales', function (Blueprint $table) {
+                $table->dropForeign(['customer_id']);
+                $table->unsignedBigInteger('customer_id')->nullable()->change();
+                $table->foreign('customer_id')->references('id')->on('customers')->onDelete('cascade');
+            });
+        }
     }
 
     public function down()

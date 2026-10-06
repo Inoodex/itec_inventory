@@ -33,24 +33,7 @@ public function index(Request $request)
     public function create()
     {
         $clients = Client::get();
-        $products = Product::with(['brand', 'latestPurchase'])->get()->map(function ($product) {
-            $price = 0;
-            if ($product->latestPurchase && $product->latestPurchase->unit_price > 0) {
-                $price = (float)$product->latestPurchase->unit_price;
-            } else {
-                $lastSaleItem = \App\Models\SalesItem::where('product_id', $product->id)->latest()->first();
-                if ($lastSaleItem && $lastSaleItem->unit_price > 0) {
-                    $price = (float)$lastSaleItem->unit_price;
-                } else {
-                    $lastProjectItem = \App\Models\ProjectItem::where('product_id', $product->id)->latest()->first();
-                    if ($lastProjectItem && $lastProjectItem->unit_price > 0) {
-                        $price = (float)$lastProjectItem->unit_price;
-                    }
-                }
-            }
-            $product->calculated_purchase_price = $price;
-            return $product;
-        });
+        $products = $this->getProductsWithCalculatedPrices();
         $companyDetails = CompanyDetail::where('is_active', true)->get();
         return view('frontend.pages.quotations.create', compact('clients', 'products', 'companyDetails'));
     }
@@ -149,24 +132,7 @@ public function store(Request $request)
     public function edit(Quotation $quotation)
     {
         $clients = Client::get();
-        $products = Product::with(['brand', 'latestPurchase'])->get()->map(function ($product) {
-            $price = 0;
-            if ($product->latestPurchase && $product->latestPurchase->unit_price > 0) {
-                $price = (float)$product->latestPurchase->unit_price;
-            } else {
-                $lastSaleItem = \App\Models\SalesItem::where('product_id', $product->id)->latest()->first();
-                if ($lastSaleItem && $lastSaleItem->unit_price > 0) {
-                    $price = (float)$lastSaleItem->unit_price;
-                } else {
-                    $lastProjectItem = \App\Models\ProjectItem::where('product_id', $product->id)->latest()->first();
-                    if ($lastProjectItem && $lastProjectItem->unit_price > 0) {
-                        $price = (float)$lastProjectItem->unit_price;
-                    }
-                }
-            }
-            $product->calculated_purchase_price = $price;
-            return $product;
-        });
+        $products = $this->getProductsWithCalculatedPrices();
         $quotation->load('items');
         
         $companyDetails = CompanyDetail::where('is_active', true)->get();
@@ -587,4 +553,58 @@ public function reportPdf(Request $request)
         'Content-Disposition' => 'inline; filename="quotations-report.pdf"',
     ]);
 }
+
+    /**
+     * Efficiently load products and batch-resolve fallback prices without N+1 query loops.
+     */
+    protected function getProductsWithCalculatedPrices()
+    {
+        $products = Product::with(['brand', 'latestPurchase'])->get();
+
+        $missingProductIds = $products->filter(function ($product) {
+            return empty($product->latestPurchase) || (float) $product->latestPurchase->unit_price <= 0;
+        })->pluck('id');
+
+        $latestSalePrices = collect();
+        $latestProjectPrices = collect();
+
+        if ($missingProductIds->isNotEmpty()) {
+            $latestSalePrices = \App\Models\SalesItem::whereIn('product_id', $missingProductIds)
+                ->where('unit_price', '>', 0)
+                ->select('product_id', 'unit_price', 'id')
+                ->orderBy('id', 'desc')
+                ->get()
+                ->unique('product_id')
+                ->pluck('unit_price', 'product_id');
+
+            $missingAfterSales = $missingProductIds->reject(function ($id) use ($latestSalePrices) {
+                return $latestSalePrices->has($id);
+            });
+
+            if ($missingAfterSales->isNotEmpty()) {
+                $latestProjectPrices = \App\Models\ProjectItem::whereIn('product_id', $missingAfterSales)
+                    ->where('unit_price', '>', 0)
+                    ->select('product_id', 'unit_price', 'id')
+                    ->orderBy('id', 'desc')
+                    ->get()
+                    ->unique('product_id')
+                    ->pluck('unit_price', 'product_id');
+            }
+        }
+
+        return $products->map(function ($product) use ($latestSalePrices, $latestProjectPrices) {
+            if ($product->latestPurchase && (float) $product->latestPurchase->unit_price > 0) {
+                $price = (float) $product->latestPurchase->unit_price;
+            } elseif ($latestSalePrices->has($product->id)) {
+                $price = (float) $latestSalePrices->get($product->id);
+            } elseif ($latestProjectPrices->has($product->id)) {
+                $price = (float) $latestProjectPrices->get($product->id);
+            } else {
+                $price = 0.0;
+            }
+
+            $product->calculated_purchase_price = $price;
+            return $product;
+        });
+    }
 }

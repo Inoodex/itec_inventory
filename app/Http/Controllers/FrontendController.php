@@ -33,27 +33,40 @@ class FrontendController extends Controller
         $stats = Cache::remember('dashboard_stats_' . date('Y-m-d-H'), 300, function () {
             $currentYear = date('Y');
             $months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            
+            // Monthly Sales Aggregation
+            $salesByMonth = Sale::whereYear('created_at', $currentYear)
+                ->selectRaw('MONTH(created_at) as month_num, SUM(payble) as total')
+                ->groupBy('month_num')
+                ->pluck('total', 'month_num');
+
             $monthlyRev = [];
             foreach ($months as $key => $monthName) {
-                $monthNumber = $key + 1;
-                $monthlyRev[$monthName] = Sale::whereYear('created_at', $currentYear)
-                    ->whereMonth('created_at', $monthNumber)
-                    ->sum('payble');
+                $monthlyRev[$monthName] = (float) ($salesByMonth->get($key + 1) ?? 0);
             }
 
             $currentYearInt = (int)$currentYear;
+            $salesByYear = Sale::whereYear('created_at', '>=', $currentYearInt - 9)
+                ->selectRaw('YEAR(created_at) as yr, SUM(payble) as total')
+                ->groupBy('yr')
+                ->pluck('total', 'yr');
+
             $yearlyRev = [];
             for ($i = 0; $i < 10; $i++) {
                 $yr = $currentYearInt - $i;
-                $yearlyRev[$yr] = Sale::whereYear('created_at', $yr)->sum('payble');
+                $yearlyRev[$yr] = (float) ($salesByYear->get($yr) ?? 0);
             }
 
             // Project Status Breakdown
+            $statusCounts = Project::selectRaw('status, count(*) as total_count')
+                ->groupBy('status')
+                ->pluck('total_count', 'status');
+
             $projectStatusCounts = [
-                'In Progress' => Project::where('status', 'in_progress')->count(),
-                'Completed'   => Project::where('status', 'completed')->count(),
-                'Pending'     => Project::where('status', 'pending')->count(),
-                'Cancelled'   => Project::where('status', 'cancelled')->count(),
+                'In Progress' => (int) ($statusCounts->get('in_progress') ?? 0),
+                'Completed'   => (int) ($statusCounts->get('completed') ?? 0),
+                'Pending'     => (int) ($statusCounts->get('pending') ?? 0),
+                'Cancelled'   => (int) ($statusCounts->get('cancelled') ?? 0),
             ];
 
             // Top Projects Budget vs Costs
@@ -93,20 +106,29 @@ class FrontendController extends Controller
             $recentJournalEntries = \App\Models\JournalEntry::with('creator')->latest('entry_date')->latest('id')->take(5)->get();
 
             // Monthly purchase / expense / project stats (for charts)
+            $purchByMonth = Purchase::whereYear('created_at', $currentYear)
+                ->selectRaw('MONTH(created_at) as month_num, SUM(total_price) as total')
+                ->groupBy('month_num')
+                ->pluck('total', 'month_num');
+
+            $expByMonth = DailyExpense::whereYear('date', $currentYear)
+                ->selectRaw('MONTH(date) as month_num, SUM(amount) as total')
+                ->groupBy('month_num')
+                ->pluck('total', 'month_num');
+
+            $projByMonth = Project::whereYear('created_at', $currentYear)
+                ->selectRaw('MONTH(created_at) as month_num, count(*) as total_count')
+                ->groupBy('month_num')
+                ->pluck('total_count', 'month_num');
+
             $monthlyPurch = [];
             $monthlyExp = [];
             $monthlyProj = [];
             foreach ($months as $key => $monthName) {
                 $monthNumber = $key + 1;
-                $monthlyPurch[$monthName] = Purchase::whereYear('created_at', $currentYear)
-                    ->whereMonth('created_at', $monthNumber)
-                    ->sum('total_price');
-                $monthlyExp[$monthName] = DailyExpense::whereYear('date', $currentYear)
-                    ->whereMonth('date', $monthNumber)
-                    ->sum('amount');
-                $monthlyProj[$monthName] = Project::whereYear('created_at', $currentYear)
-                    ->whereMonth('created_at', $monthNumber)
-                    ->count();
+                $monthlyPurch[$monthName] = (float) ($purchByMonth->get($monthNumber) ?? 0);
+                $monthlyExp[$monthName] = (float) ($expByMonth->get($monthNumber) ?? 0);
+                $monthlyProj[$monthName] = (int) ($projByMonth->get($monthNumber) ?? 0);
             }
 
             // Month-over-month growth percentages

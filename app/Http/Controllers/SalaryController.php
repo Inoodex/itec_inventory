@@ -27,21 +27,26 @@ class SalaryController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'employee_id' => 'required',
-            'month' => 'required',
-            'basic_salary' => 'required|numeric',
-            'advance' => 'nullable|numeric',
-            'allowance' => 'nullable|numeric',
-            'deduction' => 'nullable|numeric',
+        $validated = $request->validate([
+            'employee_id' => 'required|exists:employees,id',
+            'month' => 'required|string|max:10',
+            'basic_salary' => 'required|numeric|min:0',
+            'advance' => 'nullable|numeric|min:0',
+            'allowance' => 'nullable|numeric|min:0',
+            'deduction' => 'nullable|numeric|min:0',
             'payment_status' => 'required|in:paid,unpaid',
             'payment_date' => 'nullable|date',
             'note' => 'nullable|string|max:500',
         ]);
 
-        $request['net_salary'] = $request->basic_salary + $request->allowance - $request->deduction - $request->advance;
+        $basic = (float) $validated['basic_salary'];
+        $allowance = (float) ($validated['allowance'] ?? 0);
+        $deduction = (float) ($validated['deduction'] ?? 0);
+        $advance = (float) ($validated['advance'] ?? 0);
 
-        Salary::create($request->all());
+        $validated['net_salary'] = max(0, $basic + $allowance - $deduction - $advance);
+
+        Salary::create($validated);
 
         return redirect()->route('salary.index')->with('success', 'Salary record created successfully.');
     }
@@ -55,21 +60,28 @@ class SalaryController extends Controller
 
     public function update(Request $request, $id)
     {
-        $request->validate([
-            'employee_id' => 'required',
-            'month' => 'required',
-            'basic_salary' => 'required|numeric',
-            'advance' => 'nullable|numeric',
-            'allowance' => 'nullable|numeric',
-            'deduction' => 'nullable|numeric',
+        $validated = $request->validate([
+            'employee_id' => 'required|exists:employees,id',
+            'month' => 'required|string|max:10',
+            'basic_salary' => 'required|numeric|min:0',
+            'advance' => 'nullable|numeric|min:0',
+            'allowance' => 'nullable|numeric|min:0',
+            'deduction' => 'nullable|numeric|min:0',
             'payment_status' => 'required|in:paid,unpaid',
             'payment_date' => 'nullable|date',
             'note' => 'nullable|string|max:500',
         ]);
 
-        $request['net_salary'] = $request->basic_salary + $request->allowance - $request->deduction;
+        $salary = Salary::findOrFail($id);
 
-        Salary::findOrFail($id)->update($request->all());
+        $basic = (float) $validated['basic_salary'];
+        $allowance = (float) ($validated['allowance'] ?? 0);
+        $deduction = (float) ($validated['deduction'] ?? 0);
+        $advance = (float) ($validated['advance'] ?? 0);
+
+        $validated['net_salary'] = max(0, $basic + $allowance - $deduction - $advance);
+
+        $salary->update($validated);
 
         return redirect()->route('salary.index')->with('success', 'Salary record updated successfully.');
     }

@@ -336,24 +336,40 @@ public function processPayment(Request $request)
     ]);
 
     $project = Project::findOrFail($request->project_id);
+    $paymentAmount = (float) $request->payment_amount;
 
-    // Create payment
-    Payment::create([
-        'payment_for' => 3, // project payment
-        'project_id' => $project->id,
-        'amount' => $request->payment_amount,
-        'payment_method' => $request->payment_method,
-        'status' => 'paid',
-        'created_at' => now(),
-        'updated_at' => now(),
-    ]);
+    if ($paymentAmount > $project->due_payment) {
+        return redirect()->back()->with('error', 'Payment amount cannot exceed remaining due amount (৳' . number_format($project->due_payment, 2) . ').');
+    }
 
-    // Update project payments
-    $project->advanced_payment += $request->payment_amount;
-    $project->due_payment = max($project->budget - $project->advanced_payment, 0);
-    $project->save();
+    DB::beginTransaction();
 
-    return redirect()->back()->with('success', 'Payment processed successfully.');
+    try {
+        // Create payment
+        Payment::create([
+            'payment_for' => 3, // project payment
+            'project_id' => $project->id,
+            'amount' => $paymentAmount,
+            'payment_method' => $request->payment_method,
+            'status' => 1,
+            'created_by' => auth()->id(),
+            'updated_by' => auth()->id(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // Update project payments
+        $project->advanced_payment += $paymentAmount;
+        $project->due_payment = max($project->budget - $project->advanced_payment, 0);
+        $project->save();
+
+        DB::commit();
+
+        return redirect()->back()->with('success', 'Payment of ৳' . number_format($paymentAmount, 2) . ' processed successfully.');
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return redirect()->back()->with('error', 'Error processing payment: ' . $e->getMessage());
+    }
 }
 
 

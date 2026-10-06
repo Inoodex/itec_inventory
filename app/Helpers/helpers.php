@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 
 // Load modular helper sub-files
-require_once __DIR__ . '/CartHelper.php';
 require_once __DIR__ . '/LibraryHelper.php';
 require_once __DIR__ . '/FormatHelper.php';
 
@@ -387,9 +386,10 @@ if (!function_exists('getAccountBalance')) {
      */
     function getAccountBalance(int|string $accountIdentifier, ?string $asOfDate = null): float
     {
-        $account = is_numeric($accountIdentifier)
+        $account = is_int($accountIdentifier)
             ? \App\Models\ChartOfAccount::find($accountIdentifier)
-            : \App\Models\ChartOfAccount::where('account_code', $accountIdentifier)->first();
+            : (\App\Models\ChartOfAccount::where('account_code', (string) $accountIdentifier)->first()
+                ?? \App\Models\ChartOfAccount::find($accountIdentifier));
 
         if (!$account) {
             return 0.00;

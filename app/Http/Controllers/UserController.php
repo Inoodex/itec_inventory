@@ -38,64 +38,19 @@ class UserController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    // public function store(Request $request)
-    // {
-    //     $rules = [
-    //         // 'role_id' => 'required',
-    //         'user_role' => 'required',
-    //         'name' => 'required|string',
-    //         'email' => 'required|email|unique:users,email',
-    //         'phone' => 'unique:users,phone',
-    //         'password' => 'required|string|min:6',
-    //         'status' => 'required|in:0,1',
-    //         // You might need additional validation rules for file uploads
-    //     ];
-
-    //     $validatedData = $request->validate($rules);
-
-    //     $imageName = "";
-    //     if ($request->hasFile('images')) {
-    //         $image = $request->file('images');
-    //         $destinationPath = public_path('frontend/users/');
-    //         $imageName = now()->format('YmdHis') . '_' . Str::random(10) . '.' . $image->getClientOriginalExtension();
-    //         $image->move($destinationPath, $imageName);
-    //     }
-    //     // Create a new product instance
-    //     $user = new User();
-    //     $user->type = '1';
-    //     $user->role_id = $validatedData['user_role'];
-    //     $user->name = $validatedData['name'];
-    //     $user->email = $validatedData['email'];
-    //     $user->phone = $validatedData['phone'];
-    //     $user->password = bcrypt($validatedData['password']); // Hash password
-    //     $user->images = $imageName; // Hash password
-    //     $user->status = $validatedData['status'];
-    //     $user->save();
-
-    //     $role = Role::where('id', $validatedData['user_role'])->first();
-    //     $user->assignRole($role);
-
-    //     session()->flash('sweet_alert', [
-    //         'type' => 'success',
-    //         'title' => 'Success!',
-    //         'text' => 'User added success',
-    //     ]);
-    //     // Redirect or return a response as needed
-    //     return redirect()->route('users.index')->with('success', 'User created successfully');
-    // }
-
     public function store(Request $request)
-{
-    $rules = [
-        'user_role' => 'required',
-        'name' => 'required|string',
-        'email' => 'required|email|unique:users,email',
-        'phone' => 'unique:users,phone',
-        'password' => 'required|string|min:6',
-        'status' => 'required|in:0,1',
-    ];
+    {
+        $rules = [
+            'user_role' => 'required',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email',
+            'phone' => 'nullable|string|max:20|unique:users,phone',
+            'password' => 'required|string|min:6',
+            'status' => 'required|in:0,1',
+            'images' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+        ];
 
-    $validatedData = $request->validate($rules);
+        $validatedData = $request->validate($rules);
 
     $imageName = "";
     if ($request->hasFile('images')) {
@@ -172,11 +127,12 @@ class UserController extends Controller
 
     $rules = [
         'user_role' => 'required',
-        'name' => 'required|string',
-        'email' => 'required|email|unique:users,email,' . $user->id,
-        'phone' => 'nullable|unique:users,phone,' . $user->id,
+        'name' => 'required|string|max:255',
+        'email' => 'required|email|max:255|unique:users,email,' . $user->id,
+        'phone' => 'nullable|string|max:20|unique:users,phone,' . $user->id,
         'password' => 'nullable|string|min:6',
         'status' => 'required|in:0,1',
+        'images' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
     ];
 
     $validatedData = $request->validate($rules);
@@ -262,13 +218,14 @@ class UserController extends Controller
 
     public function pinStore(Request $request)
     {
-        $inputs = $request->all();
+        $allowedNames = Extra::where('status', '1')->pluck('name')->toArray();
+        $inputs = $request->only($allowedNames);
 
         foreach ($inputs as $key => $input) {
-            if (Extra::where('name', $key)->exists()) {  // Avoid unnecessary queries
-                Extra::where('name', $key)->update(['value' => $input]);
+            if ($input !== null) {
+                Extra::where('name', $key)->update(['value' => (string)$input]);
             }
         }
-        return redirect()->back();
+        return redirect()->back()->with('success', 'Settings updated successfully.');
     }
 }

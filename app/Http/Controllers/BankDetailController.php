@@ -20,7 +20,7 @@ class BankDetailController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'account_name' => 'required|string|max:255',
             'bank_name' => 'required|string|max:255',
             'branch' => 'required|string|max:255',
@@ -32,11 +32,11 @@ class BankDetailController extends Controller
         ]);
 
         // If setting as default, remove default from others
-        if ($request->is_default) {
+        if (!empty($validated['is_default'])) {
             BankDetail::where('is_default', true)->update(['is_default' => false]);
         }
 
-        BankDetail::create($request->all());
+        BankDetail::create($validated);
 
         return redirect()->route('bank-details.index')
             ->with('success', 'Bank details created successfully.');
@@ -49,7 +49,7 @@ class BankDetailController extends Controller
 
     public function update(Request $request, BankDetail $bankDetail)
     {
-        $request->validate([
+        $validated = $request->validate([
             'account_name' => 'required|string|max:255',
             'bank_name' => 'required|string|max:255',
             'branch' => 'required|string|max:255',
@@ -61,11 +61,11 @@ class BankDetailController extends Controller
         ]);
 
         // If setting as default, remove default from others
-        if ($request->is_default) {
+        if (!empty($validated['is_default'])) {
             BankDetail::where('is_default', true)->where('id', '!=', $bankDetail->id)->update(['is_default' => false]);
         }
 
-        $bankDetail->update($request->all());
+        $bankDetail->update($validated);
 
         return redirect()->route('bank-details.index')
             ->with('success', 'Bank details updated successfully.');

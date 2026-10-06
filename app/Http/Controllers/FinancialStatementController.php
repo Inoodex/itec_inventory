@@ -318,7 +318,7 @@ class FinancialStatementController extends Controller
         $inflows = \App\Models\JournalEntryItem::whereIn('account_id', $liquidAccounts)
             ->where('debit', '>', 0)
             ->whereHas('journalEntry', function ($q) use ($fromDate, $toDate) {
-                $q->whereIn('status', ['posted', 'approved'])
+                $q->whereIn('status', ['posted', 'approved', 'reversed'])
                   ->whereBetween('entry_date', [$fromDate, $toDate])
                   ->where('reference_type', '!=', 'contra');
             })
@@ -328,7 +328,7 @@ class FinancialStatementController extends Controller
         $outflows = \App\Models\JournalEntryItem::whereIn('account_id', $liquidAccounts)
             ->where('credit', '>', 0)
             ->whereHas('journalEntry', function ($q) use ($fromDate, $toDate) {
-                $q->whereIn('status', ['posted', 'approved'])
+                $q->whereIn('status', ['posted', 'approved', 'reversed'])
                   ->whereBetween('entry_date', [$fromDate, $toDate])
                   ->where('reference_type', '!=', 'contra');
             })

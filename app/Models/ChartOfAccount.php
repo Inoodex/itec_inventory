@@ -96,7 +96,7 @@ class ChartOfAccount extends Model
     {
         $query = $this->journalItems()
             ->whereHas('journalEntry', function ($q) use ($asOfDate) {
-                $q->whereIn('status', ['posted', 'approved']);
+                $q->whereIn('status', ['posted', 'approved', 'reversed']);
                 if ($asOfDate) {
                     $q->where('entry_date', '<=', $asOfDate);
                 }

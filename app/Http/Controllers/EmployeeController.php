@@ -47,8 +47,11 @@ public function show($id)
     public function store(StoreEmployeeRequest $request)
     {
         $request->validate([
-            'employee_id' => 'required|unique:employees',
-            'name' => 'required',
+            'employee_id' => 'required|string|max:50|unique:employees,employee_id',
+            'name' => 'required|string|max:255',
+            'email' => 'nullable|email|max:255',
+            'phone' => 'nullable|string|max:20',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
 
         $employee = new Employee($request->except('image'));
@@ -76,8 +79,11 @@ public function show($id)
         $employee = Employee::findOrFail($id);
 
         $request->validate([
-            'employee_id' => 'required|unique:employees,employee_id,'.$employee->id,
-            'name' => 'required',
+            'employee_id' => 'required|string|max:50|unique:employees,employee_id,'.$employee->id,
+            'name' => 'required|string|max:255',
+            'email' => 'nullable|email|max:255',
+            'phone' => 'nullable|string|max:20',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
 
         $employee->fill($request->except('image'));

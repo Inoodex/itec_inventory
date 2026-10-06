@@ -34,7 +34,7 @@ class LedgerController extends Controller
             $ledgerItems = JournalEntryItem::with(['journalEntry', 'account'])
                 ->where('account_id', $accountId)
                 ->whereHas('journalEntry', function ($q) use ($fromDate, $toDate) {
-                    $q->whereIn('status', ['posted', 'approved'])
+                    $q->whereIn('status', ['posted', 'approved', 'reversed'])
                       ->whereBetween('entry_date', [$fromDate, $toDate]);
                 })
                 ->join('journal_entries', 'journal_entries.id', '=', 'journal_entry_items.journal_entry_id')
@@ -71,7 +71,7 @@ class LedgerController extends Controller
         $ledgerItems = JournalEntryItem::with(['journalEntry', 'account'])
             ->where('account_id', $accountId)
             ->whereHas('journalEntry', function ($q) use ($fromDate, $toDate) {
-                $q->whereIn('status', ['posted', 'approved'])
+                $q->whereIn('status', ['posted', 'approved', 'reversed'])
                   ->whereBetween('entry_date', [$fromDate, $toDate]);
             })
             ->join('journal_entries', 'journal_entries.id', '=', 'journal_entry_items.journal_entry_id')

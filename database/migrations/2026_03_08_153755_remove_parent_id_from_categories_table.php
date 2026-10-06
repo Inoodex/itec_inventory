@@ -13,7 +13,9 @@ return new class extends Migration
     {
         if (Schema::hasColumn('categories', 'parent_id')) {
             Schema::table('categories', function (Blueprint $table) {
-                $table->dropForeign(['parent_id']);
+                if (\Illuminate\Support\Facades\DB::getDriverName() !== 'sqlite') {
+                    $table->dropForeign(['parent_id']);
+                }
                 $table->dropColumn('parent_id');
             });
         }

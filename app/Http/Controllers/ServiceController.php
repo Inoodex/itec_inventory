@@ -36,8 +36,10 @@ class ServiceController extends Controller
             }
         }
 
-        if ($request->serach_by != "" && $request->key != "") {
-            $services = $services->where('services.' . $request->serach_by, 'like', '%' . $request->key . '%');
+        $searchBy = $request->search_by ?? $request->serach_by;
+        $allowedColumns = ['invoice_no', 'remarks', 'product_id', 'customer_id', 'contact_no', 'phone'];
+        if (!empty($searchBy) && in_array($searchBy, $allowedColumns, true) && $request->filled('key')) {
+            $services = $services->where('services.' . $searchBy, 'like', '%' . $request->key . '%');
         }
 
         $services = $services->where('services.status', '0')
@@ -87,8 +89,10 @@ class ServiceController extends Controller
             }
         }
 
-        if ($request->serach_by != "" && $request->key != "") {
-           $services = $services->where('services.'.$request->serach_by, 'like', '%' . $request->key . '%');
+        $searchBy = $request->search_by ?? $request->serach_by;
+        $allowedColumns = ['invoice_no', 'remarks', 'product_id', 'customer_id', 'contact_no', 'phone'];
+        if (!empty($searchBy) && in_array($searchBy, $allowedColumns, true) && $request->filled('key')) {
+            $services = $services->where('services.' . $searchBy, 'like', '%' . $request->key . '%');
         }
 
 

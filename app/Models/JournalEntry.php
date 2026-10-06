@@ -67,7 +67,7 @@ class JournalEntry extends Model
     // Scopes
     public function scopePosted($query)
     {
-        return $query->whereIn('status', ['posted', 'approved']);
+        return $query->whereIn('status', ['posted', 'approved', 'reversed']);
     }
 
     public function scopeApproved($query)

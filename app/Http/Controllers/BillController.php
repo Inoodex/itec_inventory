@@ -21,11 +21,11 @@ class BillController extends Controller
     
     // Date range filter
     if ($request->has('date_from') && $request->date_from != '') {
-        $query->whereDate('challan_date', '>=', $request->date_from);
+        $query->whereDate('bill_date', '>=', $request->date_from);
     }
     
     if ($request->has('date_to') && $request->date_to != '') {
-        $query->whereDate('challan_date', '<=', $request->date_to);
+        $query->whereDate('bill_date', '<=', $request->date_to);
     }
     
     $bills = $query->latest()->paginate(10);

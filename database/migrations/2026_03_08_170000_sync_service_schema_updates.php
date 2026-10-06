@@ -22,9 +22,11 @@ return new class extends Migration
             }
         });
 
-        DB::statement('ALTER TABLE services MODIFY country_code VARCHAR(255) NULL');
-        DB::statement('ALTER TABLE services MODIFY warranty_duration INT NULL');
-        DB::statement('ALTER TABLE services MODIFY repaired_by BIGINT NULL');
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement('ALTER TABLE services MODIFY country_code VARCHAR(255) NULL');
+            DB::statement('ALTER TABLE services MODIFY warranty_duration INT NULL');
+            DB::statement('ALTER TABLE services MODIFY repaired_by BIGINT NULL');
+        }
     }
 
     /**
@@ -32,13 +34,15 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::statement("UPDATE services SET country_code = '+880' WHERE country_code IS NULL");
-        DB::statement('UPDATE services SET warranty_duration = 0 WHERE warranty_duration IS NULL');
-        DB::statement('UPDATE services SET repaired_by = 0 WHERE repaired_by IS NULL');
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("UPDATE services SET country_code = '+880' WHERE country_code IS NULL");
+            DB::statement('UPDATE services SET warranty_duration = 0 WHERE warranty_duration IS NULL');
+            DB::statement('UPDATE services SET repaired_by = 0 WHERE repaired_by IS NULL');
 
-        DB::statement('ALTER TABLE services MODIFY country_code VARCHAR(255) NOT NULL');
-        DB::statement('ALTER TABLE services MODIFY warranty_duration INT NOT NULL');
-        DB::statement('ALTER TABLE services MODIFY repaired_by BIGINT NOT NULL');
+            DB::statement('ALTER TABLE services MODIFY country_code VARCHAR(255) NOT NULL');
+            DB::statement('ALTER TABLE services MODIFY warranty_duration INT NOT NULL');
+            DB::statement('ALTER TABLE services MODIFY repaired_by BIGINT NOT NULL');
+        }
 
         Schema::table('services', function (Blueprint $table) {
             if (Schema::hasColumn('services', 'product_id')) {

@@ -11,12 +11,12 @@ use App\Models\SalesItem;
 use App\Models\User;
 use App\Models\WarrantyClaim;
 use App\Services\WarrantyService;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class WarrantyServiceTest extends TestCase
 {
-    use DatabaseTransactions;
+    use RefreshDatabase;
 
     private WarrantyService $warrantyService;
 

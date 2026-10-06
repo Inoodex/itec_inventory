@@ -119,42 +119,8 @@ class ExpenseController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    // public function store(Request $request)
-    // {
-    //     $attributes = $request->all();
-
-    //     $rules = [
-    //         'date' => 'required|date',
-    //         'expense_category_id' => 'required|exists:expense_categories,id',
-    //         'amount' => 'required|numeric|min:0.01',
-    //         'spend_method' => 'required|in:cash,card,bank_transfer',
-    //         'remarks' => 'nullable|string|max:1000',
-    //     ];
-
-    //     $validation = Validator::make($attributes, $rules);
-
-    //     if ($validation->fails()) {
-    //         return redirect()->back()
-    //             ->with(['error' => 'Validation failed. Please check your inputs.'])
-    //             ->withErrors($validation)
-    //             ->withInput();
-    //     }
-
-    //     $expense = new DailyExpense();
-    //     $expense->date = $request->date;
-    //     $expense->expense_category_id = $request->expense_category_id;
-    //     $expense->amount = $request->amount;
-    //     $expense->spend_method = $request->spend_method;
-    //     $expense->remarks = $request->remarks;
-    //     $expense->save();
-
-    //     // return redirect()->back()->with(['success' => 'Expense created successfully.']);
-    //     return redirect()->route('dailyExpenses.index')->with('success', 'Created successfully.');
-
-    // }
-
-  public function store(Request $request)
-{
+    public function store(Request $request)
+    {
     $request->validate([
         'employee_id' => 'required|exists:employees,id',
         'date' => 'required|date',

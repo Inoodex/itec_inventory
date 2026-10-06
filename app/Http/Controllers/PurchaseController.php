@@ -73,11 +73,10 @@ class PurchaseController extends Controller
             ->groupBy('purchase_no');
 
         // Total stats across all purchases
-        $allPurchases = Purchase::all();
-        $totalOrdersCount = $allPurchases->pluck('purchase_no')->unique()->count();
-        $totalAmountSum = (float) $allPurchases->sum('total_price');
-        $totalPaidSum = (float) $allPurchases->sum('payment');
-        $totalDueSum = (float) $allPurchases->sum('due');
+        $totalOrdersCount = Purchase::distinct('purchase_no')->count('purchase_no');
+        $totalAmountSum = (float) Purchase::sum('total_price');
+        $totalPaidSum = (float) Purchase::sum('payment');
+        $totalDueSum = (float) Purchase::sum('due');
 
         $products = Product::latest()->get();
         $vendors = Vendor::latest()->get();

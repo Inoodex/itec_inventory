@@ -23,38 +23,40 @@ public function create()
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'employee_id' => 'required|exists:employees,id',
             'date' => 'required|date',
-            'amount' => 'required|numeric',
+            'amount' => 'required|numeric|min:0',
             'type' => 'required|in:TA,DA',
             'payment_type' => 'required|in:Advance,Claim',
+            'purpose' => 'nullable|string|max:1000',
         ]);
 
-        TaDa::create($request->all());
+        TaDa::create($validated);
 
         return redirect()->route('ta-da.index')->with('success', 'TA/DA record added successfully.');
     }
 
    public function edit($id)
-{
-    $tada = TaDa::findOrFail($id);
-    $employees = Employee::all();
-    return view('frontend.pages.ta_da.edit', compact('tada', 'employees'));
-}
+    {
+        $tada = TaDa::findOrFail($id);
+        $employees = Employee::where('status', 'active')->get();
+        return view('frontend.pages.ta_da.edit', compact('tada', 'employees'));
+    }
 
 
     public function update(Request $request, TaDa $taDa)
     {
-        $request->validate([
-            'employee_id' => 'required|integer',
+        $validated = $request->validate([
+            'employee_id' => 'required|exists:employees,id',
             'date' => 'required|date',
-            'amount' => 'required|numeric',
+            'amount' => 'required|numeric|min:0',
             'type' => 'required|in:TA,DA',
             'payment_type' => 'required|in:Advance,Claim',
+            'purpose' => 'nullable|string|max:1000',
         ]);
 
-        $taDa->update($request->all());
+        $taDa->update($validated);
 
         return redirect()->route('ta-da.index')->with('success', 'TA/DA record updated successfully.');
     }
