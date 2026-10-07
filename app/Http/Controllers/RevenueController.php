@@ -36,28 +36,62 @@ class RevenueController extends Controller
         ]);
     }
 
-    public function generate()
+    public function generate(Request $request)
     {
-        $month = now()->month;
-        $year = now()->year;
+        // 1. Find earliest transaction date from Sales, Purchases, and DailyExpenses
+        $earliestSale = Sale::min('created_at');
+        $earliestPurchase = Purchase::min('created_at');
+        $earliestExpense = DailyExpense::min('date') ?? DailyExpense::min('created_at');
+
+        $dates = array_filter([$earliestSale, $earliestPurchase, $earliestExpense]);
+
+        $startDate = !empty($dates)
+            ? Carbon::parse(min($dates))->startOfMonth()
+            : now()->startOfMonth();
+
+        $endDate = now()->endOfMonth();
+
+        $current = $startDate->copy();
+        $generatedCount = 0;
+
+        while ($current->lte($endDate)) {
+            $this->calculateAndSaveRevenue($current->year, $current->month);
+            $generatedCount++;
+            $current->addMonth();
+        }
+
+        $fromLabel = $startDate->format('M Y');
+        $toLabel = now()->format('M Y');
+
+        return redirect()->route('revenues.index')
+            ->with('success', "Revenue synchronized successfully from {$fromLabel} to {$toLabel} ({$generatedCount} months updated)!");
+    }
+
+    private function calculateAndSaveRevenue(int $year, int $month): Revenue
+    {
         $start = Carbon::create($year, $month, 1)->startOfMonth();
         $end = Carbon::create($year, $month, 1)->endOfMonth();
 
-        $totalSales = Sale::whereBetween('created_at', [$start, $end])->sum('payble');
-        $totalPurchases = Purchase::whereBetween('created_at', [$start, $end])->sum('total_price');
-        $totalExpenses = DailyExpense::whereBetween('created_at', [$start, $end])->sum('amount');
+        $totalSales = (float) Sale::whereBetween('created_at', [$start, $end])->sum('payble');
+        $totalPurchases = (float) Purchase::whereBetween('created_at', [$start, $end])->sum('total_price');
+        $totalExpenses = (float) DailyExpense::where(function ($q) use ($start, $end) {
+            $q->whereBetween('date', [$start->format('Y-m-d'), $end->format('Y-m-d')])
+              ->orWhere(function ($sub) use ($start, $end) {
+                  $sub->whereNull('date')->whereBetween('created_at', [$start, $end]);
+              });
+        })->sum('amount');
 
-        Revenue::updateOrCreate(
+        $netProfit = $totalSales - $totalPurchases - $totalExpenses;
+
+        return Revenue::updateOrCreate(
             ['year' => $year, 'month' => $month],
             [
                 'total_sales' => $totalSales,
                 'total_purchases' => $totalPurchases,
                 'total_expenses' => $totalExpenses,
+                'net_profit' => $netProfit,
             ]
         );
-
-        return redirect()->route('revenues.index')
-            ->with('success', 'Monthly revenue summary updated successfully!');
     }
 
      public function export($id)

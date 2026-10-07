@@ -66,7 +66,7 @@
                     @csrf
                     <button type="submit" class="btn btn-primary px-4 py-2 rounded-3 shadow-sm d-inline-flex align-items-center gap-2">
                         <i class="fe fe-refresh-cw fs-6"></i>
-                        <span>Generate This Month</span>
+                        <span>Generate Revenue</span>
                     </button>
                 </form>
             </div>
@@ -76,20 +76,6 @@
 
     <!-- Summary Stats Bar -->
     <div class="row g-3 mb-4">
-        <!-- <div class="col-xl-3 col-md-6 col-12">
-            <div class="card stat-card bg-white shadow-sm rounded-3 h-100 mb-0">
-                <div class="card-body d-flex align-items-center">
-                    <div class="avatar avatar-lg bg-primary-light text-primary rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0">
-                        <i class="fe fe-calendar fs-4"></i>
-                    </div>
-                    <div>
-                        <h6 class="text-muted fw-normal mb-1">Total Periods</h6>
-                        <h4 class="mb-0 fw-bold text-dark">{{ number_format($revenues->count()) }} Months</h4>
-                    </div>
-                </div>
-            </div>
-        </div> -->
-
         <div class="col-xl-4 col-md-6 col-12">
             <div class="card stat-card bg-white shadow-sm rounded-3 h-100 mb-0">
                 <div class="card-body d-flex align-items-center">
@@ -188,9 +174,19 @@
                                     @endif
                                 </td>
                                 <td class="pe-4 text-end">
-                                    <a href="{{ route('revenues.export', $rev->id) }}" target="_blank" class="btn btn-sm btn-outline-danger rounded-2 px-3 shadow-none">
-                                        <i class="fe fe-file-text me-1"></i>Export PDF
-                                    </a>
+                                    <div class="d-inline-flex gap-2 align-items-center">
+                                        <form method="POST" action="{{ route('revenues.generate') }}" class="d-inline">
+                                            @csrf
+                                            <input type="hidden" name="year" value="{{ $rev->year }}">
+                                            <input type="hidden" name="month" value="{{ $rev->month }}">
+                                            <button type="submit" class="btn btn-sm btn-outline-secondary rounded-2 px-2 shadow-none" title="Recalculate {{ $rev->month_name }} {{ $rev->year }}">
+                                                <i class="fe fe-refresh-cw"></i>
+                                            </button>
+                                        </form>
+                                        <a href="{{ route('revenues.export', $rev->id) }}" target="_blank" class="btn btn-sm btn-outline-danger rounded-2 px-3 shadow-none">
+                                            <i class="fe fe-file-text me-1"></i>Export PDF
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         @empty
@@ -201,7 +197,7 @@
                                             <i class="fe fe-trending-up fs-1"></i>
                                         </div>
                                         <h5 class="fw-bold text-dark mb-1">No Revenue Data Generated</h5>
-                                        <p class="text-muted small mb-3">Click 'Generate This Month' above to calculate revenue</p>
+                                        <p class="text-muted small mb-3">Click 'Generate Revenue' above to automatically sync revenue from your earliest transaction month to the present.</p>
                                     </div>
                                 </td>
                             </tr>

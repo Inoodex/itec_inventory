@@ -227,8 +227,8 @@
         <tr>
             <td style="padding: 10px 16px; font-size: 12px; color: #334155;">
                 <strong style="color: #4f46e5; margin-right: 6px;">Amount In Words:</strong>
-                @php $totalAmount = $sales->bill ?? 0; @endphp
-                {{ numberToWords($totalAmount) }} Taka Only
+                @php $grandTotal = $sales->payble ?? 0; @endphp
+                {{ function_exists('numberToWords') ? numberToWords($grandTotal) : $grandTotal }} Taka Only
             </td>
         </tr>
     </table>
