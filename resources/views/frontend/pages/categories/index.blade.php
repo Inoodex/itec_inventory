@@ -149,7 +149,7 @@
                     </div>
                     <div>
                         <h6 class="text-muted fw-normal mb-1">Total Categories</h6>
-                        <h4 class="mb-0 fw-bold text-dark">{{ number_format($categories->count()) }}</h4>
+                        <h4 class="mb-0 fw-bold text-dark">{{ number_format($totalCategories) }}</h4>
                     </div>
                 </div>
             </div>
@@ -163,9 +163,7 @@
                     </div>
                     <div>
                         <h6 class="text-muted fw-normal mb-1">Active Categories</h6>
-                        <h4 class="mb-0 fw-bold text-dark">
-                            {{ number_format($categories->filter(fn($c) => in_array($c->status, ['1', 1, 'active']))->count()) }}
-                        </h4>
+                        <h4 class="mb-0 fw-bold text-dark">{{ number_format($activeCategories) }}</h4>
                     </div>
                 </div>
             </div>
@@ -179,9 +177,7 @@
                     </div>
                     <div>
                         <h6 class="text-muted fw-normal mb-1">Inactive Categories</h6>
-                        <h4 class="mb-0 fw-bold text-dark">
-                            {{ number_format($categories->filter(fn($c) => !in_array($c->status, ['1', 1, 'active']))->count()) }}
-                        </h4>
+                        <h4 class="mb-0 fw-bold text-dark">{{ number_format($inactiveCategories) }}</h4>
                     </div>
                 </div>
             </div>
@@ -207,7 +203,7 @@
                     </select>
                 </div>
                 <div class="col-12 col-md-3 col-lg-4 text-md-end text-muted small">
-                    Showing <span id="visibleCategoryCount" class="fw-bold text-dark">{{ $categories->count() }}</span> of {{ $categories->count() }} records
+                    Showing <span id="visibleCategoryCount" class="fw-bold text-dark">{{ $categories->count() }}</span> of {{ $totalCategories }} records
                 </div>
             </div>
         </div>

@@ -23,12 +23,17 @@ class CategoryController extends Controller
         }
 
         // Filter by status
-        if ($request->filled('status')) {
+        if ($request->filled('status') && $request->status !== 'all') {
             $query->where('status', $request->status);
         }
 
-        $categories = $query->orderBy('order_by')->paginate(10)->withQueryString();
-        return view('frontend.pages.categories.index', compact('categories'));
+        $categories = $query->orderBy('order_by')->get();
+
+        $totalCategories = Category::count();
+        $activeCategories = Category::where('status', 1)->count();
+        $inactiveCategories = Category::where('status', 0)->count();
+
+        return view('frontend.pages.categories.index', compact('categories', 'totalCategories', 'activeCategories', 'inactiveCategories'));
     }
 
     public function create()

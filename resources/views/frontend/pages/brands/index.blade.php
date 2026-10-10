@@ -118,7 +118,7 @@
                     </div>
                     <div>
                         <h6 class="text-muted fw-normal mb-1">Total Brands</h6>
-                        <h4 class="mb-0 fw-bold text-dark">{{ number_format($brands->count()) }}</h4>
+                        <h4 class="mb-0 fw-bold text-dark">{{ number_format($totalBrands) }}</h4>
                     </div>
                 </div>
             </div>
@@ -132,9 +132,7 @@
                     </div>
                     <div>
                         <h6 class="text-muted fw-normal mb-1">Active Brands</h6>
-                        <h4 class="mb-0 fw-bold text-dark">
-                            {{ number_format($brands->filter(fn($b) => in_array($b->status, ['1', 1, 'active']))->count()) }}
-                        </h4>
+                        <h4 class="mb-0 fw-bold text-dark">{{ number_format($activeBrands) }}</h4>
                     </div>
                 </div>
             </div>
@@ -148,9 +146,7 @@
                     </div>
                     <div>
                         <h6 class="text-muted fw-normal mb-1">Inactive Brands</h6>
-                        <h4 class="mb-0 fw-bold text-dark">
-                            {{ number_format($brands->filter(fn($b) => !in_array($b->status, ['1', 1, 'active']))->count()) }}
-                        </h4>
+                        <h4 class="mb-0 fw-bold text-dark">{{ number_format($inactiveBrands) }}</h4>
                     </div>
                 </div>
             </div>
@@ -176,7 +172,7 @@
                     </select>
                 </div>
                 <div class="col-12 col-md-3 col-lg-4 text-md-end text-muted small">
-                    Showing <span id="visibleBrandCount" class="fw-bold text-dark">{{ $brands->count() }}</span> of {{ $brands->count() }} records
+                    Showing <span id="visibleBrandCount" class="fw-bold text-dark">{{ $brands->count() }}</span> of {{ $totalBrands }} records
                 </div>
             </div>
         </div>

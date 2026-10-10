@@ -21,12 +21,17 @@ class BrandController extends Controller
         }
 
         // Filter by status
-        if ($request->filled('status')) {
+        if ($request->filled('status') && $request->status !== 'all') {
             $query->where('status', $request->status);
         }
 
-        $brands = $query->latest()->paginate(10)->withQueryString();
-        return view('frontend.pages.brands.index', compact('brands'));
+        $brands = $query->latest()->get();
+
+        $totalBrands = Brand::count();
+        $activeBrands = Brand::where('status', 1)->count();
+        $inactiveBrands = Brand::where('status', 0)->count();
+
+        return view('frontend.pages.brands.index', compact('brands', 'totalBrands', 'activeBrands', 'inactiveBrands'));
     }
 
     /**
