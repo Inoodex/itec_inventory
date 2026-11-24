@@ -52,7 +52,7 @@
                 </a>
                 <a href="{{ route('warranties.print', $claim->id) }}" target="_blank" class="btn btn-outline-success px-3 py-2 rounded-3 d-inline-flex align-items-center gap-2">
                     <i class="fe fe-printer"></i>
-                    <span>Print Receipt</span>
+                    <span>PDF Export</span>
                 </a>
                 <button type="button" class="btn btn-primary px-4 py-2 rounded-3 shadow-sm d-inline-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#updateStatusModal">
                     <i class="fe fe-edit fs-6"></i>

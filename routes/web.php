@@ -13,7 +13,7 @@ use App\Http\Controllers\{
     CompanyDetailController, PaymentController, ReturnController, WarrantyController,
     ChartOfAccountController, JournalEntryController, LedgerController,
     TrialBalanceController, FinancialStatementController,
-    FiscalYearController, VendorDueController
+    FiscalYearController, VendorDueController, PartyLedgerController
 };
 
 use Illuminate\Support\Facades\{Auth, Route};
@@ -178,11 +178,17 @@ Route::middleware(['auth', 'permission:Payment Management|Sales Management|Accou
     // Customer Due
     Route::get('/due-payments', [SalesController::class, 'duePayments'])->name('due-payments.index');
     Route::get('/due-payments/pdf', [SalesController::class, 'duePaymentsPdf'])->name('due-payments.pdf');
+    Route::post('/due-payments/customer-pay', [SalesController::class, 'processCustomerPayment'])->name('due-payments.customer-pay');
 
     // Vendor Due
     Route::get('/vendor-due', [VendorDueController::class, 'index'])->name('vendor-due.index');
     Route::get('/vendor-due/pdf', [VendorDueController::class, 'downloadPdf'])->name('vendor-due.pdf');
     Route::post('/vendor-due/pay', [VendorDueController::class, 'processPayment'])->name('vendor-due.process-payment');
+    Route::post('/vendor-due/fifo-pay', [VendorDueController::class, 'processVendorFifoPayment'])->name('vendor-due.fifo-pay');
+
+    // Dual Role (Customer & Vendor) Unified Ledger & Netting
+    Route::get('/party-ledger/{type}/{id}', [PartyLedgerController::class, 'show'])->name('party-ledger.show');
+    Route::post('/party-ledger/contra-settle', [PartyLedgerController::class, 'contraSettle'])->name('party-ledger.contra-settle');
 
     // Bills
     Route::prefix('bills')->group(function () {

@@ -149,19 +149,29 @@
         <!-- Filter Controls -->
         <div class="card-header bg-white py-3 border-bottom border-light">
             <div class="row align-items-center g-3">
-                <div class="col-12 col-md-6 col-lg-5">
+                <div class="col-12 col-md-6 col-lg-4">
                     <div class="search-box-custom">
                         <input type="text" id="salesSearchInput" class="form-control border-light-subtle" placeholder="Search by order no, customer name, phone, sales person..." autocomplete="off">
                     </div>
                 </div>
-                <div class="col-12 col-md-3 col-lg-3">
+                <div class="col-6 col-md-3 col-lg-2">
                     <select id="saleTypeFilterSelect" class="form-select border-light-subtle">
                         <option value="all">All Sale Types</option>
                         <option value="retail">Retail Only</option>
                         <option value="project">Project Only</option>
                     </select>
                 </div>
-                <div class="col-12 col-md-3 col-lg-4 text-md-end text-muted small">
+                <div class="col-6 col-md-3 col-lg-2">
+                    <input type="month" id="monthFilter" class="form-control border-light-subtle"
+                           value="{{ request('month', '') }}"
+                           placeholder="Filter by month">
+                </div>
+                <div class="col-12 col-md-12 col-lg-4 text-lg-end text-muted small d-flex align-items-center justify-content-lg-end gap-2">
+                    @if(request('month'))
+                        <a href="{{ route('sales.index') }}" class="btn btn-outline-secondary btn-sm px-2 py-0 rounded-pill" title="Clear month filter">
+                            <i class="fe fe-x"></i> Clear
+                        </a>
+                    @endif
                     Showing <span id="visibleSalesCount" class="fw-bold text-dark">{{ $services->count() }}</span> of {{ $services->total() }} records
                 </div>
             </div>
@@ -335,6 +345,21 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (searchInput) searchInput.addEventListener('input', filterTable);
     if (typeSelect) typeSelect.addEventListener('change', filterTable);
+
+    // Month filter — server-side navigation
+    const monthInput = document.getElementById('monthFilter');
+    if (monthInput) {
+        monthInput.addEventListener('change', function () {
+            const url = new URL(window.location.href);
+            if (this.value) {
+                url.searchParams.set('month', this.value);
+            } else {
+                url.searchParams.delete('month');
+            }
+            url.searchParams.delete('page');
+            window.location.href = url.toString();
+        });
+    }
 });
 </script>
 @endsection

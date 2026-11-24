@@ -831,44 +831,280 @@ public function store(StoreSaleRequest $request)
     }
 
 public function duePayments()
-{
-    // Retail sales with due payments
-    $sales = Sale::with('customer')
-        ->where('sale_type', 'retail')
-        ->where('due_payment', '>', 0)
-        ->get();
+    {
+        // Retail sales with due payments
+        $sales = Sale::with(['customer', 'salesPerson'])
+            ->where('sale_type', 'retail')
+            ->where('due_payment', '>', 0)
+            ->orderBy('created_at', 'asc')
+            ->get();
 
-    // Projects with due payments
-    $projects = Project::with('client')
-        ->where('due_payment', '>', 0)
-        ->get()
-        ->map(function ($project) {
-            $sale = new Sale();               
-            $sale->id = $project->id;      
-            $sale->order_no = 'PRJ-' . $project->id;
-            $sale->customer = null;
-            $sale->client = $project->client;
-            $sale->payble = $project->budget;
-            $sale->advanced_payment = $project->advanced_payment;
-            $sale->due_payment = $project->due_payment;
-            $sale->sale_type = 'project';
-            $sale->created_at = $project->created_at;
-            return $sale;
+        // Projects with due payments
+        $projects = Project::with('client')
+            ->where('due_payment', '>', 0)
+            ->orderBy('created_at', 'asc')
+            ->get()
+            ->map(function ($project) {
+                $sale = new Sale();
+                $sale->id = $project->id;
+                $sale->order_no = 'PRJ-' . $project->id;
+                $sale->customer = null;
+                $sale->client = $project->client;
+                $sale->payble = $project->budget;
+                $sale->advanced_payment = $project->advanced_payment;
+                $sale->due_payment = $project->due_payment;
+                $sale->sale_type = 'project';
+                $sale->created_at = $project->created_at;
+                return $sale;
+            });
+
+        // Build customer groups (merged customer due)
+        $customerGroups = collect();
+
+        // Check for matching vendors (dual role: same phone or name)
+        $allVendors = \App\Models\Vendor::all();
+        $vendorByPhone = $allVendors->filter(fn($v) => !empty($v->phone))->keyBy(fn($v) => trim($v->phone));
+        $vendorByName = $allVendors->keyBy(fn($v) => strtolower(trim($v->name)));
+
+        // Retail groups (grouped by customer_id)
+        $retailSalesGrouped = $sales->groupBy(function ($sale) {
+            return $sale->customer_id ? 'retail_' . $sale->customer_id : 'walkin_' . $sale->id;
         });
 
-    // Merge retail sales and projects
-    $allItems = $sales->merge($projects)->sortByDesc('created_at');
-    $paymentAccounts = getPaymentAccounts();
-    $paymentMethods = getPaymentMethodList();
+        foreach ($retailSalesGrouped as $groupKey => $groupItems) {
+            $first = $groupItems->first();
+            $customer = $first->customer;
+            $custPhone = trim($customer->phone ?? '');
+            $custName = strtolower(trim($customer->name ?? ''));
 
-    return view('frontend.pages.sales.due-payments', [
-        'sales' => $allItems,
-        'paymentAccounts' => $paymentAccounts,
-        'paymentMethods' => $paymentMethods,
-    ]);
-}
+            $matchedVendor = null;
+            if ($custPhone && isset($vendorByPhone[$custPhone])) {
+                $matchedVendor = $vendorByPhone[$custPhone];
+            } elseif ($custName && isset($vendorByName[$custName])) {
+                $matchedVendor = $vendorByName[$custName];
+            }
 
-public function duePaymentsPdf()
+            $vendorDue = 0;
+            if ($matchedVendor) {
+                $vendorDue = (float) \App\Models\Purchase::where('vendor_id', $matchedVendor->id)->sum('due');
+            }
+
+            $customerDue = (float) $groupItems->sum('due_payment');
+            $netDue = $customerDue - $vendorDue;
+
+            $customerGroups->push((object)[
+                'id' => $groupKey,
+                'customer_id' => $customer?->id,
+                'name' => $customer?->name ?? 'Walk-in Customer',
+                'phone' => $customer?->phone ?? 'N/A',
+                'email' => $customer?->email ?? '',
+                'type' => 'retail',
+                'invoices_count' => $groupItems->count(),
+                'total_payable' => (float)$groupItems->sum('payble'),
+                'total_paid' => (float)$groupItems->sum('advanced_payment'),
+                'total_due' => $customerDue,
+                'latest_date' => $groupItems->max('created_at'),
+                'items' => $groupItems->sortBy('created_at')->values(),
+                'dual_vendor' => $matchedVendor,
+                'vendor_due' => $vendorDue,
+                'net_due' => $netDue,
+            ]);
+        }
+
+        // Project groups (grouped by client_id)
+        $projectSalesGrouped = $projects->groupBy(function ($project) {
+            return $project->client?->id ? 'project_' . $project->client->id : 'project_none_' . $project->id;
+        });
+
+        foreach ($projectSalesGrouped as $groupKey => $groupItems) {
+            $first = $groupItems->first();
+            $client = $first->client;
+            $clientPhone = trim($client->phone ?? '');
+            $clientName = strtolower(trim($client->name ?? ''));
+
+            $matchedVendor = null;
+            if ($clientPhone && isset($vendorByPhone[$clientPhone])) {
+                $matchedVendor = $vendorByPhone[$clientPhone];
+            } elseif ($clientName && isset($vendorByName[$clientName])) {
+                $matchedVendor = $vendorByName[$clientName];
+            }
+
+            $vendorDue = 0;
+            if ($matchedVendor) {
+                $vendorDue = (float) \App\Models\Purchase::where('vendor_id', $matchedVendor->id)->sum('due');
+            }
+
+            $clientDue = (float)$groupItems->sum('due_payment');
+            $netDue = $clientDue - $vendorDue;
+
+            $customerGroups->push((object)[
+                'id' => $groupKey,
+                'customer_id' => $client?->id,
+                'name' => $client?->name ?? 'Project Client',
+                'phone' => $client?->phone ?? 'N/A',
+                'email' => $client?->email ?? '',
+                'type' => 'project',
+                'invoices_count' => $groupItems->count(),
+                'total_payable' => (float)$groupItems->sum('payble'),
+                'total_paid' => (float)$groupItems->sum('advanced_payment'),
+                'total_due' => $clientDue,
+                'latest_date' => $groupItems->max('created_at'),
+                'items' => $groupItems->sortBy('created_at')->values(),
+                'dual_vendor' => $matchedVendor,
+                'vendor_due' => $vendorDue,
+                'net_due' => $netDue,
+            ]);
+        }
+
+        // Sort customer groups by highest total due first
+        $customerGroups = $customerGroups->sortByDesc('total_due')->values();
+
+        // Merge retail sales and projects
+        $allItems = $sales->merge($projects)->sortByDesc('created_at');
+        $paymentAccounts = getPaymentAccounts();
+        $paymentMethods = getPaymentMethodList();
+
+        return view('frontend.pages.sales.due-payments', [
+            'sales' => $allItems,
+            'customerGroups' => $customerGroups,
+            'paymentAccounts' => $paymentAccounts,
+            'paymentMethods' => $paymentMethods,
+        ]);
+    }
+
+    public function processCustomerPayment(Request $request)
+    {
+        $request->validate([
+            'customer_id' => 'required|exists:customers,id',
+            'payment_amount' => 'required|numeric|min:0.01',
+            'payment_method' => 'required|string',
+            'account_id' => 'nullable|exists:chart_of_accounts,id',
+            'payment_date' => 'nullable|date',
+            'notes' => 'nullable|string',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            $paymentAmount = (float)$request->payment_amount;
+
+            // Fetch all unpaid retail sales for this customer, oldest first (FIFO)
+            $unpaidSales = Sale::where('customer_id', $request->customer_id)
+                ->where('sale_type', 'retail')
+                ->where('due_payment', '>', 0)
+                ->orderBy('created_at', 'asc')
+                ->orderBy('id', 'asc')
+                ->get();
+
+            if ($unpaidSales->isEmpty()) {
+                return redirect()->back()->with('error', 'No unpaid sales found for this customer.');
+            }
+
+            $totalDue = (float)$unpaidSales->sum('due_payment');
+            if ($paymentAmount > ($totalDue + 0.01)) {
+                return redirect()->back()->with('error', 'Payment amount (৳' . number_format($paymentAmount, 2) . ') cannot exceed total due amount of ৳' . number_format($totalDue, 2) . '!');
+            }
+
+            $remainingPayment = $paymentAmount;
+            $invoicesSettled = 0;
+            $invoicesPartial = 0;
+            $paymentDate = $request->payment_date ?: now();
+
+            // Chart of accounts for double entry
+            $depositAccount = null;
+            if (!empty($request->account_id)) {
+                $depositAccount = \App\Models\ChartOfAccount::find($request->account_id);
+            }
+            if (!$depositAccount) {
+                $depositAccount = \App\Models\ChartOfAccount::where('account_code', '1110')->first();
+            }
+            $arAcc = \App\Models\ChartOfAccount::where('account_code', '1130')->first();
+            $accLabel = $depositAccount ? ($depositAccount->account_name . ' (' . $depositAccount->account_code . ')') : 'Cash';
+
+            foreach ($unpaidSales as $sale) {
+                if ($remainingPayment <= 0.0001) {
+                    break;
+                }
+
+                $currentDue = (float)$sale->due_payment;
+                $allocated = min($remainingPayment, $currentDue);
+                $dueBeforePayment = $currentDue;
+
+                $newAdvancedPayment = (float)$sale->advanced_payment + $allocated;
+                $newDuePayment = max(0, (float)$sale->payble - $newAdvancedPayment);
+
+                // Update sale record
+                $sale->update([
+                    'advanced_payment' => $newAdvancedPayment,
+                    'due_payment' => $newDuePayment,
+                    'payment_status' => 1,
+                ]);
+
+                // Create individual Payment entry
+                Payment::create([
+                    'customer_id' => $sale->customer_id,
+                    'sale_id' => $sale->id,
+                    'amount' => $allocated,
+                    'due_before_payment' => $dueBeforePayment,
+                    'due_after_payment' => $newDuePayment,
+                    'payment_method' => $request->payment_method,
+                    'payment_date' => $paymentDate,
+                    'notes' => trim(($request->notes ? $request->notes . ' | ' : '') . 'FIFO Bulk Payment (Invoice #' . $sale->order_no . ')'),
+                    'payment_for' => 2, // Sales
+                ]);
+
+                // Double-entry journal voucher
+                try {
+                    if ($depositAccount && $arAcc && $allocated > 0) {
+                        postJournalEntry([
+                            'entry_date' => date('Y-m-d', strtotime($paymentDate)),
+                            'reference_type' => 'sale',
+                            'reference_id' => $sale->id,
+                            'description' => 'FIFO Due collected for Invoice ' . $sale->order_no . ' — Customer #' . $sale->customer_id . ($request->notes ? ' [' . $request->notes . ']' : ''),
+                            'items' => [
+                                [
+                                    'account_id' => $depositAccount->id,
+                                    'debit' => $allocated,
+                                    'credit' => 0.00,
+                                    'description' => "Due collected via {$accLabel} for Invoice {$sale->order_no}",
+                                ],
+                                [
+                                    'account_id' => $arAcc->id,
+                                    'debit' => 0.00,
+                                    'credit' => $allocated,
+                                    'description' => "Receivable due reduced for Invoice {$sale->order_no}",
+                                ]
+                            ]
+                        ]);
+                    }
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning('Due payment FIFO auto-journal notice: ' . $e->getMessage());
+                }
+
+                if ($newDuePayment <= 0.001) {
+                    $invoicesSettled++;
+                } else {
+                    $invoicesPartial++;
+                }
+
+                $remainingPayment -= $allocated;
+            }
+
+            DB::commit();
+
+            $message = 'Payment of ৳' . number_format($paymentAmount, 2) . ' processed successfully using FIFO allocation!';
+            if ($invoicesSettled > 0) {
+                $message .= ' (' . $invoicesSettled . ' invoice' . ($invoicesSettled > 1 ? 's' : '') . ' fully cleared' . ($invoicesPartial > 0 ? ', 1 partially paid' : '') . ')';
+            }
+
+            return redirect()->back()->with('success', $message);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Error processing FIFO payment: ' . $e->getMessage());
+        }
+    }
+
+    public function duePaymentsPdf()
 {
     $sales = Sale::with('customer')
         ->where('sale_type', 'retail')

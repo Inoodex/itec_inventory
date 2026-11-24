@@ -38,7 +38,7 @@ class WarrantyService
         $search = trim($search);
 
         // Find sale items by serial number, order_no, customer, or product barcode
-        $serialMatches = \App\Models\ProductSerial::where('serial_number', $search)
+        $serialMatches = \App\Models\ProductSerial::where('serial_number', 'LIKE', "%{$search}%")
             ->whereNotNull('sales_item_id')
             ->pluck('sales_item_id');
 
@@ -46,28 +46,35 @@ class WarrantyService
             ->where(function ($q) use ($search, $serialMatches) {
                 if ($serialMatches->isNotEmpty()) {
                     $q->whereIn('id', $serialMatches);
-                } else {
-                    $q->whereHas('sale', function ($query) use ($search) {
-                        $query->where('order_no', 'LIKE', "%{$search}%")
-                            ->orWhereHas('customer', function ($cq) use ($search) {
-                                $cq->where('phone', 'LIKE', "%{$search}%")
-                                  ->orWhere('name', 'LIKE', "%{$search}%");
-                            });
-                    })
-                    ->orWhereHas('product', function ($pq) use ($search) {
-                        $pq->where('barcode', $search);
-                    })
-                    ->orWhere('id', $search);
                 }
+                
+                $q->orWhereHas('sale', function ($query) use ($search) {
+                    $query->where('order_no', 'LIKE', "%{$search}%")
+                        ->orWhereHas('customer', function ($cq) use ($search) {
+                            $cq->where('phone', 'LIKE', "%{$search}%")
+                              ->orWhere('name', 'LIKE', "%{$search}%");
+                        });
+                })
+                ->orWhereHas('product', function ($pq) use ($search) {
+                    $pq->where('barcode', 'LIKE', "%{$search}%")
+                       ->orWhere('name', 'LIKE', "%{$search}%")
+                       ->orWhere('model', 'LIKE', "%{$search}%");
+                })
+                ->orWhere('id', $search);
             })
             ->latest()
             ->get()
             ->map(function ($item) use ($search) {
                 $saleDate = Carbon::parse($item->sale?->created_at ?? now());
-                $warrantyDays = (int) ($item->warranty ?? 0);
+                // Fallback warranty days: sales_item warranty -> product warranty -> 365 days default
+                $itemWarranty = (int) ($item->warranty ?? 0);
+                $prodWarranty = (int) ($item->product?->warranty ?? 0);
+                $warrantyDays = $itemWarranty > 0 ? $itemWarranty : ($prodWarranty > 0 ? $prodWarranty : 365);
+
                 $expiryDate = $saleDate->copy()->addDays($warrantyDays);
                 $daysRemaining = now()->diffInDays($expiryDate, false);
 
+                $item->warranty_days = $warrantyDays;
                 $item->warranty_start_date = $saleDate->toDateString();
                 $item->warranty_expiry_date = $expiryDate->toDateString();
                 $item->warranty_days_remaining = (int) ceil($daysRemaining);
@@ -75,6 +82,8 @@ class WarrantyService
 
                 // If searched by serial, attach matched serial
                 if (\App\Models\ProductSerial::where('serial_number', $search)->where('sales_item_id', $item->id)->exists()) {
+                    $item->matched_serial = $search;
+                } else {
                     $item->matched_serial = $search;
                 }
 
@@ -88,13 +97,20 @@ class WarrantyService
     public function createClaim(array $data): WarrantyClaim
     {
         return DB::transaction(function () use ($data) {
-            $salesItem = SalesItem::with('sale')->findOrFail($data['sales_item_id']);
+            $salesItem = SalesItem::with(['sale', 'product'])->findOrFail($data['sales_item_id']);
             $saleDate  = Carbon::parse($salesItem->sale?->created_at ?? now());
-            $warrantyDays = (int) ($salesItem->warranty ?? 0);
+
+            // Determine effective warranty days: user specified -> sale_item -> product -> 365
+            $itemWarranty = (int) ($salesItem->warranty ?? 0);
+            $prodWarranty = (int) ($salesItem->product?->warranty ?? 0);
+            $defaultWarranty = $itemWarranty > 0 ? $itemWarranty : ($prodWarranty > 0 ? $prodWarranty : 365);
+            $warrantyDays = !empty($data['warranty_days']) ? (int) $data['warranty_days'] : $defaultWarranty;
+
             $expiryDate = $saleDate->copy()->addDays($warrantyDays);
 
-            if ($expiryDate->isPast()) {
-                throw new \Exception("Warranty for this item expired on " . $expiryDate->format('d M Y') . ". Cannot claim warranty.");
+            $allowOverride = !empty($data['override_warranty']);
+            if ($expiryDate->isPast() && !$allowOverride) {
+                throw new \Exception("Warranty for this item expired on " . $expiryDate->format('d M Y') . ". Check 'Staff Override' to register anyway.");
             }
 
             $claim = WarrantyClaim::create([

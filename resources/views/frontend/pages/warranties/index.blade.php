@@ -201,7 +201,7 @@
                             <th>Claim Date</th>
                             <th>Warranty Expiry</th>
                             <th>Status</th>
-                            <!-- <th class="text-end pe-4">Action</th> -->
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody class="border-top-0">
@@ -225,7 +225,7 @@
                                 <td>
                                     <div>
                                         <span class="fw-semibold text-dark d-block" title="{{ $claim->product?->name }}">
-                                            {{ Str::limit($claim->product?->name ?? 'N/A', 25) }}
+                                            {{ Str::limit($claim->product?->name ?? 'N/A', 20) }}
                                         </span>
                                         @if($claim->serial_number)
                                             <span class="badge bg-light text-dark border fs-8">S/N: {{ $claim->serial_number }}</span>

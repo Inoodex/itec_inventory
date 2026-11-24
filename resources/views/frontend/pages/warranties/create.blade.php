@@ -51,7 +51,7 @@
                         <span class="input-group-text bg-white"><i class="fas fa-barcode text-primary"></i></span>
                         <input type="text" name="search" value="{{ request('search') }}"
                             class="form-control form-control-lg border-start-0 font-monospace" required autofocus
-                            placeholder="Scan Unit Serial Barcode, Product Barcode, Invoice # (e.g. INV-1002), or Phone...">
+                            placeholder="Search by Product Name (e.g. Printer, Canon, HiTi), Serial Barcode, Invoice #, or Phone...">
                     </div>
                 </div>
                 <div class="col-md-3">
@@ -73,7 +73,7 @@
                                     <th>Product Name</th>
                                     <th>Sale Date</th>
                                     <th>Warranty Expiry</th>
-                                    <th>Status</th>
+                                    <th>Status (Remaining)</th>
                                     <th class="text-end">Action</th>
                                 </tr>
                             </thead>
@@ -82,7 +82,7 @@
                                     <tr class="{{ $item->is_expired ? 'opacity-50' : '' }}">
                                         <td><strong class="text-primary">{{ $item->sale?->order_no ?? '#' . $item->order_id }}</strong></td>
                                         <td>{{ $item->sale?->customer?->name ?? 'Guest' }} ({{ $item->sale?->customer?->phone }})</td>
-                                        <td>{{ $item->product?->name }}</td>
+                                        <td>{{ Str::limit($item->product->name ?? 'N/A', 20) }}</td>
                                         <td>{{ $item->warranty_start_date }}</td>
                                         <td>{{ $item->warranty_expiry_date }}</td>
                                         <td>
@@ -92,25 +92,32 @@
                                                 </span>
                                             @else
                                                 <span class="badge badge-soft-success px-3 py-1 rounded-pill">
-                                                    <i class="fe fe-check-circle me-1"></i> {{ $item->warranty_days_remaining }} Days Remaining
+                                                    <i class="fe fe-check-circle me-1"></i> {{ $item->warranty_days_remaining }} Days
                                                 </span>
                                             @endif
                                         </td>
                                         <td class="text-end">
                                             @if($item->is_expired)
-                                                <span class="d-inline-block" data-bs-toggle="tooltip" title="Cannot claim — warranty expired on {{ $item->warranty_expiry_date }}">
-                                                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-2" disabled style="pointer-events: none;">
-                                                        <i class="fe fe-slash me-1"></i> Cannot Claim
-                                                    </button>
-                                                </span>
+                                                <button type="button" class="btn btn-sm btn-outline-warning rounded-2 select-item-btn"
+                                                    data-item-id="{{ $item->id }}"
+                                                    data-product-name="{{ $item->product?->name }}"
+                                                    data-invoice-no="{{ $item->sale?->order_no }}"
+                                                    data-customer-name="{{ $item->sale?->customer?->name }}"
+                                                    data-warranty-days="{{ $item->warranty_days ?? 365 }}"
+                                                    data-is-expired="1"
+                                                    data-expiry-date="{{ $item->warranty_expiry_date }}">
+                                                    <i class="fe fe-alert-triangle me-1"></i> Override &amp; Select
+                                                </button>
                                             @else
                                                 <button type="button" class="btn btn-sm btn-outline-primary rounded-2 select-item-btn"
                                                     data-item-id="{{ $item->id }}"
                                                     data-product-name="{{ $item->product?->name }}"
                                                     data-invoice-no="{{ $item->sale?->order_no }}"
                                                     data-customer-name="{{ $item->sale?->customer?->name }}"
+                                                    data-warranty-days="{{ $item->warranty_days ?? 365 }}"
+                                                    data-is-expired="0"
                                                     data-expiry-date="{{ $item->warranty_expiry_date }}">
-                                                    Select Item
+                                                    Select
                                                 </button>
                                             @endif
                                         </td>
@@ -140,22 +147,37 @@
                 </div>
 
                 <div class="row g-3 mb-4">
-                    <div class="col-md-6 col-lg-6">
+                    <div class="col-md-6 col-lg-5">
                         <label class="form-label fw-semibold text-secondary small mb-1">Selected Product / Item <span class="text-danger">*</span></label>
                         <input type="text" id="selected_product_name" class="form-control bg-light" readonly
                             placeholder="Select an item above..." value="{{ old('selected_product_name') }}" required>
                     </div>
 
                     <div class="col-md-6 col-lg-3">
-                        <label class="form-label fw-semibold text-secondary small mb-1">Serial / IMEI Number</label>
-                        <input type="text" name="serial_number" value="{{ old('serial_number') }}"
+                        <label class="form-label fw-semibold text-secondary small mb-1">Serial / IMEI Number <span class="text-muted">(Printer Serial)</span></label>
+                        <input type="text" name="serial_number" id="serial_number_input" value="{{ old('serial_number', request('search')) }}"
                             class="form-control" placeholder="e.g. SN-8839201">
                     </div>
 
-                    <div class="col-md-6 col-lg-3">
+                    <div class="col-md-4 col-lg-2">
+                        <label class="form-label fw-semibold text-secondary small mb-1">Warranty Days</label>
+                        <input type="number" name="warranty_days" id="warranty_days_input" value="{{ old('warranty_days', 365) }}"
+                            class="form-control" placeholder="365" min="0">
+                    </div>
+
+                    <div class="col-md-4 col-lg-2">
                         <label class="form-label fw-semibold text-secondary small mb-1">Claim Date <span class="text-danger">*</span></label>
                         <input type="date" name="claim_date" value="{{ old('claim_date', date('Y-m-d')) }}"
                             class="form-control" required>
+                    </div>
+
+                    <div class="col-12" id="override_alert_box">
+                        <div class="form-check form-switch p-2 bg-light border rounded-3 d-flex align-items-center gap-2">
+                            <input class="form-check-input ms-0 me-2" type="checkbox" name="override_warranty" value="1" id="override_warranty" {{ old('override_warranty') ? 'checked' : '' }}>
+                            <label class="form-check-label small fw-semibold text-dark mb-0" for="override_warranty">
+                                <i class="fe fe-shield text-warning me-1"></i> Staff Authorization Override (Allow claim for manual warranty / out-of-warranty printer items)
+                            </label>
+                        </div>
                     </div>
 
                     <div class="col-12">
@@ -195,10 +217,22 @@ document.addEventListener('DOMContentLoaded', function() {
             const productName = this.dataset.productName;
             const invoiceNo = this.dataset.invoiceNo;
             const customerName = this.dataset.customerName;
+            const isExpired = this.dataset.isExpired === '1';
+            const warrantyDays = this.dataset.warrantyDays || 365;
 
             document.getElementById('sales_item_id').value = itemId;
             document.getElementById('selected_product_name').value = `${productName} (Invoice: ${invoiceNo} - ${customerName})`;
             
+            const warrantyInput = document.getElementById('warranty_days_input');
+            if (warrantyInput) {
+                warrantyInput.value = warrantyDays;
+            }
+
+            const overrideCheckbox = document.getElementById('override_warranty');
+            if (overrideCheckbox && isExpired) {
+                overrideCheckbox.checked = true;
+            }
+
             document.querySelectorAll('.select-item-btn').forEach(btn => btn.classList.replace('btn-primary', 'btn-outline-primary'));
             this.classList.replace('btn-outline-primary', 'btn-primary');
         });

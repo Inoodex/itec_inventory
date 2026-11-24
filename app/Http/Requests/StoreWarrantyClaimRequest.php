@@ -20,6 +20,8 @@ class StoreWarrantyClaimRequest extends FormRequest
             'problem_description' => 'required|string|max:1000',
             'condition_notes'     => 'nullable|string|max:500',
             'remarks'             => 'nullable|string|max:500',
+            'warranty_days'       => 'nullable|integer|min:0',
+            'override_warranty'   => 'nullable',
         ];
     }
 }

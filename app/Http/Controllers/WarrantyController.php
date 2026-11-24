@@ -139,10 +139,18 @@ class WarrantyController extends Controller
             ->findOrFail($id);
 
         ini_set('memory_limit', '512M');
-        $html = view('pdf.warranty-receipt', compact('claim'))->render();
+        $padPath = public_path('assets/invoice/final_pad.png');
+        $padBase64 = file_exists($padPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($padPath)) : '';
+
+        $html = view('pdf.warranty-receipt', compact('claim', 'padBase64'))->render();
         $mpdf = new \Mpdf\Mpdf([
             'mode' => 'utf-8',
             'format' => 'A4',
+            'margin_top' => 42,
+            'margin_bottom' => 32,
+            'margin_left' => 15,
+            'margin_right' => 15,
+            'margin_footer' => 24,
             'default_font' => 'Helvetica',
         ]);
         $mpdf->WriteHTML($html);
